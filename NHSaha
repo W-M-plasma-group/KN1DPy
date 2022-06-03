@@ -1,0 +1,15 @@
+import numpy as np
+
+def NHSaha(Density, Te, p):
+    if len(Density) != len(Te):
+        raise Exception('Number of Elements of Density and Te are different!')
+    if len(p) != 1:
+        raise Exception('‘p’ must be a scalar')
+    if p<0:
+        raise Exception('“p” must greater than 0')
+    result = [1.0e32] * len(Density)
+    ok = np.nonzero(0 < Density < 1.0e32 and 0.0 < Te < 1.0e32)
+    if len(ok) > 0:
+        for i in ok:
+            result[i] = Density[i] * (3.310E-28 * Density[i]) * p * p * np.exp(13.6057 / (p * p * Te[i])) / Te[i] ** 1.5
+    return result
