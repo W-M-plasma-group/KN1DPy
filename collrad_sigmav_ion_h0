@@ -190,7 +190,7 @@ def collrad_sigmav_ion_h0(N_e, T_e, p):
          2.06417e-08,  1.89076e-08,  1.73014e-08,  1.58163e-08,  1.44454e-08,  1.31819e-08]])
 
     logsigmav = np.log(sigmav)
-    sigma_out = np.exp(np.interp(logsigmav, indne, indte))
+    sigma_out = np.exp(np.interp(logsigmav, indne, indte)) # not entirely confident in using np.interp here
     # convert from cm^3 to m^3 
     sigmav_out = sigmav_out/1e6
     return sigmav_out
