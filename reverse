@@ -10,7 +10,7 @@ def reverse (a, subscript):
     if subscript > ndims:
         raise Exception('Subscript_index must be less than or equal to number of dimensions.')
     if subscript == 1: #unique case where it is reversing the 1st dim
-        a = a.reverse()
+        a.reverse()
         return a
     return rev_rec(a, subscript, 1)
     
@@ -19,7 +19,7 @@ def rev_rec(a, subscript, dim_tracker):
     i = 0
     while i < len(a):
         if dim_tracker == subscript-1:
-            a[i] = a[i].reverse()
+            a[i].reverse()
         else:
             a[i] = rev_rec(a[i], subscript, dim_tracker+1)
         i+=1
