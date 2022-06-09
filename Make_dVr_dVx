@@ -61,9 +61,9 @@ def Make_dVr_dVx(Vr, Vx): # For this to work inputs must be np arrays so I might
         Vr2Vx2[i : np.size(Vr2Vx2)] = (Vr[i] ** 2) + (Vx ** 2)
 
     # Determine indice range of positive and negative Vx 
-    jp = np.nonzero(Vx > 0)
+    jp = np.argwhere(Vx > 0)
     jpa = jp[0]; jpb = jp[np.size(jp) - 1]
-    jn = np.nonzero(Vx < 0)
+    jn = np.argwhere(Vx < 0)
     jna = jn[0]; jnb = jn[np.size(jn) - 1]
 
     return
