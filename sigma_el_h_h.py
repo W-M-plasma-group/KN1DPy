@@ -27,7 +27,7 @@ def Sigma_EL_H_H(E, vis = 0):
     else: 
         a = np.array([ -3.330843e1, -5.738374e-1, -1.028610e-1, -3.920980e-3, 5.964135e-4])
         result = np.exp(poly(np.log(_E), a)) * 1e-4
-    if nDim == 0:       # I dont know if this works 
+    if nDim == 0:      
         result = result[0]
     return result
 
