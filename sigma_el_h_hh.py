@@ -17,10 +17,10 @@ from poly.py import *
 # Gwendolyn Galleher
 
 def Sigma_El_H_HH(E):
-    ty = type_of(E) # I feel like there is a better way to do this is python I need to do some more thinking/research
+    ty = type_of(E) 
     _E = float(E)
-    _E = _E > 0.03e0 # I don't think these two lines are correct 
-    _E = _E < 1.01e4
+    _E = np.maximum(_E, 3.03e0)     
+    _E = np.miminum(_E, 1.01e4)
     a = np.array[-3.495671e1, -4.062257e-1, -3.820531e-2, -9.404486e-3, 3.963723e-4]
     result = np.exp(poly(np.log(_E), a)) * 1e-4
     if nDim == 0:
