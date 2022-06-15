@@ -19,8 +19,8 @@ from poly import *
 def Sigma_EL_H_H(E, vis = 0):
     ty = type_of(E)
     _E = float(E)
-    _E = _E > 0.03      # I dont think this is the correct translation, I dont entirely know whaat > and < mean in IDL 
-    _E = _E < 1.01e4
+    _E = np.maximum(_E, 3.03e0)     
+    _E = np.miminum(_E, 1.01e4)
     if vis: 
         a = np.array([ -3.344860e1, -4.238982e-1, -7.477873e-2, -7.915053e-3, -2.686129e-4])
         result = np.exp(poly(np.log(_E), a)) * 1e-4
