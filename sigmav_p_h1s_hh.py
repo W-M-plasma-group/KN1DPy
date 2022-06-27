@@ -1,7 +1,7 @@
 import numpy as np
 from poly import poly
 
-def sigmav_h1s_hn3_hh(Te):
+def sigmav_p_h1s_hh(Te):
     #   Te - Scalar, list, or np.array. Gives electron temperature (eV)
 
     #Returns maxwellian averaged <sigma V) for electron impact
