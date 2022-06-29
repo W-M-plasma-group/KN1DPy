@@ -51,7 +51,7 @@ def make_sigmav(E_particle, mu_particle, T_target, mu_target, sigma_function):
 
     #   Get sigma for inputted E_Particle
     
-  exec('global sig; sig='+sigma_function+'0.5*vth*vth*vrel*vrel*mu_particle*mH/q')
+  exec('from '+sigma_function+' import *; global sig; sig='+sigma_function+'(0.5*vth*vth*vrel*vrel*mu_particle*mH/q)')
 
     #   Compute Sigmav by integrating sigma x Vrel x Fi_hat over velocity space
 
