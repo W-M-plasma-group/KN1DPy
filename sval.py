@@ -2,4 +2,4 @@
 # truncates string to a specified length
 
 def sval(s,length=None):
-  return s.strip()[:length]
+  return str(s).strip()[:length]
