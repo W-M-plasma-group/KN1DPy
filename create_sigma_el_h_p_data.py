@@ -2,7 +2,7 @@ import numpy as np
 from make_sigmav import make_sigmav
 from sval import sval
 
-def create_sigmav_el_p_h_data():
+def create_sigmav_el_h_p_data():
 
     #Creates a 2D SigmaV data table in particle energy and target temperature
     #   and saves it as a save set.
