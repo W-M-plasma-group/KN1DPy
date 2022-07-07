@@ -49,9 +49,9 @@ def Make_dVr_dVx(Vr, Vx): # For this to work inputs must be np arrays so I might
     DeltaVr = VrR - VrL
 
     # compute vth_Deltavx, vx_Deltavx, vr_Deltavr, padded with zeros
-    Vth_DeltaVx = np.zeros((nVr + 2, nVr + 2), float)
-    Vx_DeltaVx = np.zeros((nVx + 2, nVx + 2), float)
-    Vr_DeltaVr = np.zeros((nVr + 2, nVr + 2), float) # replaced np.array with np.zeros - nh
+    Vth_DeltaVx = np.zeros((nVr + 2, nVx + 2), float)
+    Vx_DeltaVx = np.zeros((nVr + 2, nVx + 2), float)
+    Vr_DeltaVr = np.zeros((nVr + 2, nVx + 2), float) # replaced np.array with np.zeros - nh
     for i in range(1, nVr+1):
         Vth_DeltaVx[i, 1 : nVx+1] = 1.0/DeltaVx
         Vx_DeltaVx[i, 1 : nVx+1] = Vx/DeltaVx
