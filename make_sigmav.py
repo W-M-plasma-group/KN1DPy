@@ -19,10 +19,9 @@ def make_sigmav(E_particle, mu_particle, T_target, mu_target, sigma_function):
   trange=np.sort(trange)
   nvb=100
 
-  create_VrVxMesh(nvb,trange)
-  # vxb, vrb, Tnorm, ixE0, and irE0 are set by create_VrVxMesh()
-  Make_dVr_dVx(vrb,vxb)
-  # Vr2pidVrb, VrVr4pidVrb, and dVxb are set by Make_dVr_dVx
+  vxb, vrb, Tnorm, ixE0, irE0 = create_VrVxMesh(nvb,trange)
+  Vr2pidVrb, VrVr4pidVrb, dVxb = Make_dVr_dVx(vrb,vxb)[:3] 
+  # fixed lines to properly use create_VrVxMesh and Make_dVr_dVx to set variables - nh
 
   mH=1.6726231e-27
   q=1.602177e-19
