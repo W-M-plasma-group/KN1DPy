@@ -40,37 +40,37 @@ def Make_dVr_dVx(Vr, Vx): # For this to work inputs must be np arrays so I might
     VxL = VxL[1 : nVx+1]
 
     # compute volume elements 
-    vol = np.zeros((nVr, nVx), float)
+    vol = np.zeros((nVx, nVr), float)
     for i in range(0, nVr):
-        vol[i,:] = Vr2pidVr[i] * dVx # fixed minor indexing bug - nh
+        vol[:,i] = Vr2pidVr[i] * dVx # fixed minor indexing bugs - nh
 
     #compute DeltaVx, DeltaVr
     DeltaVx = VxR - VxL
     DeltaVr = VrR - VrL
 
     # compute vth_Deltavx, vx_Deltavx, vr_Deltavr, padded with zeros
-    Vth_DeltaVx = np.zeros((nVr + 2, nVx + 2), float)
-    Vx_DeltaVx = np.zeros((nVr + 2, nVx + 2), float)
-    Vr_DeltaVr = np.zeros((nVr + 2, nVx + 2), float) # replaced np.array with np.zeros - nh
+    Vth_DeltaVx = np.zeros((nVx + 2, nVr + 2), float)
+    Vx_DeltaVx = np.zeros((nVx + 2, nVr + 2), float)
+    Vr_DeltaVr = np.zeros((nVx + 2, nVr + 2), float) # replaced np.array with np.zeros - nh
     for i in range(1, nVr+1):
-        Vth_DeltaVx[i, 1 : nVx+1] = 1.0/DeltaVx
-        Vx_DeltaVx[i, 1 : nVx+1] = Vx/DeltaVx
+        Vth_DeltaVx[1 : nVx+1,i] = 1.0/DeltaVx
+        Vx_DeltaVx[1 : nVx+1,i] = Vx/DeltaVx
     for j in range(1, nVx+1):
-        Vr_DeltaVr[1 : nVr+1, j] = Vr/DeltaVr 
+        Vr_DeltaVr[j,1 : nVr+1] = Vr/DeltaVr 
     
     #compute v^2
-    Vr2Vx2 = np.zeros((nVr, nVx), float)
+    Vr2Vx2 = np.zeros((nVx, nVr), float)
     for i in range(0, nVr):
-        Vr2Vx2[i,:] = (Vr[i] ** 2) + (Vx ** 2)
+        Vr2Vx2[:,i] = (Vr[i] ** 2) + (Vx ** 2)
 
     # Determine indice range of positive and negative Vx 
     jpa=jpb=jna=jnb=-1
     jp = np.argwhere(Vx > 0)
     if jp.size>0:
-        jpa = jp[0]; jpb = jp[np.size(jp) - 1][0]
+        jpa = jp[0][0]; jpb = jp[np.size(jp) - 1][0]
     jn = np.argwhere(Vx < 0)
     if jn.size>0:
-        jna = jn[0]; jnb = jn[np.size(jn) - 1][0] # modified section to return -1 if jp or jn is empty (previously this raised an error) - nh
+        jna = jn[0][0]; jnb = jn[np.size(jn) - 1][0] # modified section to return -1 if jp or jn is empty (previously this raised an error) - nh
     
     # changed return line to provide an output as a list - nh
     return [Vr2pidVr,VrVr4pidVr,dVx,VrL,VrR,VxL,VxL,vol,Vth_DeltaVx,Vx_DeltaVx,Vr_DeltaVr,Vr2Vx2,jpa,jpb,jna,jnb]
