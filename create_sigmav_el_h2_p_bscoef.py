@@ -1,9 +1,10 @@
 import numpy as np
 import scipy.interpolate
-from sval import *
-from make_sigmav import *
+from sval import sval
+from make_sigmav import make_sigmav
 #   Creates save set storing Bi-cubic spine interpoaltion 
 # coefficients for parameters in Johnson-Hinov rate equations.
+# Gwendolyn Galleher
 def Create_Sigmav_EL_H2_P_BSCOEF():
     Sigma_Function = 'sigma_el_P_HH'
 
