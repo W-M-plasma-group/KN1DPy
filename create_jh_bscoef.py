@@ -181,7 +181,6 @@ def Create_JH_BSCoef():
     # Fit BSCoef to each 
 
     print('Computing B-Spline coefficients for r0 and r1 values')
-    order = 4
     LogR_BSCoef = np.zeros((5, 2, np.size(LogDensity) * np.size(LogTe)))
     for nIon in range(0,2):
         for nP in range(2,7):
