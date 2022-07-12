@@ -36,17 +36,17 @@ def make_sigmav(E_particle, mu_particle, T_target, mu_target, sigma_function):
 
     #   Set Normalized Target Distribution Function
 
-  fi_hat=np.zeros((nvrb,nvxb))
+  fi_hat=np.zeros((nvxb,nvrb))
   for i in range(nvrb):
-    fi_hat[i,:]=np.e**(-(vrb[i]**2+vxb**2)*Tnorm/T_target)
-  fi_hat=fi_hat/(Vr2pidVrb*np.matmul(fi_hat,dVxb)).sum()
+    fi_hat[:,i]=np.e**(-(vrb[i]**2+vxb**2)*Tnorm/T_target)
+  fi_hat=fi_hat/(Vr2pidVrb*np.matmul(dVxb,fi_hat)).sum() # fixed indexing errors and order of matmul arguments - nh
 
     #   Compute relative velocity at each mesh point
 
-  vrel=np.zeros((nvrb,nvxb,nvxa))
+  vrel=np.zeros((nvxa,nvxb,nvrb))
   for k in range(nvxa):
     for i in range(nvrb):
-      vrel[i,:,k]=np.sqrt(vrb[i]**2+(vxb-vxa[k])**2)
+      vrel[k,:,i]=np.sqrt(vrb[i]**2+(vxb-vxa[k])**2)
 
     #   Get sigma for inputted E_Particle
     
@@ -56,6 +56,6 @@ def make_sigmav(E_particle, mu_particle, T_target, mu_target, sigma_function):
 
   sigv=np.zeros(nvxa)  
   for k in range(nvxa):
-    sigv[k]=vth*(Vr2pidVrb*np.matmul(sig[:,:,k]*vrel[:,:,k]*fi_hat,dVxb)).sum()
+    sigv[k]=vth*(Vr2pidVrb*np.matmul(dVxb,sig[k,:,:]*vrel[k,:,:]*fi_hat)).sum() # fixed indexing errors and order of matmul arguments - nh
 
   return sigv
