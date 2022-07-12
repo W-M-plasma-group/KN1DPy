@@ -64,13 +64,13 @@ def Make_dVr_dVx(Vr, Vx): # For this to work inputs must be np arrays so I might
         Vr2Vx2[i,:] = (Vr[i] ** 2) + (Vx ** 2)
 
     # Determine indice range of positive and negative Vx 
-    jpa=jpb=jna=jnb=None
+    jpa=jpb=jna=jnb=-1
     jp = np.argwhere(Vx > 0)
     if jp.size>0:
-        jpa = jp[0]; jpb = jp[np.size(jp) - 1]
+        jpa = jp[0]; jpb = jp[np.size(jp) - 1][0]
     jn = np.argwhere(Vx < 0)
     if jn.size>0:
-        jna = jn[0]; jnb = jn[np.size(jn) - 1] # modified section to return None if jp or jn is empty (previously this raised an error) - nh
+        jna = jn[0]; jnb = jn[np.size(jn) - 1][0] # modified section to return -1 if jp or jn is empty (previously this raised an error) - nh
     
     # changed return line to provide an output as a list - nh
     return [Vr2pidVr,VrVr4pidVr,dVx,VrL,VrR,VxL,VxL,vol,Vth_DeltaVx,Vx_DeltaVx,Vr_DeltaVr,Vr2Vx2,jpa,jpb,jna,jnb]
