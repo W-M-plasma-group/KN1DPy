@@ -1,5 +1,4 @@
 import numpy as np 
-from type_of import *
 from poly import *
 
 #   Returns momentum transfer cross section for elastic collisions of H onto H
