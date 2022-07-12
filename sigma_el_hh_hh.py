@@ -16,7 +16,6 @@ from poly import *
 # Gwendolyn Galleher 
 
 def Sigma_EL_HH_HH( E, vis = 0):
-    ty = type_of(E)
     _E = np.maximum(_E, 3.03e0)     
     _E = np.miminum(_E, 1.01e4)
     if vis: 
@@ -25,6 +24,6 @@ def Sigma_EL_HH_HH( E, vis = 0):
     else: 
         a = np.array([-3.430345e1, -2.960406e-1, -6.382532e-2, -7.557519e-3, 2.606259e-4])
         result = np.exp(poly(np.log(_E), a)) * 1e-4 
-    if nDim == 0:
+    if np.ndim(E) == 0:
         result = result[0]
     return result

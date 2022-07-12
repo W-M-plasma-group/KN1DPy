@@ -16,13 +16,12 @@ from poly.py import *
 #
 # Gwendolyn Galleher
 
-def Sigma_El_H_HH(E):
-    ty = type_of(E) 
+def Sigma_El_H_HH(E): 
     _E = float(E)
     _E = np.maximum(_E, 3.03e0)     
     _E = np.miminum(_E, 1.01e4)
     a = np.array[-3.495671e1, -4.062257e-1, -3.820531e-2, -9.404486e-3, 3.963723e-4]
     result = np.exp(poly(np.log(_E), a)) * 1e-4
-    if nDim == 0:
+    if np.ndim(E) == 0:
         result = result[0]
     return result
