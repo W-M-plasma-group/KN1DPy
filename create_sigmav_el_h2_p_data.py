@@ -19,11 +19,11 @@ def create_sigmav_el_h2_p_data():
     T_Target=10**(np.log10(Tmin)+(np.log10(Tmax)-np.log10(Tmin))*np.arange(nT)/(nT-1))
     Mu_Target=1
     
-    sigmav=np.zeros((mE,nT))
+    sigmav=np.zeros((nT,mE))
     
     for i in range(T_Target.size):
         print('Processing T='+sval(T_Target[i]))
-        sigmav[i,:]=make_sigmav(E_Particle,Mu_Particle,T_Target[i],Mu_Target,sigma_function)
+        sigmav[i,:]=make_sigmav(E_Particle,Mu_Particle,T_Target[i],Mu_Target,sigma_function) # fixed indexing - nh
 
     Ln_E_Particle=np.log(E_Particle)
     Ln_T_Target=np.log(T_Target)
