@@ -5,8 +5,8 @@ from Make_dVr_dVx import *
 def make_sigmav(E_particle, mu_particle, T_target, mu_target, sigma_function):
 
     #   Input:
-    #       E_Particle	    - fltarr(*), eV
-    #       mu_particle     - float
+    #       E_Particle	    - array, eV - I changed the input type to use python vocab - GG
+    #       mu_particle     - floatn
     #       T_Target	    - float, eV
     #       mu_target	    - float
     #       sigma_function  - string, name of function to return Sigma (m^2)
