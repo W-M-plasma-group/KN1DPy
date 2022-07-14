@@ -21,14 +21,14 @@ def create_shifted_maxwellain(vr,vx,Tmaxwell,vx_shift,mu,mol,Tnorm):
 
   # create_shifted_maxwellian.include
 
-  AN=BN=np.zeros((nvx,nvr,2)).T
+  AN=BN=np.zeros((2,nvx,nvr)) # fixed array creation - nh
   sgn=[-1,1]
   for k in range(nx):
     if Tmaxwell[k]>0:
       for i in range(nvr):
         arg=-(vr[i]**2+(vx-vx_shift[k]/vth)**2) * mol*Tnorm/Tmaxwell[k]
-        arg=arg[arg<0]
-        maxwell[k,:,i]=np.e**(arg[arg>-80])
+        arg=np.minimum(arg,0)
+        maxwell[k,:,i]=np.e**(np.maximum(arg,-80)) # replaced < and > with np.minimum and np.maximum - nh
 
       maxwell[k,:,:]/=np.sum(Vr2pidVr*(np.matmul(maxwell[k,:,:],dVx)))
 
