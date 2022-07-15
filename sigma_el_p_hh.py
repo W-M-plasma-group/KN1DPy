@@ -1,5 +1,5 @@
 import numpy as np
-from poly import * 
+from poly import poly 
 #   Returns momentum transfer cross section for elastic collisions of H+ onto H2
 # for specified energy of H+.
 # Data are taken from 
@@ -16,11 +16,11 @@ from poly import *
 #	units: m^-2
 # Gwendolyn Galleher 
 def Sigma_EL_P_HH(E):
-    _E = np.array(E)
+    E = np.array([E])
+    _E = E.astype(float)
+    # ensures 0.03e0 < E < 1.01e4
     _E = np.maximum(_E, 0.03e0)
     _E = np.minimum(_E, 1.01e4)
     a = np.array([-3.355719e1, -5.696568e-1, -4.089556e-2, -1.143513e-2, 5.926596e-4])
     result = np.exp(poly(np.log(_E), a)) * 1e-4
-    if np.ndim(E) == 0:
-        result = result[0]
     return result 
