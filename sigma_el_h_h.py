@@ -30,7 +30,7 @@ def Sigma_EL_H_H(E, vis = 0):
         # calculates momentum transfer cross section
         a = np.array([ -3.330843e1, -5.738374e-1, -1.028610e-1, -3.920980e-3, 5.964135e-4])
         result = np.exp(poly(np.log(_E), a)) * 1e-4
-    # deleted redundant if statement 
+    # deleted redundant if statement - GG
     return result
 
 
