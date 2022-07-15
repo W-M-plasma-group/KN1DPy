@@ -10,17 +10,19 @@ import numpy as np
 #   Ionization Rate (m^3 s^-1)
 #
 #Gwendolyn Galleher 
-def collrad_sigmav_ion_h0(N_e, T_e, p):
+def collrad_sigmav_ion_h0(N_e, T_e): # removed unused argument p - nh
     if np.size(N_e) != np.size(T_e):
         raise Exception('Number of elements in inputs do not match.')
-    temp = np.float(T_e) # changes precision to float this might be unnecessary in python  
-    dens = np.float(N_e)
+    temp = T_e # changes precision to float this might be unnecessary in python  
+    dens = N_e # removed type conversions - nh
     #convert from m^-3 to cm^-3
     dens = dens/1e6
 
     # compute indices for interpolation on sigmav grid:
-    indte = 10 * (np.log(temp) + 1.2) > 0 < 59 
-    indne = 2 * (np.log(dens) - 10) > 0 < 14 
+    indte=np.maximum(10*(np.log(temp)+1.2),0)
+    indte=np.minimum(indte,59) 
+    indne=np.maximum(2*(np.log(dens)-10),0)
+    indne=np.minimum(indne,14) # replaced > and < with np.maximum and np.minimum - nh
 
     column_1 = np.array( \
         [1.00000e-99,  1.93923e-83,  6.89061e-68,  4.81352e-56,  2.12250e-46,  9.93199e-39, \
