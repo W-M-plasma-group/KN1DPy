@@ -1,5 +1,5 @@
 import numpy as np
-from poly import *
+from poly import poly
 #   Returns momentum transfer cross section for elastic collisions of H2 onto H2
 # for specififed energy of H2
 # Data are taken from 
@@ -15,14 +15,17 @@ from poly import *
 # Gwendolyn Galleher 
 
 def Sigma_EL_HH_HH( E, vis = 0):
+    E = np.array([E])
+    _E = float(E)
+    # ensures 3.03e0 < _E < 1.01e4
     _E = np.maximum(_E, 3.03e0)     
     _E = np.minimum(_E, 1.01e4)
     if vis: 
+        # calculates viscosity cross section
         a = np.array([-3.430345e1, -2.960406e-1, -6.382532e-2, -7.557519e-3, 2.606259e-4])
         result = np.exp(poly(np.log(_E), a)) * 1e-4
     else: 
+        # calculates momentum transfer cross section 
         a = np.array([-3.430345e1, -2.960406e-1, -6.382532e-2, -7.557519e-3, 2.606259e-4])
         result = np.exp(poly(np.log(_E), a)) * 1e-4 
-    if np.ndim(E) == 0:
-        result = result[0]
     return result
