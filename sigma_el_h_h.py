@@ -16,19 +16,21 @@ from poly import poly
 # Gwendolyn Galleher
 
 def Sigma_EL_H_H(E, vis = 0):
+    E = np.array([E])
     if np.size(E) == 1: 
-        _E = float(E) # this line was in the original code I don't 
-                      # know if its neccessary but it means E must have only 1 element
+        _E = float(E) 
+    # ensures 3.03e0 < _E < 1.01e4
     _E = np.maximum(_E, 3.03e0)     
     _E = np.minimum(_E, 1.01e4)
     if vis: 
+        # calculates viscosity cross section
         a = np.array([ -3.344860e1, -4.238982e-1, -7.477873e-2, -7.915053e-3, -2.686129e-4])
         result = np.exp(poly(np.log(_E), a)) * 1e-4
     else: 
+        # calculates momentum transfer cross section
         a = np.array([ -3.330843e1, -5.738374e-1, -1.028610e-1, -3.920980e-3, 5.964135e-4])
         result = np.exp(poly(np.log(_E), a)) * 1e-4
-    if np.ndim(E) == 0:      
-        result = result[0]
+    # deleted redundant if statement 
     return result
 
 
