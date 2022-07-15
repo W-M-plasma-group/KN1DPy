@@ -32,7 +32,7 @@ def NHSaha(Density, Te, p):
 
     ok = np.array([]) # updated how ok is defined to resolve errors - GG
     for i in range(0, len(Density)):
-        if 0.0 < Density[i] < 1.0e332 and 0.0 < Te[i] < 1.e32:
+        if 0.0 < Density[i] < 1.0e32 and 0.0 < Te[i] < 1.e32:
             ok = np.append(ok, i)
     # converts array from a float array to an int array
     ok = ok.astype(int) 
