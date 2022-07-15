@@ -29,8 +29,17 @@ def NHSaha(Density, Te, p):
     if p<0:
         raise Exception('“p” must greater than 0')
     result = [1.0e32] * len(Density)
-    ok = np.nonzero(0 < Density < 1.0e32 and 0.0 < Te < 1.0e32)
+
+    ok = np.array([]) # updated how ok is defined to resolve errors - GG
+    for i in range(0, len(Density)):
+        if 0.0 < Density[i] < 1.0e332 and 0.0 < Te[i] < 1.e32:
+            ok = np.append(ok, i)
+    # converts array from a float array to an int array
+    ok = ok.astype(int) 
+
     if len(ok) > 0:
         for i in ok:
-            result[i] = Density[i] * (3.310E-28 * Density[i]) * p * p * np.exp(13.6057 / (p * p * Te[i])) / Te[i] ** 1.5
+            result[i] = Density[i] * (3.310E-28 * Density[i]) * p * p * np.exp(13.6057 / (p * p * Te[i])) / (Te[i] ** 1.5)
+            # this returns many infinite values and 
+            # I can't tell if that is an issue with the code inputs or if they are supposed to be that big - GG
     return result
