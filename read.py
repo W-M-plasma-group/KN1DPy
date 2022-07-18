@@ -28,6 +28,6 @@ def nc_read(nc_path):
     #Ouputs:
     #    input_dict - a dictionary of all inputs from the input file
     fn = nc_path
-    ds = nc.Dataset(fn, 'w', format = 'NETCDF4') 
+    ds = nc.Dataset(fn) 
     input_dict = ds.__dict__
     return input_dict
