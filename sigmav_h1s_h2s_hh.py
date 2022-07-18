@@ -24,4 +24,5 @@ def sigmav_h1s_h2s_hh(Te):
         -2.229578042005e-3, 8.890114963166e-5, -1.523912962346e-6]
   Te2=np.maximum(Te,0.1) #Sets values to minimum .1 and maximum 2.01e4
   Te2=np.minimum(Te2,2.01e4) 
-  return np.e**(poly(np.log(Te2),b))*1e-6
+  result = np.e**(poly(np.log(Te2),b))*1e-6  # - added the result variable to make it easier to read - GG
+  return result 
