@@ -4,6 +4,7 @@ def edit_keys(dict):
     #   dict - the dictionary outputted from the C-Mod Save file
     # Ouputs:
     #   dict - the ammended dictionary 
+    # Gwendolyn Galleher 
     dict['xlimiter'] = dict['x_lim']
     del dict['x_lim']
     dict['xsep'] = dict['x_sep']
