@@ -6,7 +6,7 @@ from sigmav_cx_hh import sigmav_cx_hh
 from create_vrvxmesh import create_vrvxmesh
 from scipy import interpolate
 
-def create_kinetic_h2_mesh(nv, mu, x, Ti, Te, n, PipeDia, xH2, TiH2, TeH2, neH2, PipeDiaH2, vx, vr, Tnorm):
+def create_kinetic_h2_mesh(nv, mu, x, Ti, Te, n, PipeDia): # - removed output variables from input - GG
     mH = 1.6726231e-27		
     q = 1.602177e-19				
     k_boltz = 1.380658e-23				#Boltzmann's constant, J K^-1
@@ -39,7 +39,10 @@ def create_kinetic_h2_mesh(nv, mu, x, Ti, Te, n, PipeDia, xH2, TiH2, TeH2, neH2,
 
     #Setup a vx,vr mesh based on raw data to get typical vx, vr values
     #probably need to do stuff about the namespace because of the differences between IDL and python
-    create_vrvxmesh(nv, Tifine, vx, vr, Tnorm)
+    vrvxmesh = create_vrvxmesh(nv, Tifine) # pulled necessary variables from the return of create_vrvxmesh - GG
+    vx = vrvxmesh[0]
+    vr = vrvxmesh[1]
+    Tnorm = vrvxmesh[2]
     vth = np.sqrt(2*q*Tnorm/(mu*mH))
 
     #Estimate interaction rate with side walls
@@ -74,5 +77,8 @@ def create_kinetic_h2_mesh(nv, mu, x, Ti, Te, n, PipeDia, xH2, TiH2, TeH2, neH2,
     TeH2=interpolate.interp1d(Tefine,xfine,xH2)
     neH2=interpolate.interp1d(nfine,xfine,xH2)
     PipeDiaH2=interpolate.interp1d(PipeDiafine,xfine,xH2)
-    create_vrvxmesh(nv,TiH2,vx,vr,Tnorm)
-    return
+    vrvxmesh = create_vrvxmesh(nv,TiH2) # pulled necessary variables from the return of create_vrvxmesh - GG
+    vx = vrvxmesh[0]
+    vr = vrvxmesh[1]
+    Tnorm = vrvxmesh[2]
+    return [xH2, TiH2, TeH2, neH2, PipeDiaH2, vx, vr, Tnorm] # returned necessary varibales in a list - GG
