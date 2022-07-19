@@ -6,7 +6,7 @@ from sigmav_cx_hh import sigmav_cx_hh
 from create_vrvxmesh import create_vrvxmesh
 from scipy import interpolate
 
-def create_kinetic_h2_mesh(nv, mu, x, Ti, Te, n, PipeDia): # - removed output variables from input - GG
+def create_kinetic_h2_mesh(nv, mu, x, Ti, Te, n, PipeDia, E0=0,ixE0=0,irE0=0,fctr=0): # - removed output variables from input - GG
     mH = 1.6726231e-27		
     q = 1.602177e-19				
     k_boltz = 1.380658e-23				#Boltzmann's constant, J K^-1
