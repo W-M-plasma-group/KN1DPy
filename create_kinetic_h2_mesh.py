@@ -12,7 +12,7 @@ def create_kinetic_h2_mesh(nv, mu, x, Ti, Te, n, PipeDia, E0 = 0, ixE0 = 0, irE0
     k_boltz = 1.380658e-23				#Boltzmann's constant, J K^-1
     Twall = 293.0*k_boltz/q			    #room temperature (eV)
     v0_bar = np.sqrt(8.0*Twall*q/(np.pi*2*mu*mH))	#directed random velocity of diatomic molecule
-    nx=len(x)
+    nx=np.size(x)
 
     gamma_wall = [0] * nx
 
@@ -71,7 +71,7 @@ def create_kinetic_h2_mesh(nv, mu, x, Ti, Te, n, PipeDia, E0 = 0, ixE0 = 0, irE0
     xpt=xmaxH2
     xH2=np.array([xpt])
     while xpt > xminH2:
-        xH2=np.concatenate(xpt,xH2)
+        xH2=np.concatenate([xpt,xH2])
         interpfunc = interpolate.interp1d(xfine, dx_max)
         dxpt1=interpfunc(xpt)
         dxpt2=dxpt1
@@ -81,7 +81,7 @@ def create_kinetic_h2_mesh(nv, mu, x, Ti, Te, n, PipeDia, E0 = 0, ixE0 = 0, irE0
             dxpt2=interpfunc(xpt_test)
         dxpt=min([dxpt1,dxpt2])
         xpt=xpt-dxpt
-    xH2=np.concatenate(np.array[xminH2], xH2[0:np.size(xH2) - 2]) # error object is not subsriptable 
+    xH2=np.concatenate(np.array([xminH2]), xH2[0:np.size(xH2) - 2]) 
 
     interpfunc = interpolate.interp1d(xfine, Tifine)
     print(xH2)
