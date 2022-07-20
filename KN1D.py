@@ -3,6 +3,8 @@ import os
 from read import sav_read, nc_read
 from edit_keys import edit_keys
 from create_kinetic_h2_mesh import create_kinetic_h2_mesh
+from create_shifted_maxwellian import create_shifted_maxwellain
+from scipy import interpolate
 
 #   Computes the molecular and atomic neutral profiles for inputted profiles
 # of Ti(x), Te(x), n(x), and molecular neutral pressure, GaugeH2, at the boundary using
@@ -121,7 +123,7 @@ def KN1D(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
             fctr = 0.3
             if GaugeH2 > 15.0:
                 fctr = fctr * 15 / GaugeH2
-            kinetic_h2_mesh = create_kinetic_h2_mesh(input_dict['n'], input_dict['mu'], input_dict['x'], input_dict['Ti'], input_dict['Te'], input_dict['n'], input_dict['PipeDia'])
+            xH2,TiM,TeM,nM,PipeDiaM,vxM,vrM,TnormM = create_kinetic_h2_mesh(n, mu, x, Ti, Te, n, PipeDia) # replaced function inputs, split output list into variables - nh
             
             # determine optimized vr, vx grid for kinetic_h (atoms, A)
             nv = 10
@@ -129,8 +131,84 @@ def KN1D(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
             if GaugeH2 > 30.0 :
                 fctr = fctr * 30 / GaugeH2
             # create_kinetic_H
+            
+        if mu==1:
+            _p='H!U+!N'
+            _H='H!U0!N'
+            _H1s='H(1s)'
+            _Hs='H!U*!N(2s)'
+            _Hp='H!U*!N(2p)'
+            _Hn2='H!U*!N(n=2)'
+            _Hn3='H!U*!N(n=3)'
+            _Hn='H!U*!N(n>=2)'
+            _HH='H!D2!N'
+            _Hp='H!D2!U+!N'
+        else:
+            _p='D!U+!N'
+            _H='D!U0!N'
+            _H1s='D(1s)'
+            _Hs='D!U*!N(2s)'
+            _Hp='D!U*!N(2p)'
+            _Hn2='D!U*!N(n=2)'
+            _Hn3='D!U*!N(n=3)'
+            _Hn='D!U*!N(n>=2)'
+            _HH='D!D2!N'
+            _Hp='D!D2!U+!N'
 
+        plus=' + '
+        arrow=' -> '
+        elastic=' (elastic)'
+        _e='e!U-!N'
+        _hv='hv'
 
+        #   constants can probably be referenced from elsewhere
 
+        mH=1.6726231e-27
+        q=1.602177e-19
+        k_boltz=1.380658e-23
+        Twall=293.0*k_boltz/q
+        v0_bar=np.sqrt(8.0*Twall*q/(np.pi*2*mu*mH))
 
+        #   Set up molecular flux BC from inputted neutral pressure
 
+        ipM=(vxM>0).nonzero()[0]
+        inM=(vxM<0).nonzero()[0]
+        nvrM=vrM.size
+        nvxM=vxM.size
+        nxH2=xH2.size
+        
+        #   Code below uses variables defined in create_kinetic_h_mesh
+        
+        ipA=(vxA>0).nonzero()[0]
+        inA=(vxA<0).nonzero()[0]
+        nvrA=vrA.size
+        nvxA=vxA.size
+        nxH=xH.size
+        
+        #  Code blocks below use common block variables, should be filled in later
+        #  Initialize fH and fH2 (these may be over-written by data from and old run below)
+        
+        if refine:
+            pass
+        else:
+            pass
+         
+         #   Convert pressure (mtorr) to molecular density and flux
+         #   (Currently untested)
+
+        fh2BC=np.zeros(nvxM,nvrM)
+        DensM=3.537e19*GaugeH2
+        GammaxH2BC=0.25*DensM*v0_bar
+        Tmaxwell=[Twall]
+        vx_shift=[0.0]
+        mol=2
+        Maxwell=create_shifted_maxwellian(vrM,vxM,Tmaxwell,vx_shift,mu,mol,TnormM)
+        fh2BC[ipM,:]=Maxwell[0,ipM,:]
+
+        Cs_LC=np.zeros(LC.size)
+        for ii in range(LC.size):
+            if LC[ii]>0:
+                Cs_LC[ii]=np.sqrt(q*(Ti(ii)+Te(ii))/(mu*mH))/LC(ii)
+        NuLoss=interpolate.interp1d(x,Cs_LC)(xH2)
+        
+        #  Compute first guess SpH2
