@@ -101,4 +101,4 @@ def create_kinetic_h2_mesh(nv, mu, x, Ti, Te, n, PipeDia, E0 = 0, ixE0 = 0, irE0
     vr = vrvxmesh[1]
     Tnorm = vrvxmesh[2]
 
-    return [xH2, TiH2, TeH2, neH2, PipeDiaH2, vx, vr, Tnorm] # returned necessary varibales in a list - GG
+    return xH2, TiH2, TeH2, neH2, PipeDiaH2, vx, vr, Tnorm # returned necessary varibales in a list - GG
