@@ -123,7 +123,7 @@ def KN1D(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
             fctr = 0.3
             if GaugeH2 > 15.0:
                 fctr = fctr * 15 / GaugeH2
-            xH2,TiM,TeM,nM,PipeDiaM,vxM,vrM,TnormM = create_kinetic_h2_mesh(n, mu, x, Ti, Te, n, PipeDia) # replaced function inputs, split output list into variables - nh
+            xH2,TiM,TeM,nM,PipeDiaM,vxM,vrM,TnormM = create_kinetic_h2_mesh(nv, mu, x, Ti, Te, n, PipeDia) # replaced function inputs, split output list into variables - nh
             
             # determine optimized vr, vx grid for kinetic_h (atoms, A)
             nv = 10
