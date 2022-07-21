@@ -2,7 +2,7 @@ import numpy as np
 from sval import sval
 from Make_dVr_dVx import Make_dVr_dVx
 
-def create_shifted_maxwellain(vr,vx,Tmaxwell,vx_shift,mu,mol,Tnorm):
+def create_shifted_maxwellian(vr,vx,Tmaxwell,vx_shift,mu,mol,Tnorm): # fixed function name - nh
   nx=vx_shift.size
   nvr,nvx=vr.size,vx.size
   maxwell=np.zeros((nvr,nvx,nx)).T
@@ -30,13 +30,13 @@ def create_shifted_maxwellain(vr,vx,Tmaxwell,vx_shift,mu,mol,Tnorm):
         arg=np.minimum(arg,0)
         maxwell[k,:,i]=np.e**(np.maximum(arg,-80)) # replaced < and > with np.minimum and np.maximum - nh
 
-      maxwell[k,:,:]/=np.sum(Vr2pidVr*(np.matmul(maxwell[k,:,:],dVx)))
+      maxwell[k,:,:]/=np.sum(Vr2pidVr*(np.matmul(dVx,maxwell[k,:,:]))) # fixed matmul argument order - nh
 
       if shifted_maxwellian_debug:
-        vx_out1=vth*np.sum(Vr2pidVr*np.matmul(maxwell[k,:,:],(vx*dVx)))
+        vx_out1=vth*np.sum(Vr2pidVr*np.matmul((vx*dVx),maxwell[k,:,:])) # fixed matmul argument order - nh
         for i in range(nvr):
           vr2vx2_ran2[:,i]=vr[i]**2+(vx-vx_out1/vth)**2
-        T_out1=(mol*mu*mH)*vth2*np.sum(Vr2pidVr*(np.matmul(vr2vx2_ran2*maxwell[k,:,:],dVx)))/(3*q)
+        T_out1=(mol*mu*mH)*vth2*np.sum(Vr2pidVr*(np.matmul(dVx,vr2vx2_ran2*maxwell[k,:,:])))/(3*q) # fixed matmul argument order - nh
         vth_local=0.1*np.sqrt(2*Tmaxwell[k]*q/(mol*mu*mH))
         Terror=abs(Tmaxwell[k]-T_out1)/Tmaxwell[k]
         Verror=abs(vx_out1-vx_shift[k])/vth_local
@@ -48,8 +48,8 @@ def create_shifted_maxwellain(vr,vx,Tmaxwell,vx_shift,mu,mol,Tnorm):
 
       # Compute present moments of Maxwell, WxMax, and EMax 
 
-      WxMax=vth*np.sum(Vr2pidVr*np.matmul(maxwell[k,:,:],(vx*dVx)))
-      EMax=vth2*np.sum(Vr2pidVr*np.matmul((vr2vx2_2D*maxwell[k,:,:]),dVx))
+      WxMax=vth*np.sum(Vr2pidVr*np.matmul((vx*dVx),maxwell[k,:,:])) # fixed matmul argument order - nh
+      EMax=vth2*np.sum(Vr2pidVr*np.matmul(dVx,(vr2vx2_2D*maxwell[k,:,:]))) # fixed matmul argument order - nh
 
       # Compute Nij from Maxwell, padded with zeros
 
@@ -95,7 +95,7 @@ def create_shifted_maxwellain(vr,vx,Tmaxwell,vx_shift,mu,mol,Tnorm):
 
         # Compute TA1, TA2
 
-        TA1=vth*np.sum(np.matmul(AN[ia,:,:],vx))
+        TA1=vth*np.sum(np.matmul(vx,AN[ia,:,:])) # fixed matmul argument order - nh
         TA2=vth2*np.sum(vr2vx2_2D*AN[ia,:,:])
         ib=0
         while ib<2:
@@ -103,7 +103,7 @@ def create_shifted_maxwellain(vr,vx,Tmaxwell,vx_shift,mu,mol,Tnorm):
           # Compute TB1, TB2
 
           if TB1[ib]==0:
-            TB1[ib]=vth*np.sum(np.matmul(BN[ib,:,:],vx))
+            TB1[ib]=vth*np.sum(np.matmul(vx,BN[ib,:,:])) # fixed matmul argument order - nh
           if TB2[ib]==0:
             TB2[ib]=vth2*np.sum(vr2vx2_2D*BN[ib,:,:])
           denom=TA2*TB1[ib]-TA1*TB2[ib]
@@ -116,13 +116,13 @@ def create_shifted_maxwellain(vr,vx,Tmaxwell,vx_shift,mu,mol,Tnorm):
             ia=ib=2
           ib+=1
         ia+=1
-      maxwell[k,:,:]=maxwell[k,:,:]/np.sum(Vr2pidVr*np.matmul(maxwell[k,:,:],dVx))
+      maxwell[k,:,:]=maxwell[k,:,:]/np.sum(Vr2pidVr*np.matmul(dVx,maxwell[k,:,:])) # fixed matmul argument order - nh
 
       if shifted_maxwellian_debug:
-        vx_out2=vth*np.sum(Vr2pidVr*np.matmul(maxwell[k,:,:],(vx*dVx)))
+        vx_out2=vth*np.sum(Vr2pidVr*np.matmul((vx*dVx),maxwell[k,:,:])) # fixed matmul argument order - nh
         for i in range(nvr):
           vr2vx2_ran2[:,i]=vr[i]**2+(vx-vx_out2/vth)**2
-        T_out2=(mol*mu*mH)*vth2*np.sum(Vr2pidVr*np.matmul(vr2vx2_ran2*maxwell[k,:,:],dVx))/(3*q)
+        T_out2=(mol*mu*mH)*vth2*np.sum(Vr2pidVr*np.matmul(dVx,vr2vx2_ran2*maxwell[k,:,:]))/(3*q) # fixed matmul argument order - nh
         Terror2=abs(Tmaxwell[k]-T_out2)/Tmaxwell[k]
         Verror2=abs(vx_shift[k]-vx_out2)/vth_local
         print('CREATE_SHIFTED_MAXWELLIAN=> Terror:'+sval(Terror)+'->'+sval(Terror2)+'  Verror:'+sval(Verror)+'->'+sval(Verror2))
