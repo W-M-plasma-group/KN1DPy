@@ -49,4 +49,4 @@ def create_VrVxMesh(nv, Ti, E0 = np.array([0.0]), Tmax = 0.0): # removed unused 
     irE0 = np.argwhere(vr == v0).T[0]
     if np.size(irE0) == 1:
         irE0 = irE0[0]
-    return [vx,vr,Tnorm,ixE0,irE0] # changed to return outputs as a list
+    return vx,vr,Tnorm,ixE0,irE0 # changed to return outputs as a variables - GG

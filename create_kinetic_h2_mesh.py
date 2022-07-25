@@ -46,10 +46,7 @@ def create_kinetic_h2_mesh(nv, mu, x, Ti, Te, n, PipeDia, E0 = 0, ixE0 = 0, irE0
 
     #Setup a vx,vr mesh based on raw data to get typical vx, vr values
     #probably need to do stuff about the namespace because of the differences between IDL and python
-    vrvxmesh = create_vrvxmesh(nv, Tifine) # pulled necessary variables from the return of create_vrvxmesh - GG
-    vx = vrvxmesh[0]
-    vr = vrvxmesh[1]
-    Tnorm = vrvxmesh[2]
+    vx, vr, Tnorm = create_vrvxmesh(nv, Tifine) # pulled necessary variables from the return of create_vrvxmesh - GG
 
     vth = np.sqrt(2*q*Tnorm/(mu*mH))
 
@@ -96,9 +93,6 @@ def create_kinetic_h2_mesh(nv, mu, x, Ti, Te, n, PipeDia, E0 = 0, ixE0 = 0, irE0
     interpfunc = interpolate.interp1d(xfine, PipeDiafine)
     PipeDiaH2=interpfunc(xH2)
 
-    vrvxmesh = create_VrVxMesh(nv,TiH2)
-    vx = vrvxmesh[0]
-    vr = vrvxmesh[1]
-    Tnorm = vrvxmesh[2]
+    vx, vr, Tnorm = create_VrVxMesh(nv,TiH2) # changed how we pulled the variables - GG
 
-    return xH2, TiH2, TeH2, neH2, PipeDiaH2, vx, vr, Tnorm # returned necessary varibales in a list - GG
+    return xH2, TiH2, TeH2, neH2, PipeDiaH2, vx, vr, Tnorm # returned necessary varibales - GG
