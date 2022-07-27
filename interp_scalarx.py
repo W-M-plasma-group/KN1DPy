@@ -2,7 +2,7 @@ import numpy as np
 from scipy import interpolate
 from warnings import warn
 
-def interp_scalarx(fa,xa,xb,warn=0,debug=0):
+def interp_scalarx(fa,xa,xb,do_warn=0,debug=0):
 
     # Input function 'a'
 	#   fa	=  density np.array
@@ -11,7 +11,7 @@ def interp_scalarx(fa,xa,xb,warn=0,debug=0):
     # Desired space coordinates of Output function 'b'
     #   Xb	=  spatial coordinate np.array()
 
-    # warn can be set to issue the warnings at the end of the file when needed
+    # do_warn can be set to issue the warnings at the end of the file when needed
 
     # debug wasn't used in the IDL code, but it was still listed in the inputs
     #   if it really doesn't do anything, it can be removed later
@@ -33,7 +33,7 @@ def interp_scalarx(fa,xa,xb,warn=0,debug=0):
   # warnings only issued if 'warn' parameter has been set
   # for warnings, a message is shown but the code continues
   # Need to check the IDL output to see if a full exception is better
-  if warn!=0: 
+  if do_warn!=0: 
     big=max(abs(xb))
     if k0>0 or k0<nxb-1:
       if k0>0 and abs(fb[k0])>warn*big:
