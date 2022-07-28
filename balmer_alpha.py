@@ -53,7 +53,7 @@ def Balmer_Alpha(Density, Te, N0, photons = 0, create = 0, no_null = 0):
 
     if np.size(Density) != np.size(Te):
         raise Exception('Number of elements of Density and Te are different!')
-    if np.size(Density) != np.size(Te):
+    if np.size(Density) != np.size(N0):
         raise Exception(' Number of elements of Density and N0 are different! ')
     result = Density ; result[:] = 1.0e32
     photons = result 
