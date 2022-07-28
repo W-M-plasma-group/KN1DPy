@@ -62,7 +62,7 @@ def Balmer_Alpha(Density, Te, N0, photons = 0, create = 0, no_null = 0):
     NHSaha1 = NHSaha(Density, Te, 1)
     NHSaha3 = NHSaha(Density, Te, 3)
     for i in range(0, np.size(Density)):
-        if 0 < N0 < 1e32 and r03 < 1.0e32 and r13 < 1.0e32 and NHSaha1 < 1.0e32 and NHSaha3 < 1.0e32:
+        if 0 < N0[i] < 1e32 and r03[i] < 1.0e32 and r13[i] < 1.0e32 and NHSaha1[i] < 1.0e32 and NHSaha3[i] < 1.0e32:
             ok = np.append(ok, i)
     count = np.size(ok)
     ok = np.astype(int)

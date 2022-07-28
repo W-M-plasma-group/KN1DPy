@@ -60,7 +60,7 @@ def Lyman_Alpha(Density, Te, N0, photons = 0, create = 0, no_null = 0):
     NHSaha1 = NHSaha(Density, Te, 1)
     NHSaha2 = NHSaha(Density, Te, 2)
     for i in range(0, np.size(Density)):
-        if 0 < N0 < 1e32 and r02 < 1.0e32 and r12 < 1.0e32 and NHSaha1 < 1.0e32 and NHSaha2 < 1.0e32:
+        if 0 < N0[i] < 1e32 and r02[i] < 1.0e32 and r12[i] < 1.0e32 and NHSaha1[i] < 1.0e32 and NHSaha2[i] < 1.0e32:
             ok = np.append(ok, i)
     count = np.size(ok)
     ok = np.astype(int)
