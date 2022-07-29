@@ -1,10 +1,16 @@
 import numpy as np 
 import os
+from scipy import interpolate
+
 from read import sav_read, nc_read
 from edit_keys import edit_keys
 from create_kinetic_h2_mesh import create_kinetic_h2_mesh
-from create_shifted_maxwellian import create_shifted_maxwellain
-from scipy import interpolate
+from create_shifted_maxwellian import create_shifted_maxwellian # fixed function name - nh
+from integ_bl import integ_bl
+from Make_dVr_dVx import Make_dVr_dVx
+from sval import sval
+from interp_fvrvxx import interp_fvrvxx
+from create_kinetic_h_mesh import create_kinetic_h_mesh
 
 #   Computes the molecular and atomic neutral profiles for inputted profiles
 # of Ti(x), Te(x), n(x), and molecular neutral pressure, GaugeH2, at the boundary using
@@ -92,6 +98,10 @@ def KN1D(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
 
 
         prompt = 'KN1D => '
+        global xH2,TiM,TeM,nM,PipeDiaM,vxM,vrM,TnormM,xH,TiA,TeA,nA,PipeDiaA,vxA,vrA,TnormA # necessary for setting variables from input_dict (lines 132-133) - nh
+        #   Note that these are global to this file only, they are not used / cannot be called in other files
+
+        #   set kn1d_internal common block variables here
         # resets variables to be values from input file 
         # Option: Read input parameters stored in file from previous run
         if ReadInput: 
@@ -102,19 +112,26 @@ def KN1D(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
                     print(prompt, ' Reading input variables stored in ', input)
                     if File[ len(File) - 4 : len(File) ] == '.sav':
                         input_dict = sav_read(File, '//Users/Gwen/Desktop/test.nc')
-                    elif File[ len(File) - 3 : len(File)]:
+                    elif File[ len(File) - 3 : len(File)]=='.nc': # fixed typo
                         input_dict = nc_read(File)
                     else: 
                         if debug:
                             print(prompt, ' Error reading the file')
                             return 
             else:
+                try:
+                    input_dict=sav_read(File+'.KN1D_input',File+'_asnetcdf.nc') # allows for old-style inputs, might be removed later - nh
+                except:
                     print(prompt, 'Error reading the file')
                     if debug:
                         print(prompt, ' Finished ')
                         return 
             # edit keys for C-Mod Files 
-            edit_keys(input_dict) 
+            edit_keys(input_dict) # Not sure if we need this in the final code - not sure the C-Mod files are really intended to be used as inputs - nh
+            
+            for i in ['xH2','TiM','TeM','nM','PipeDiaM','vxM','vrM','TnormM','xH','TiA','TeA','nA','PipeDiaA','vxA','vrA','TnormA']:
+                globals()[i]=input_dict[i.lower()] # Takes entries from input_dict and defines them as variables 
+                #   slightly messy, but should solve comment below - nh
             # i think in the end we will have to use the dictionary to manually define the variables
         else:
             # determine optimized vr, vx, grid for kinetc_h2 (molecules, M)
@@ -130,7 +147,7 @@ def KN1D(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
             fctr = 0.3
             if GaugeH2 > 30.0 :
                 fctr = fctr * 30 / GaugeH2
-            # create_kinetic_H
+            xH,TiA,TeA,nA,PipeDiaA,vxA,vrA,TnormA= create_kinetic_H_mesh(nv,mu,x,Ti,Te,n,PipeDia,fctr=fctr) # finished line since create_kinetic_h_mesh has been programmed - nh
             
         if mu==1:
             _p='H!U+!N'
@@ -212,3 +229,108 @@ def KN1D(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
         NuLoss=interpolate.interp1d(x,Cs_LC)(xH2)
         
         #  Compute first guess SpH2
+
+        #   If plasma recycling accounts for molecular source, then SpH2 = 1/2 n Cs/LC (1/2 accounts for H2 versus H)
+        #   But, allow for SpH2 to be proportional to this function:
+        #      SpH2 = beta n Cs/LC 
+        #   with beta being an adjustable parameter, set by achieving a net H flux of zero onto the wall.
+        #   For first guess of beta, set the total molecular source according to the formula
+        
+        # (See notes "Procedure to adjust the normalization of the molecular source at the 
+        #   limiters (SpH2) to attain a net zero atom/molecule flux from wall")
+        
+        #	Integral{SpH2}dx =  (2/3) GammaxH2BC = beta Integral{n Cs/LC}dx
+        
+        nCs_LC=n*Cs_LC
+        SpH2_hat=interpolate.interp1d(x,nCs_LC,fill_value="extrapolate")(xH2)
+        SpH2_hat=SpH2_hat/integ_bl(xH2,SpH2_hat,value_only=1) # not sure if this line is correct
+        beta=2/3*GammaxH2BC
+        if refine:
+            if SpH2_s!=None:
+                SpH2=SpH2_s # from kn1d_internal common block
+            else:
+                SpH2=beta*SpH2_hat
+        else:
+            SpH2=beta*SpH2_hat
+        SH2=SpH2
+
+        #   Interpolate for vxiM and vxiA
+
+        vxiM=interpolate.interp1d(x,vxi,fill_value="extrapolate")(xH2)
+        vxiA=interpolate.interp1d(x,vxi,fill_value="extrapolate")(xH)
+        iter=0
+        EH_hist=[0]
+        SI_hist=[0]
+        oldrun=0
+
+        #   Option: Read results from previous run
+
+            #   Will do later after discussing save/restore
+
+        #   Starting back at line 378 from IDL code
+        #   Test for v0_bar consistency in the numerics by computing it from a half maxwellian at the wall temperature
+
+        vthM=np.sqrt(2*q*TnormM/(mu*mH))
+        Vr2pidVrM,VrVr4pidVrM,dVxM=Make_dVr_dVx(vrM,vxM)[0:3]
+        vthA=np.sqrt(2*q*TnormA/(mu*mH))
+        Vr2pidVrA,VrVr4pidVrA,dVxA=Make_dVr_dVx(vrA,vxA)[0:3]
+
+        nbarHMax=np.sum(Vr2pidVrM*np.matmul(dVxM,fh2BC))
+        vbarM=2*vthM*np.sum(Vr2pidVrM*np.matmul(vxM*dVxM,fh2BC))/nbarHMax
+        vbarM_error=abs(vbarM-v0_bar)/max(vbarM,v0_bar)
+
+        nvrM=vrM.size
+        nvxM=vxM.size
+        vr2vx2_ran2=np.zeros((nvxM,nvrM))
+
+        mwell=Maxwell[0,:,:] #  variable named 'Max' in original code; changed here to avoid sharing name with built in function
+
+        nbarMax=np.sum(Vr2pidVrM*np.matmul(dVxM,mwell))
+        UxMax=vthM*np.sum(Vr2pidVrM*np.matmul(vxM*dVxM,mwell))/nbarMax
+        for i in range(nvrM):
+            vr2vx2_ran2[:,i]=vrM[i]**2+(vxM-UxMax/vthM)**2
+        TMax=2*mu*mH*vthM**2*np.sum(Vr2pidVrM*np.matmul(dVxM,vr2vx2_ran2*mwell))/(3*q*nbarMax)
+
+        UxHMax=vthM*np.sum(Vr2pidVrM*np.matmul(vxM*dVxM,fh2BC))/nbarHMax
+        for i in range(nvrM):
+            vr2vx2_ran2[:,i]=vrM[i]**2+(vxM-UxHMax/vthM)**2
+        THMax=(2*mu*mH)*vthM**2*np.sum(Vr2pidVrM*np.matmul(dVxM,vr2vx2_ran2*fh2BC))/(3*q*nbarHMax)
+
+        if compute_errors and debreif:
+            print(prompt+'VbarM_error: '+sval(vbarM_error))
+            print(prompt+'TWall Maxwellian: '+sval(TMax))
+            print(prompt+'TWall Half Maxwellian: '+sval(THMax))
+
+        #   Option to view inputted profiles
+
+            #   Plotting - will maybe add later
+
+        #   Starting back at line 429 from IDL code
+        #   Entry point for fH/fH2 iteration
+
+        fh_fh2_iterate=True
+        while fh_fh2_iterate: # Used goto statements in IDL; changed here to while loop
+            if not oldrun:
+                iter+=1
+                if debreif:
+                    print(prompt+'fH/fH2 Iteration: '+sval(iter))
+                do_warn=5e-3
+                fHM=interp_fvrvxx(fH,vrA,vxA,xH,TnormA,vrM,vxM,xH2,TnormM,do_warn=do_warn) # need to set interp_debug
+
+                ni_correct=1
+                Compute_H_Source=1
+                H2compute_errors=compute_errors and H2debrief
+
+                #   Calls kinetic_h2 and kinteic_h
+                #   Section skipped for now, as those functions are unfinished
+
+            #   Starting back at line 543 from IDL code
+            #   Test for convergence/iterate
+            if debreif:
+                print(prompt+'Maximum Normalized change in nH2: ',sval(nDelta_nH2))
+            if nDelta_nH2 < truncate:
+                fh_fh2_iterate=False
+
+        error=0
+
+        #   Compute total H flux through crossing limiter radius
