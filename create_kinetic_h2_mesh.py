@@ -19,7 +19,7 @@ def create_kinetic_h2_mesh(nv, mu, x, Ti, Te, n, PipeDia, E0 = 0, ixE0 = 0, irE0
     #Estimate total reaction rate for destruction of molecules and for interation with side walls
     RR=n*sigmav_ion_hh(Te)+n*sigmav_h1s_h1s_hh(Te)+n*sigmav_h1s_h2s_hh(Te)
 
-    Y = [0] * nx
+    Y = np.array([0] * nx) # changed to np array to fix error - GG
     for k in range(1, nx-1):
         Y[k]=Y[k-1]-(x[k]-x[k-1])*0.5*(RR[k]+RR[k-1])/v0_bar
 
@@ -46,7 +46,7 @@ def create_kinetic_h2_mesh(nv, mu, x, Ti, Te, n, PipeDia, E0 = 0, ixE0 = 0, irE0
 
     #Setup a vx,vr mesh based on raw data to get typical vx, vr values
     #probably need to do stuff about the namespace because of the differences between IDL and python
-    vx, vr, Tnorm = create_vrvxmesh(nv, Tifine) # pulled necessary variables from the return of create_vrvxmesh - GG
+    vx, vr, Tnorm, ixE0, irE0 = create_vrvxmesh(nv, Tifine) # pulled necessary variables from the return of create_vrvxmesh - GG
 
     vth = np.sqrt(2*q*Tnorm/(mu*mH))
 
@@ -54,7 +54,7 @@ def create_kinetic_h2_mesh(nv, mu, x, Ti, Te, n, PipeDia, E0 = 0, ixE0 = 0, irE0
     nxfine=np.size(xfine)
     gamma_wall = [0] * nxfine
     for k in range(nxfine-1):
-        if PipeDiafine(k) > 0:
+        if PipeDiafine[k] > 0: # fixed brackets - GG
             gamma_wall[k]=2*max(vr)*vth/PipeDiafine[k]
 
     #Estimate total reaction rate, including charge exchange, elastic scattering, and interaction with side walls
