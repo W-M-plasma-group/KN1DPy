@@ -18,7 +18,7 @@ def SigmaV_EL_H_P( T, E, use_Bspline = 0):
     #	returns <sigma V> for 0.1 < T < 1e3 and 0.1 < E < 1e5 
     #	units: m^3/s
     #       if T and/or E is outside this range, the value on the boundary is returned
-    if np.size(E) != p.size(T):
+    if np.size(E) != np.size(T):
         raise Exception('Number of elements of E and T are different!')
     _E = np.maximum(E, 0.0001)
     _T = np.maximum(T, 0.0001)
