@@ -61,14 +61,15 @@ def create_kinetic_h2_mesh(nv, mu, x, Ti, Te, n, PipeDia, E0 = 0, ixE0 = 0, irE0
     RR=nfine*sigmav_ion_hh(Tefine)+nfine*sigmav_h1s_h1s_hh(Tefine)+nfine*sigmav_h1s_h2s_hh(Tefine)+0.1*nfine*sigmav_cx_hh(Tifine,Tifine) + gamma_wall
 
     #Compute local maximum grid spacing from dx_max = 2 min(vr) / RR
-    big_dx=0.02*np.fctr
-    dx_max=np.minimum(np.fctr*0.8*(2*vth*min(vr)/RR), big_dx)
+    big_dx=0.02*fctr
+    dx_max=np.minimum(fctr*0.8*(2*vth*min(vr)/RR), big_dx) # fixed typo - GG
 
     #Construct xH2 axis
-    xpt=xmaxH2
-    xH2=np.array([xpt])
+    xpt = xmaxH2
+    xpt = np.array([xpt]) # made it np array to fix error - GG
+    xH2 = xpt # changed how its define to fix error 
     while xpt > xminH2:
-        xH2=np.concatenate([xpt,xH2])
+        xH2=np.concatenate([xpt,xH2]) # I am not entirely sure this is what the IDL code wants 
         interpfunc = interpolate.interp1d(xfine, dx_max)
         dxpt1=interpfunc(xpt)
         dxpt2=dxpt1
@@ -78,10 +79,9 @@ def create_kinetic_h2_mesh(nv, mu, x, Ti, Te, n, PipeDia, E0 = 0, ixE0 = 0, irE0
             dxpt2=interpfunc(xpt_test)
         dxpt=min([dxpt1,dxpt2])
         xpt=xpt-dxpt
-    xH2=np.concatenate(np.array([xminH2]), xH2[0:np.size(xH2) - 2]) 
+    xH2=np.concatenate([np.array([xminH2]), xH2[0:np.size(xH2) - 2]]) # added missing brackets - GG 
 
     interpfunc = interpolate.interp1d(xfine, Tifine)
-    print(xH2)
     TiH2=interpfunc(xH2)
 
     interpfunc = interpolate.interp1d(xfine, Tefine)
@@ -93,6 +93,6 @@ def create_kinetic_h2_mesh(nv, mu, x, Ti, Te, n, PipeDia, E0 = 0, ixE0 = 0, irE0
     interpfunc = interpolate.interp1d(xfine, PipeDiafine)
     PipeDiaH2=interpfunc(xH2)
 
-    vx, vr, Tnorm = create_VrVxMesh(nv,TiH2) # changed how we pulled the variables - GG
+    vx, vr, Tnorm, ixE0, irE0 = create_VrVxMesh(nv,TiH2) # changed how we pulled the variables - GG
 
     return xH2, TiH2, TeH2, neH2, PipeDiaH2, vx, vr, Tnorm # returned necessary varibales - GG
