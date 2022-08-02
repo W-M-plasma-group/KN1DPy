@@ -65,6 +65,6 @@ def JHR_Coef(Density, Te, Ion, p, create = 0, no_null = 0):
     count = np.size(ok)
     ok = ok.astype(int) 
     if count > 0: 
-        for i in range(0, len(ok)): # fixed how result is defined not completely confident in this - GG
-            result[ok] = np.exp( ) # currently missing the python equivalent to bs2dr will come back to this later 
+        for i in ok: # fixed how result is defined not completely confident in this - GG
+            result[i] = np.exp( ) # currently missing the python equivalent to bs2dr will come back to this later 
     return result 
