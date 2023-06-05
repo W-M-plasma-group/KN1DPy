@@ -4,9 +4,9 @@ from sval import sval
 #   This INCLUDE file is used by Kinetic_H2 and Kinetic_H
 #   The code is also written within the create_shifted_maxwellian function
 
-def create_shifted_maxwellian_include(vx_shift,Tmaxwell,Shifted_Maxwellian_Debug,mol,
+def create_shifted_maxwellian_include(vr,vx,Tnorm,vx_shift,Tmaxwell,Shifted_Maxwellian_Debug,mu,mol,
                                       nx,nvx,nvr,vth,vth2,maxwell,vr2vx2_ran2,
-                                      Vr2pidVr,dVx,Vol,Vth_DVx,Vx_DVx,Vr_DVr,vr2vx2_2D,jpa,jpb,jna,jnb):
+                                      Vr2pidVr,dVx,Vol,Vth_DVx,Vx_DVx,Vr_DVr,vr2vx2_2D,jpa,jpb,jna,jnb): # added vr,vx,Tnorm,mu to arguments; should not have been left out originally
 
     #   Input:
 	#       Vx_shift  - dblarr(nx), (m s^-1)
@@ -49,7 +49,7 @@ def create_shifted_maxwellian_include(vx_shift,Tmaxwell,Shifted_Maxwellian_Debug
 
       maxwell[k,:,:]/=np.sum(Vr2pidVr*(np.matmul(dVx,maxwell[k,:,:]))) # fixed matmul argument order - nh
 
-      if shifted_maxwellian_debug:
+      if Shifted_Maxwellian_Debug: # fixed capitalization
         vx_out1=vth*np.sum(Vr2pidVr*np.matmul((vx*dVx),maxwell[k,:,:])) # fixed matmul argument order - nh
         for i in range(nvr):
           vr2vx2_ran2[:,i]=vr[i]**2+(vx-vx_out1/vth)**2
@@ -135,7 +135,7 @@ def create_shifted_maxwellian_include(vx_shift,Tmaxwell,Shifted_Maxwellian_Debug
         ia+=1
       maxwell[k,:,:]=maxwell[k,:,:]/np.sum(Vr2pidVr*np.matmul(dVx,maxwell[k,:,:])) # fixed matmul argument order - nh
 
-      if shifted_maxwellian_debug:
+      if Shifted_Maxwellian_Debug: # fixed capitalization
         vx_out2=vth*np.sum(Vr2pidVr*np.matmul((vx*dVx),maxwell[k,:,:])) # fixed matmul argument order - nh
         for i in range(nvr):
           vr2vx2_ran2[:,i]=vr[i]**2+(vx-vx_out2/vth)**2
