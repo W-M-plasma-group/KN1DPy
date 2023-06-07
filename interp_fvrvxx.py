@@ -6,7 +6,7 @@ from Make_dVr_dVx import Make_dVr_dVx
 from locate import locate
 from sval import sval
 
-def interp_fvrvxx(fa,Vra,Vxa,Xa,Tnorma,Vrb,Vxb,Xb,Tnormb,do_warn=None, debug=0, correct=1):
+def interp_fvrvxx(fa,Vra,Vxa,Xa,Tnorma,Vrb,Vxb,Xb,Tnormb,do_warn=None, debug=0, correct=1,g=None): # added global variable argument
 
     #  Input:
     #     Input Distribution function 'a'
@@ -42,7 +42,21 @@ def interp_fvrvxx(fa,Vra,Vxa,Xa,Tnorma,Vrb,Vxb,Xb,Tnormb,do_warn=None, debug=0, 
     prompt='INTERP_FVRVXX => '
 
     #   Calls INTERP_FVRVXX_internal1 and INTERP_FVRVXX_internal2 common blocks
-    vra1=vxa1=Tnorma1=vrb1=vxb1=Tnormb1=weight1=vra2=vxa2=Tnorma2=vrb2=vxb2=Tnormb2=weight2=None # temporary until common blocks are sorted out
+    vra1=g.INTERP_FVRVXX_internal1_vra1
+    vxa1=g.INTERP_FVRVXX_internal1_vxa1
+    Tnorma1=g.INTERP_FVRVXX_internal1_Tnorma1
+    vrb1=g.INTERP_FVRVXX_internal1_vrb1
+    vxb1=g.INTERP_FVRVXX_internal1_vxb1
+    Tnormb1=g.INTERP_FVRVXX_internal1_Tnormb1
+    weight1=g.INTERP_FVRVXX_internal1_Weight1
+    
+    vra2=g.INTERP_FVRVXX_internal2_vra2
+    vxa2=g.INTERP_FVRVXX_internal2_vxa2
+    Tnorma2=g.INTERP_FVRVXX_internal2_Tnorma2
+    vrb2=g.INTERP_FVRVXX_internal2_vrb2
+    vxb2=g.INTERP_FVRVXX_internal2_vxb2
+    Tnormb2=g.INTERP_FVRVXX_internal2_Tnormb2
+    weight2=g.INTERP_FVRVXX_internal2_weight2
 
     nvra=Vra.size
     nvxa=Vxa.size
@@ -57,9 +71,9 @@ def interp_fvrvxx(fa,Vra,Vxa,Xa,Tnorma,Vrb,Vxb,Xb,Tnormb,do_warn=None, debug=0, 
     #   Compute Vtha, Vtha2, Vthb and Vthb2
 
     Vtha=np.sqrt(2*q*Tnorma/(mu*mH))
-    Vtha2=vtha*vtha
+    Vtha2=Vtha*Vtha # fixed capitalization
     Vthb=np.sqrt(2*q*Tnormb/(mu*mH))
-    Vthb2=vthb*vthb
+    Vthb2=Vthb*Vthb # fixed capitalization
 
     if fa[0,0,:].size!=nvra:
         raise Exception('Number of elements in fa(*,0,0) and Vra do not agree!')
@@ -90,7 +104,8 @@ def interp_fvrvxx(fa,Vra,Vxa,Xa,Tnorma,Vrb,Vxb,Xb,Tnormb,do_warn=None, debug=0, 
     fb=np.zeros(nxb,nvxb,nvrb)
 
     make_dvr_dvx_out=Make_dVr_dVx(Vra,Vxa)
-    Vr2pidVra,VrVr4pidVra,dVxa,vraL,vraR,vxaL,vxaR,Vra2Vxa2=make_dvr_dvx_out[0:6],make_dvr_dvx_out[11]
+    Vr2pidVra,VrVr4pidVra,dVxa,vraL,vraR,vxaL,vxaR=make_dvr_dvx_out[:7]
+    Vra2Vxa2=make_dvr_dvx_out[11]
     Vr2pidVrb,VrVr4pidVrb,dVxb,vrbL,vrbR,vxbL,vxbR,Vol,Vth_DVx,Vx_DVx,Vr_DVr,Vrb2Vxb2,jpa,jpb,jna,jnb=Make_dVr_dVx(Vrb,Vxb)
 
     #   Determine if Weight was already computed by checking vra_s,vxa_s,Tnorma_s,vrb_s,vxb_s,Tnormb_s for cases 1 and 2
@@ -171,38 +186,38 @@ def interp_fvrvxx(fa,Vra,Vxa,Xa,Tnorma,Vrb,Vxb,Xb,Tnormb,do_warn=None, debug=0, 
                         if vraMax>vraMin and vxaMax>vxaMin:
                             _weight[ja,ia,jb,ib]=2*np.pi*(vraMax**2-vraMin**2)*(vxaMax-vxaMin)/(Vr2pidVrb[ib]*dVxb[jb])
 
-        weight[:]=_weight
+        weight=np.reshape(_weight,weight.shape) # previous version caused error 
 
-    fb_xa=np.zeros((nxa,nvrb*nvxb)) # no idea if this works properly
+    fb_xa=np.zeros((nxa,nvrb*nvxb)) 
 
     #   Determine fb_xa from weight array
 
     _fa=np.zeros((nxa,nvra*nvxa))
-    _fa[:]=fa
+    _fa=np.reshape(fa,_fa.shape) # previous version caused error
     fb_xa=np.matmul(_fa,weight)
 
     #   Compute _Wxa and _Ea - these are the desired moments of fb, but on the xa grid
 
-    na=np.zeros(nXa)
-    _Wxa=np.zeros(nXa)
-    _Ea=np.zeros(nXa)
+    na=np.zeros(nxa) # fixed capitalization
+    _Wxa=np.zeros(nxa)
+    _Ea=np.zeros(nxa)
 
-    for k in range(nXa):
+    for k in range(nxa):
         na[k]=np.sum(Vr2pidVrb*np.matmul(dVxa,fa[k,:,:]))
         if na[k]>0:
             _Wxa[k]=np.sqrt(Tnorma)*np.sum(Vr2pidVra*np.matmul((Vxa*dVxa),fa[k,:,:]))/na[k]
             _Ea[k]=Tnorma*np.sum(Vr2pidVra*np.matmul(dVxa,(Vra2Vxa2*fa[k,:,:])))/na[k]
 
-    wxa=np.zeros(nXb)
-    Ea=np.zeros(nXb)
+    wxa=np.zeros(nxb) # fixed capitalization
+    Ea=np.zeros(nxb)
 
     for k in range(k0,k1+1):
-        kL=np.maximum(locate(xa,xb[k]),0)
-        kR=np.minimum(kL+1,xa.size-1)
+        kL=np.maximum(locate(Xa,Xb[k]),0) # fixed capitalization
+        kR=np.minimum(kL+1,Xa.size-1)
         kL=np.minimum(kL,kR-1)
 
-        f=(xb[k]-xa[kL])/(xa[kR]-xa[kL])
-        fb[k,:,:]=fb_xa[kL,:]+(fb_xa[kR,:]-fb_xa[kL,:])*f
+        f=(Xb[k]-Xa[kL])/(Xa[kR]-Xa[kL])
+        fb[k,:,:]=np.reshape(fb_xa[kL,:]+(fb_xa[kR,:]-fb_xa[kL,:])*f,fb[k,:,:].shape) # previous version caused error
         Wxa[k]=_Wxa[kL]+(_Wxa[kR]-_Wxa[kL])*f
         Ea[k]=_Ea[kL]+(_Ea[kR]-_Ea[kL])*f
 
@@ -248,12 +263,12 @@ def interp_fvrvxx(fa,Vra,Vxa,Xa,Tnorma,Vrb,Vxb,Xb,Tnormb,do_warn=None, debug=0, 
                         Nij[tuple(i)]=0
                     if max(Nij[2,:])<=0:
                         allow_neg=1
-                    Nijp1_vx_Dvx=np.roll(NIj*Vx_DVx,-1,0)
-                    Nij_vx_Dvx=Nij*vx_Dvx
+                    Nijp1_vx_Dvx=np.roll(Nij*Vx_DVx,-1,0)
+                    Nij_vx_Dvx=Nij*Vx_DVx
                     Nijm1_vx_Dvx=np.roll(Nij*Vx_DVx,1,0)
-                    Nijp1_vr_Dvx=np.roll(NIj*Vr_DVr,-1,1)
-                    Nij_vr_Dvr=Nij*vr_Dvr
-                    Nim1j_vr_Dvr=np.roll(NIj*Vr_DVr,1,1)
+                    Nip1j_vr_Dvr=np.roll(Nij*Vr_DVr,-1,1)
+                    Nij_vr_Dvr=Nij*Vr_DVr
+                    Nim1j_vr_Dvr=np.roll(Nij*Vr_DVr,1,1)
 
                     #   Compute Ap, Am, Bp, and Bm (0=p 1=m)
 
@@ -271,7 +286,7 @@ def interp_fvrvxx(fa,Vra,Vxa,Xa,Tnorma,Vrb,Vxb,Xb,Tnormb,do_warn=None, debug=0, 
                     BN[1,jpa,:]=-Nijp1_vx_Dvx[jpa+1,1:nvrb+1]
                     BN[1,jnb,:]=Nijm1_vx_Dvx[jnb+1,1:nvrb+1]
                     BN[1,jna:jnb,:]=Nijm1_vx_Dvx[jna+1:jnb+1,1:nvrb+1]-Nij_vx_Dvx[jna+1:jnb+1,1:nvrb+1]
-                    BN[1,:,1:nvrb]=BN[1,:,1:nvrb]-Nip1j_vr_Dvr[1:nvxb+1,2:nvrb+1]+NIj_vr_Dvr[1:nvxb+1,2:nvrb]
+                    BN[1,:,1:nvrb]=BN[1,:,1:nvrb]-Nip1j_vr_Dvr[1:nvxb+1,2:nvrb+1]+Nij_vr_Dvr[1:nvxb+1,2:nvrb]
                     BN[1,:,0]=BN[1,:,0]-Nip1j_vr_Dvr[1:nvxb+1,1]
 
                     #   If negative values for Nij must be allowed, then add postive particles to i=0 and negative particles to i=1 (beta is negative here)
@@ -308,8 +323,8 @@ def interp_fvrvxx(fa,Vra,Vxa,Xa,Tnorma,Vrb,Vxb,Xb,Tnormb,do_warn=None, debug=0, 
                             alpha=0
 
                             if denom!=0 and TA1!=0:
-                                beta=(TA2*(Wxa[k]-Wxb)-TA1*(Ea[k]-Eb))/denom
-                                alpha=(Wxa[k]-Wxb-TB1[ib]*Beta)/TA1
+                                beta=(TA2*(wxa[k]-Wxb)-TA1*(Ea[k]-Eb))/denom # fixed capitalization
+                                alpha=(wxa[k]-Wxb-TB1[ib]*beta)/TA1
 
                             do_break=alpha*sgn[ia]>0 and beta*sgn[ib]>0
                             if do_break:
@@ -329,7 +344,7 @@ def interp_fvrvxx(fa,Vra,Vxa,Xa,Tnorma,Vrb,Vxb,Xb,Tnormb,do_warn=None, debug=0, 
                         ii=np.argwhere(Nij!=0)
                         if ii.size>0:
                             s=np.min(1/np.max(-RHS[ii]/Nij[ii]),1)
-                    fb[k,:,:]=nb*(Nij+s*RHS)/vol
+                    fb[k,:,:]=nb*(Nij+s*RHS)/Vol # fixed capitalization
 
                     goto_correct=s<1
 
@@ -349,7 +364,7 @@ def interp_fvrvxx(fa,Vra,Vxa,Xa,Tnorma,Vrb,Vxb,Xb,Tnormb,do_warn=None, debug=0, 
                     if (i0_error == 0) and (i0 > 0) and (fb[k,j,i0] > do_warn*big):
                         warn('Non-zero value of fb detected at min(Vra) boundary')
                         i0_error=1
-                    if (i1_error == 0) and (i1 < nVrb-1) and (fb[k,j,i1] > do_warn*big):
+                    if (i1_error == 0) and (i1 < nvrb-1) and (fb[k,j,i1] > do_warn*big): # fixed capitalization
                         warn('Non-zero value of fb detected at max(Vra) boundary')
                         i1_error=1
 
@@ -363,7 +378,7 @@ def interp_fvrvxx(fa,Vra,Vxa,Xa,Tnorma,Vrb,Vxb,Xb,Tnormb,do_warn=None, debug=0, 
                     if (j0_error == 0) and (j0 > 0) and (fb[k,j0,i] > do_warn*big):
                         warn('Non-zero value of fb detected at min(Vxa) boundary')
                         j0_error=1
-                    if (j1_error == 0) and (j1 < nVxb-1) and (fb[k,j1,i] > do_warn*big):
+                    if (j1_error == 0) and (j1 < nvxb-1) and (fb[k,j1,i] > do_warn*big): # fixed capitalization
                         warn('Non-zero value of fb detected at max(Vxa) boundary')
                         j1_error=1
 
@@ -389,7 +404,7 @@ def interp_fvrvxx(fa,Vra,Vxa,Xa,Tnorma,Vrb,Vxb,Xb,Tnormb,do_warn=None, debug=0, 
     tot_b=np.zeros(nxb)
     tot_b[k0:k1+1]=interpolate.interp1d(Xa,tot_a,fill_value="extrapolate")(Xb[k0:k1+1])
     ii=np.argwhere(fb>0)
-    if fb.size>0:
+    if ii.size>0: # replaced fb with ii
         min_tot=np.min(np.array([fb[tuple(i)] for i in ii]))
         for k in range(k0,k1+1):
             tot=np.sum(Vr2pidVrb*np.matmul(dVxb,fb[k,:,:]))
@@ -404,14 +419,14 @@ def interp_fvrvxx(fa,Vra,Vxa,Xa,Tnorma,Vrb,Vxb,Xb,Tnormb,do_warn=None, debug=0, 
         na=np.zeros(nxa)
         Uxa=np.zeros(nxa)
         Ta=np.zeros(nxa)
-        vr2vx2_ran2=np.zeros(nvxa,nvra)
+        vr2vx2_ran2=np.zeros((nvxa,nvra)) # fixed np.zeros() call
 
         for k in range(nxa):
-            na[k]=np.sum(vr2pidVra*np.matmul(dVxa,fa[k,:,:]))
+            na[k]=np.sum(Vr2pidVra*np.matmul(dVxa,fa[k,:,:])) # fixed capitalization
             if na[k]>0:
                 Uxa[k]=Vtha*np.sum(Vr2pidVra*np.matmul(Vxa*dVxa,fa[k,:,:]))/na[k]
                 for i in range(nvra):
-                    vr2vx2_ran2[:,i]=vra[i]**2+(vxa-Uxa[k]/Vtha)**2
+                    vr2vx2_ran2[:,i]=Vra[i]**2+(Vxa-Uxa[k]/Vtha)**2 # fixed capitalization
                 Ta[k]=mu*mH*Vtha2*np.sum(Vr2pidVra*np.matmul(dVxa,vr2vx2_ran2*fa[k,:,:]))/(3*q*na[k])
 
         #   nb, Uxb, Tb
@@ -419,14 +434,14 @@ def interp_fvrvxx(fa,Vra,Vxa,Xa,Tnorma,Vrb,Vxb,Xb,Tnormb,do_warn=None, debug=0, 
         nb=np.zeros(nxb)
         Uxb=np.zeros(nxb)
         Tb=np.zeros(nxb)
-        vr2vx2_ran2=np.zeros(nvxb,nvrb)
+        vr2vx2_ran2=np.zeros((nvxb,nvrb)) # fixed np.zeros() call
 
         for k in range(nxb):
             nb[k]=np.sum(Vr2pidVrb*np.matmul(dVxb,fb[k,:,:]))
             if nb[k]>0:
-                Uxb[k]=Vthb*np.sum(VrxpidVrb*np.matmul(Vxb*dVxb,fb[k,:,:]))/nb[k]
+                Uxb[k]=Vthb*np.sum(Vr2pidVrb*np.matmul(Vxb*dVxb,fb[k,:,:]))/nb[k] # fixed typo
                 for i in range(nvrb):
-                    vr2vx2_ran2[:,i]=vrb[i]**2+(vxb-Uxb[k]/Vthb)**2
+                    vr2vx2_ran2[:,i]=Vrb[i]**2+(Vxb-Uxb[k]/Vthb)**2 # fixed capitalization
                 Tb[k]=mu*mH*Vthb*np.sum(Vr2pidVrb*np.matmul(dVxb,vr2vx2_ran2*fb[k,:,:]))/(3*q*nb[k])
 
         #   Plotting stuff was here in the original code
@@ -436,22 +451,22 @@ def interp_fvrvxx(fa,Vra,Vxa,Xa,Tnorma,Vrb,Vxb,Xb,Tnormb,do_warn=None, debug=0, 
         if w1_active:
             if debug:
                 print(prompt+'Storing Weight in Weight2')
-            vra2=vra
-            vxa2=vxa
-            Tnorma2=Tnorma
-            vrb2=vrb
-            vxb2=vxb
-            Tnormb2=Tnormb
-            weight2=weight
+            g.INTERP_FVRVXX_internal2_vra2=Vra
+            g.INTERP_FVRVXX_internal2_vxa2=Vxa
+            g.INTERP_FVRVXX_internal2_Tnorma2=Tnorma
+            g.INTERP_FVRVXX_internal2_vrb2=Vrb
+            g.INTERP_FVRVXX_internal2_vxb2=Vxb
+            g.INTERP_FVRVXX_internal2_Tnormb2=Tnormb
+            g.INTERP_FVRVXX_internal2_weight2=weight
         else:
             if debug:
                 print(prompt+'Storing Weight in Weight1')
-            vra1=vra
-            vxa1=vxa
-            Tnorma1=Tnorma
-            vrb1=vrb
-            vxb1=vxb
-            Tnormb1=Tnormb
-            weight1=weight
+            g.INTERP_FVRVXX_internal1_vra1=Vra
+            g.INTERP_FVRVXX_internal1_vxa1=Vxa
+            g.INTERP_FVRVXX_internal1_Tnorma1=Tnorma
+            g.INTERP_FVRVXX_internal1_vrb1=Vrb
+            g.INTERP_FVRVXX_internal1_vxb1=Vxb
+            g.INTERP_FVRVXX_internal1_Tnormb1=Tnormb
+            g.INTERP_FVRVXX_internal1_weight1=weight
 
     return fb
