@@ -9,8 +9,7 @@ def make_sigmav(E_particle, mu_particle, T_target, mu_target, sigma_function):
     #       mu_particle     - floatn
     #       T_Target	    - float, eV
     #       mu_target	    - float
-    #       sigma_function  - string, name of function to return Sigma (m^2)
-    #                           for inputted E_Particle (eV)
+    #       sigma_function  - function to return Sigma (m^2) for inputted E_Particle (eV); note this is no longer a string
 
   if type(E_particle)!=np.ndarray:
     E_particle=np.array(E_particle)
@@ -29,7 +28,8 @@ def make_sigmav(E_particle, mu_particle, T_target, mu_target, sigma_function):
 
     #   Set normalized particle velocities
 
-  vxa=np.sqrt(2*q*E_particle/(mu_particle*mH))/vth
+  vxa=np.array([np.sqrt(2*q*i/(mu_particle*mH))/vth for i in E_particle]) 
+    # original version was causing errors; this fixed it during testing, but it may need to be reviewed later - nh
   nvxa=vxa.size
   nvrb=vrb.size
   nvxb=vxb.size
@@ -50,7 +50,7 @@ def make_sigmav(E_particle, mu_particle, T_target, mu_target, sigma_function):
 
     #   Get sigma for inputted E_Particle
     
-  exec('from '+sigma_function.lower()+' import *; global sig; sig='+sigma_function+'(0.5*vth*vth*vrel*vrel*mu_particle*mH/q)')
+  sig=sigma_function(0.5*vth*vth*vrel*vrel*mu_particle*mH/q) # changed to no longer use exec()
 
     #   Compute Sigmav by integrating sigma x Vrel x Fi_hat over velocity space
 
