@@ -2,13 +2,14 @@ import numpy as np
 from sval import sval
 from make_sigmav import make_sigmav
 import scipy.interpolate
+from sigma_el_p_h import Sigma_EL_P_H # added import for sigma function
 
 #Creates a save set storing Bi-cubic spline interpolation
 def create_sigmav_el_h_p_bscoef():
 
     #particle is h, target is p
 
-    sigma_function = 'sigma_el_P_H'
+    sigma_function = Sigma_EL_P_H # changed string variable to function
 
     mE=6
     Emin=0.1
@@ -26,10 +27,10 @@ def create_sigmav_el_h_p_bscoef():
     mu_particle=1.0
     T_target=10^(np.log10(Tmin)+(np.log10(Tmax)-np.log10(Tmin))*findgen2/(nT-1))
     mu_target=1.0
-    SigmaV = [[0.0] * nT] * mE
-    for iT in range(len(T_target)-1):
+    SigmaV=np.zeros((nT,mE)) # changed SigmaV creation method
+    for iT in range(len(T_target)): # fixed range
         print('Processing T='+sval(T_target(iT)))
-        SigmaV[:][iT]=make_sigmav(E_Particle,mu_particle,T_target[iT],mu_target,sigma_function)
+        SigmaV[iT,:]=make_sigmav(E_Particle,mu_particle,T_target[iT],mu_target,sigma_function) # fixed SigmaV indexing
 
     print('Computing B-Spline coefficients')
     order_EL_H_P=4
@@ -39,7 +40,12 @@ def create_sigmav_el_h_p_bscoef():
     LogSigmaV_EL_H_P=np.alog(SigmaV)
     LogSigmav_Interp = scipy.interpolate.RectBivariateSpline(LogE_Particle, LogT_Target, LogSigmaV_EL_H_P) 
     LogSigmaV_EL_H_P_BSCoef = LogSigmav_Interp.get_coeffs()
+    EKnot_EL_H_P,TKnot_EL_H_P=LogSigmav_Interp.get_knots() 
 
-    #need to figure out where to save it later
+    np.savez('sigmav_el_h_p_bscoef',
+             EKnot_EL_H_P=EKnot_EL_H_P,
+             TKnot_EL_H_P=TKnot_EL_H_P,
+             order_EL_H_P=order_EL_H_P,
+             LogSigmaV_EL_H_P_BSCoef=LogSigmaV_EL_H_P_BSCoef) # now saves to current directory
 
     return
