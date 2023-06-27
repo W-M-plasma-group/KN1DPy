@@ -204,10 +204,13 @@ def collrad_sigmav_ion_h0(N_e, T_e): # removed unused argument p - nh
          3.40243e-08,  3.14241e-08,  2.89729e-08,  2.66715e-08,  2.45184e-08,  2.25100e-08, \
          2.06417e-08,  1.89076e-08,  1.73014e-08,  1.58163e-08,  1.44454e-08,  1.31819e-08])
     sigmav = np.column_stack([column_1, column_2, column_3, column_4, column_5, column_6, column_7, \
-        column_8, column_9, column_10, column_11, column_11, column_12, column_13, column_14, column_15])
+        column_8, column_9, column_10, column_11, column_12, column_13, column_14, column_15]) # removed extra copy of column_11
 
     logsigmav = np.log(sigmav)
-    sigmav_out = np.exp(np.interp(logsigmav, indne, indte))
+    #sigmav_out = np.exp(np.interp(logsigmav, indne, indte)) - Rewritten interpolation to work with python
+    xs, ys = logsigmav.shape
+    interpfunc=interpolate.RectBivariateSpline(np.arange(xs),np.arange(ys),logsigmav)
+    sigmav_out=np.exp(np.array([interpfunc(indne[i],indte[i])[0][0] for i in range(indne.size)]))
     # convert from cm^3 to m^3 
     sigmav_out = sigmav_out/1e6
     return sigmav_out
