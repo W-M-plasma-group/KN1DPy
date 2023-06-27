@@ -1,4 +1,5 @@
 import numpy as np 
+from scipy import interpolate
 
 #   Evaluates ionization rate from the collisional-radiative calculations 
 # of the COLLRAD code (D. Stotler, DEGAS 2 user manual, p.24)
@@ -207,7 +208,7 @@ def collrad_sigmav_ion_h0(N_e, T_e): # removed unused argument p - nh
         column_8, column_9, column_10, column_11, column_12, column_13, column_14, column_15]) # removed extra copy of column_11
 
     logsigmav = np.log(sigmav)
-    #sigmav_out = np.exp(np.interp(logsigmav, indne, indte)) - Rewritten interpolation to work with python
+    #sigmav_out = np.exp(np.interp(logsigmav, indne, indte)) - Rewrote interpolation to work with python
     xs, ys = logsigmav.shape
     interpfunc=interpolate.RectBivariateSpline(np.arange(xs),np.arange(ys),logsigmav)
     sigmav_out=np.exp(np.array([interpfunc(indne[i],indte[i])[0][0] for i in range(indne.size)]))
