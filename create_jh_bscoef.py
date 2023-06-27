@@ -162,8 +162,8 @@ def Create_JH_BSCoef():
 
     #the following are the spontaneous emission coeffs for n = 2 to 1
     #   3 to 1, ... , 16 to 1
-    A_lyman = np.array([4.41e7,8.42e6,2.53e6,9.732e5,4.389e5,2.215e5,1.216e5, \
-        7.122e4,4.397e4,2.83e4,18288.8,12249.1,8451.26,5981.95,4332.13])
+    A_lyman = np.array([4.699e8,5.575e7,1.278e7,4.125e6,1.644e6,7.568e5,3.869e5,
+	2.143e5,1.263e5,7.834e4,5.066e4,3.393e4,2.341e4,1.657e4,1.200e4]) # A_balmer copied previously - now fixed
 
     #the following are the spontaneous emission coeffs for n = 3 to 2
     #   4 to 2, ... 17 to 2
@@ -196,7 +196,16 @@ def Create_JH_BSCoef():
     LogAlpha_Interp = scipy.interpolate.RectBivariateSpline(LogTe, LogDensity, LogAlpha)
     LogAlpha_BSCoef = LogAlpha_Interp.get_coeffs()
 
-    print('Saving results in file: ')
-    # We havent discussed how we are saving things yet so I left the last lines out 
+    print('Saving results in file: jh_bscoef.npz')
+    np.savez("jh_bscoef",
+             DKnot=DKnot,
+             TKnot=TKnot,
+             order=4,
+             LogR_BSCoef=LogR_BSCoef,
+             LogS_BSCoef=LogS_BSCoef,
+             LogAlpha_BSCoef=LogAlpha_BSCoef,
+             A_Lyman=A_lyman,
+             A_Balmer=A_balmer)
+
     return
     
