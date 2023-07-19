@@ -1,5 +1,5 @@
 #from cmath import sqrt     replaced with np.sqrt - nh
-from reverse.py import *
+from reverse import * # fixed import
 import numpy as np
 
 # sets up optimum Vr and Vx velocity space mesh for Kinetic_Neutrals procedure 
