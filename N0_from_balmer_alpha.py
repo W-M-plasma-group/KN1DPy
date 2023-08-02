@@ -5,7 +5,7 @@ from NHSaha import NHSaha
 from JHS_coef import JHS_coef
 from JHAlpha_coef import JHAlpha_coef
 
-def N0_from_balmer_alpha(B_Alpha, Density, Te , Source = 0, Ionization = 0,Recombination = 0, create = 0):
+def N0_from_balmer_alpha(B_Alpha, Density, Te , Source = 0, Ionization = 0,Recombination = 0, create = 0, g=None):
     #________________________________________________________________________________
 # Input:
 #  	B_alpha 	- fltarr, local Balmer-alpha emissivity (watts m^-3)
@@ -25,18 +25,26 @@ def N0_from_balmer_alpha(B_Alpha, Density, Te , Source = 0, Ionization = 0,Recom
 #    Coefficients from J. Terry's idl code JH_RATES.PRO
 
 # variables in JH_coef common block - this is only temporary bc we havent finished discussing common blocks
-    Dknot = None
-    Tknot = None
-    LogR_BSCoef=None
-    LogS_BSCoef=None
-    LogAlpha_BSCoef=None
-    A_Lyman=None
-    A_Balmer=None
+    Dknot = g.JH_Coef_DKnot
+    Tknot = g.JH_Coef_TKnot
+    LogR_BSCoef=g.JH_Coef_LogR_BSCoef
+    LogS_BSCoef=g.JH_Coef_LogS_BSCoef
+    LogAlpha_BSCoef=g.JH_Coef_LogAlpha_BSCoef
+    A_Lyman=g.JH_Coef_A_Lyman
+    A_Balmer=g.JH_Coef_A_Balmer
     if create:
-        from create_jh_bscoef import Create_JH_BSCoef
+        Create_JH_BSCoef()
     if LogR_BSCoef is None:
-        # this is where old data is restored I don't entirely know how we want to do this yet or if we are doing this at all 
-        pass 
+        # this is where old data is restored 
+        s=np.load('jh_bscoef.npz')
+        Dknot=s['DKnot']
+        Tknot=s['TKnot']
+        order=s['order']
+        LogR_BSCoef=s['LogR_BSCoef']
+        LogS_BSCoef=s['LogS_BSCoef']
+        LogAlpha_BSCoef=s['LogAlpha_BSCoef']
+        A_Lyman=s['A_Lyman']
+        A_Balmer=s['A_Balmer']
 
     # From Johnson-Hinnov, eq(11):
     #   n(3) =  ( r0(3) + r1(3) * n(1) / NHsaha(1) ) * NHsaha(3)
@@ -51,12 +59,12 @@ def N0_from_balmer_alpha(B_Alpha, Density, Te , Source = 0, Ionization = 0,Recom
     Source = N0
     Ionization = N0
     Recombination = N0
-    r03 = JHR_Coef(Density, Te, 0, 3)
-    r13 = JHR_Coef(Density, Te, 1, 3)
+    r03 = JHR_Coef(Density, Te, 0, 3, g=g)
+    r13 = JHR_Coef(Density, Te, 1, 3, g=g)
     NHSaha1 = NHSaha(Density, Te, 1)
     NHSaha3 = NHSaha(Density, Te, 3)
-    S = JHS_coef(Density, Te)
-    Alpha = JHAlpha_coef(Density, Te)
+    S = JHS_coef(Density, Te, g=g)
+    Alpha = JHAlpha_coef(Density, Te, g=g)
     for i in range(0, np.size(Density)):
         if 0 < B_Alpha[i] < 1e32 and r03[i] < 1.0e32 and r13[i] < 1.0e32 and \
             NHSaha1 < 1.0e32 and NHSaha3 < 1.0e32 and 0 <  S < 1.0e32 and 0 < Alpha < 1.0e32:
