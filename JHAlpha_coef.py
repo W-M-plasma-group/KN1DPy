@@ -4,21 +4,29 @@ from create_jh_bscoef import Create_JH_BSCoef
 
 # Evaluates the alpha coefficients 
 # - the comment on the original file seemed to be wrong so I will probaly have to expand on this later
-def JHAlpha_coef(Density, Te,  create = 0, no_null = 0):
+def JHAlpha_coef(Density, Te,  create = 0, no_null = 0, g=None):
     # these are the variables that will be called from the classes for now I am defining them at the top. 
     # They are not defined as there actual values because the actual values used are defined in other files.
-    Dknot = None
-    Tknot = None
-    LogR_BSCoef=None
-    LogS_BSCoef=None
-    LogAlpha_BSCoef=None
-    A_Lyman=None
-    A_Balmer=None
+    Dknot = g.JH_Coef_DKnot
+    Tknot = g.JH_Coef_TKnot
+    LogR_BSCoef=g.JH_Coef_LogR_BSCoef
+    LogS_BSCoef=g.JH_Coef_LogS_BSCoef
+    LogAlpha_BSCoef=g.JH_Coef_LogAlpha_BSCoef
+    A_Lyman=g.JH_Coef_A_Lyman
+    A_Balmer=g.JH_Coef_A_Balmer
     if create:
         Create_JH_BSCoef()
     if LogR_BSCoef is None:
-        # this is where old data is restored I don't entirely know how we want to do this yet or if we are doing this at all 
-        pass 
+        # this is where old data is restored 
+        s=np.load('jh_bscoef.npz')
+        Dknot=s['DKnot']
+        Tknot=s['TKnot']
+        order=s['order']
+        LogR_BSCoef=s['LogR_BSCoef']
+        LogS_BSCoef=s['LogS_BSCoef']
+        LogAlpha_BSCoef=s['LogAlpha_BSCoef']
+        A_Lyman=s['A_Lyman']
+        A_Balmer=s['A_Balmer']
 
     # Evaluate Alpha coefficients 
     if np.size(Density) != np.size(Te):
@@ -40,5 +48,7 @@ def JHAlpha_coef(Density, Te,  create = 0, no_null = 0):
     count = np.size(ok)
     ok = ok.astype(int) 
     if count > 0: 
-        result[ok] = np.exp( ) # currently missing the python equivalent to bs2dr will come back to this later 
+        for i in ok:
+            #result[ok] = np.exp( ) # currently missing the python equivalent to bs2dr will come back to this later 
+            result[i]=np.exp(interpolate.bisplev(LDensity[i],LTe[i],(Dknot,Tknot,LogS_BSCoef,3,3),0,0)) # updated
     return result
