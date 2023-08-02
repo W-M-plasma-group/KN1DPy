@@ -1,5 +1,5 @@
 import numpy as np
-import scipy 
+from scipy import interpolate
 from create_jh_bscoef import Create_JH_BSCoef
 
 # Evaluates the alpha coefficients 
