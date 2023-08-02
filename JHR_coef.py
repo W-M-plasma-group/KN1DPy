@@ -1,5 +1,5 @@
 import numpy as np
-import scipy 
+from scipy import interpolate
 from create_jh_bscoef import create_jh_bscoef
 
 # Evaluates the r0(p) and r1(p) coefficients from Johnson-Hinnov tables 1 or 2.
