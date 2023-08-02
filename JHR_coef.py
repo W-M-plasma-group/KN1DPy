@@ -6,7 +6,7 @@ from create_jh_bscoef import create_jh_bscoef
 # Gwendolyn Galleher 
 
 
-def JHR_Coef(Density, Te, Ion, p, create = 0, no_null = 0):
+def JHR_Coef(Density, Te, Ion, p, create = 0, no_null = 0, g=None):
 
 
 # Input:
@@ -24,18 +24,26 @@ def JHR_Coef(Density, Te, Ion, p, create = 0, no_null = 0):
 #		  data range values.
 
 # variables in common block 
-    Dknot = None
-    Tknot = None
-    LogR_BSCoef=None
-    LogS_BSCoef=None
-    LogAlpha_BSCoef=None
-    A_Lyman=None
-    A_Balmer=None
+    Dknot = g.JH_Coef_DKnot
+    Tknot = g.JH_Coef_TKnot
+    LogR_BSCoef=g.JH_Coef_LogR_BSCoef
+    LogS_BSCoef=g.JH_Coef_LogS_BSCoef
+    LogAlpha_BSCoef=g.JH_Coef_LogAlpha_BSCoef
+    A_Lyman=g.JH_Coef_A_Lyman
+    A_Balmer=g.JH_Coef_A_Balmer
     if create:
-        create_jh_bscoef()
+        Create_JH_BSCoef()
     if LogR_BSCoef is None:
-        # this is where old data is restored I don't entirely know how we want to do this yet or if we are doing this at all 
-        pass
+        # this is where old data is restored 
+        s=np.load('jh_bscoef.npz')
+        Dknot=s['DKnot']
+        Tknot=s['TKnot']
+        order=s['order']
+        LogR_BSCoef=s['LogR_BSCoef']
+        LogS_BSCoef=s['LogS_BSCoef']
+        LogAlpha_BSCoef=s['LogAlpha_BSCoef']
+        A_Lyman=s['A_Lyman']
+        A_Balmer=s['A_Balmer']
     
     # Evaluates R coefficients 
     if np.size(Density) != np.size(Te):
@@ -66,5 +74,6 @@ def JHR_Coef(Density, Te, Ion, p, create = 0, no_null = 0):
     ok = ok.astype(int) 
     if count > 0: 
         for i in ok: # fixed how result is defined not completely confident in this - GG
-            result[i] = np.exp( ) # currently missing the python equivalent to bs2dr will come back to this later 
+            # result[i] = np.exp( ) # currently missing the python equivalent to bs2dr will come back to this later 
+            result[i]=np.exp(interpolate.bisplev(LDensity[i],LTe[i],(Dknot,Tknot,LogS_BSCoef,3,3),0,0)) # updated
     return result 
