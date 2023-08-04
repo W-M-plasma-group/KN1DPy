@@ -58,9 +58,9 @@ def kinetic_he(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,T
 	            Max_Gen=50,No_Johnson_Hinnov=0,No_Recomb=0,H_H_EL=0,H_P_EL=0,_H_H2_EL=0,
 		        H_P_CX=0,ni_correct=0, g=None):
 
-    prompt='Kinetic_H => '
+   prompt='Kinetic_H => '
 
-    #Kinetic_H_input common block global variables (may be replaced in the future, but initially we'll use this)
+   #Kinetic_H_input common block global variables (may be replaced in the future, but initially we'll use this)
    vx_s = g.Kinetic_H_input_vx_s
    vr_s = g.Kinetic_H_input_vr_s
    x_s = g.Kinetic_H_input_x_s
@@ -152,109 +152,84 @@ def kinetic_he(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,T
       if notpos.size > 0:
 	      print(prompt + 'x[*] must be increasing with index!')
 		   error = 1
-		   break
 	   if nvx % 2 != 0:
 		   print(prompt + 'Number of elements in vx must be even!') 
 		   error = 1
-		   break
 	   if Ti.size != nx:
 		   print(prompt + 'Number of elements in Ti and x do not agree!')
 		   error = 1
-		   break
 		#	if type_of(vxi) eq 0 then vxi=dblarr(nx) - Doesn't really work in Python
 	   if vxi.size != nx:
 		   print(prompt + 'Number of elements in vxi and x do not agree!')
 		   error = 1
-		   break
 	   if Te.size != nx:
 		   print(prompt + 'Number of elements in Te and x do not agree!')
 		   error = 1
-		   break
 	   if n.size != nx:
 		   print('Number of elements in n and x do not agree!')
 		   error = 1
-		   break
 	   if PipeDia.size != nx:
 		   print('Number of elements in PipeDia and x do not agree!') # Fixed error message- previously copied from n.size!=nx
 		   error = 1
-		   break
 		if fHBC[0, :].size != nvr:
 			print(prompt + 'Number of elements in fHBC[0,:] and vr do not agree!')
 			error = 1
-			break
 		if fHBC[:, 0].size != nvx:
 			print(prompt + 'Number of elements in fHBC[:,0] and vx do not agree!')
 			error = 1
-			break
 		if fH2[0, 0, :].size != nvr:
 			print(prompt + 'Number of elements in fH2[0,0,:] and vr do not agree!')
 			error = 1
-			break
 		if fH2[0, :, 0].size != nvx:
 			print(prompt + 'Number of elements in fH2[0,:,0] and vx do not agree!')
 			error = 1
-			break
 		if fH2[:, 0, 0].size != nx:
 			print(prompt + 'Number of elements in fH2[:,0,0] and x do not agree!')
 			error = 1
-			break
 		if fSH[0, 0, :].size != nvr:
 			print(prompt + 'Number of elements in fSH[0,0,:] and vr do not agree!')
 			error = 1
-			break
 		if fSH[0, :, 0].size != nvx:
 			print(prompt + 'Number of elements in fSH[0,:,0] and vx do not agree!')
 			error = 1
-			break
 		if fSH[:, 0, 0].size != nx:
 			print(prompt + 'Number of elements in fSH[:,0,0] and x do not agree!')
 			error = 1
-			break
 		if nHP.size != nx:
 			print(prompt + 'Number of elements in nHP and x do not agree!')
 			error = 1
-			break
 		if THP.size != nx:
 			print(prompt + 'Number of elements in nHP and x do not agree!')
 			error = 1
-			break
 		if fH == None:
 			fH = np.zeros((nx, nvx, nvr)) # Set fH if not left as None in function call
 		if fH[0, 0, :].size != nvr:
 			print(prompt + 'Number of elements in fH[0,0,:] and vr do not agree!')
 			error = 1
-			break
 		if fH[0, :, 0].size != nvx:
 			print(prompt + 'Number of elements in fH[0,:,0] and vx do not agree!')
 			error = 1
-			break
 		if fH[:, 0, 0].size != nx:
 			print(prompt + 'Number of elements in fH[:,0,0] and x do not agree!')
 			error = 1
-			break
 		if np.sum(abs(vr)) == 0:
 			print(prompt + 'vr is all 0!')
 			error = 1
-			break
 		ii = vr[vr <= 0]
 		if ii.size > 0:
 			print(prompt + 'vr contains zero or negative element(s)!')
 			error = 1
-			break
 		if np.sum(abs(vx)) == 0:
 			print(prompt + 'vx is all 0!')
 			error = 1
-			break
 		if np.sum(x) <= 0:
 			print(prompt + 'Total(x) is less than or equal to 0!')
 			error = 1
-			break
 		if mu not in [1, 2]:
 			print(prompt + 'mu must be 1 or 2!')
 			error = 1
-			break
 		break
-	if error == 1:
+   if error == 1:
 		if debug > 0:
 			print(prompt + 'Finished')
 		return
@@ -371,21 +346,21 @@ def kinetic_he(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,T
    Work = np.zeros((nvx*nvr))
    fHG = np.zeros((nx, nvx, nvr))
    NHG = np.zeros((Max_Gen+1, nx))
-	if ihe == 1:
-		mu_temp = 4
-    	Vth = sqrt(2*q*Tnorm/(mu_temp*mH))
-	else:
-		Vth = sqrt(2*q*Tnorm/(mu*mH))
-	Vth2 = vth*vth
-	Vth3 = Vth2*Vth
-	fHs = np.zeros(nx)
-	nHs = np.zeros(nx)
-	Alpha_H_H = np.zeros((nvr, nvx))
-	Omega_H_P = np.zeros(nx)
-	Omega_H_H2 = np.zeros(nx)
-	Omega_H_H = np.zeros(nx)
-	VxHG = np.zeros(nx)
-	THG = np.zeros(nx)
+   if ihe == 1:
+      mu_temp = 4
+      Vth = sqrt(2*q*Tnorm/(mu_temp*mH))
+   else:
+      Vth = sqrt(2*q*Tnorm/(mu*mH))
+   Vth2 = vth*vth
+   Vth3 = Vth2*Vth
+   fHs = np.zeros(nx)
+   nHs = np.zeros(nx)
+   Alpha_H_H = np.zeros((nvr, nvx))
+   Omega_H_P = np.zeros(nx)
+   Omega_H_H2 = np.zeros(nx)
+   Omega_H_H = np.zeros(nx)
+   VxHG = np.zeros(nx)
+   THG = np.zeros(nx)
 	Wperp_paraH = np.zeros(nx)
 	vr2vx2_ran2 = np.zeros((nvr. nvx))
 	vr2_2vx_ran2 = np.zeros((nvr, nvx))
@@ -407,7 +382,7 @@ def kinetic_he(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,T
 
 	#vr^2-2*vx^2
 
-   for i=0,nvr-1 do vr2_2vx2_2D(i,*)=vr(i)^2-2*vx^2
+   for i=0 in range(nvr-1) do vr2_2vx2_2D(i,*)=vr(i)^2-2*vx^2
 
 	#Theta-prime coordinate
 
@@ -448,16 +423,17 @@ def kinetic_he(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,T
 	#if fH2 is zero, then turn off elastic H2 <-> H collisions
 
    H_H2_EL=_H_H2_EL
-   if total(fH2) le 0.0 then H_H2_EL=0
+   if total(fH2) <= 0.0:
+      H_H2_EL=0
 
 	#Set iteration scheme
 
-   fH_Iterate()=0
+   fH_Iterate(count, H_P_EL, H_H2_EL, H_H_EL, nx, vth, Vr2pidVr, vx, dVx, debrief, prompt, vxi, DeltaVx_tol, Alpha_H_P, vxH2, Alpha_H_H2, nvr, vr2_2vx_ran2, Wperp_paraH, vr, vr2_2vx2_2D, Work, Alpha_H_H, SIG_H_H, Wpp_tol, nvx, H_P_CX, alpha_cx, alpha_ion,gamma_wall, Sn, ip, fHG, NHG, plot, i_n, _H, fH_generations)=0
    if (H_H_EL != 0) or (H_P_EL != 0) or (H_H2_EL != 0):
-		fH_Iterate() = 1
+		fH_Iterate(count, H_P_EL, H_H2_EL, H_H_EL, nx, vth, Vr2pidVr, vx, dVx, debrief, prompt, vxi, DeltaVx_tol, Alpha_H_P, vxH2, Alpha_H_H2, nvr, vr2_2vx_ran2, Wperp_paraH, vr, vr2_2vx2_2D, Work, Alpha_H_H, SIG_H_H, Wpp_tol, nvx, H_P_CX, alpha_cx, alpha_ion,gamma_wall, Sn, ip, fHG, NHG, plot, i_n, _H, fH_generations) = 1
 
    	fH_generations=0
-   if (fH_Iterate() != 0) or (H_P_CX != 0):
+   if (fH_Iterate(count, H_P_EL, H_H2_EL, H_H_EL, nx, vth, Vr2pidVr, vx, dVx, debrief, prompt, vxi, DeltaVx_tol, Alpha_H_P, vxH2, Alpha_H_H2, nvr, vr2_2vx_ran2, Wperp_paraH, vr, vr2_2vx2_2D, Work, Alpha_H_H, SIG_H_H, Wpp_tol, nvx, H_P_CX, alpha_cx, alpha_ion,gamma_wall, Sn, ip, fHG, NHG, plot, i_n, _H, fH_generations) != 0) or (H_P_CX != 0):
 		fH_generations = 1
 
 	#Set flags to make use of previously computed local parameters 
@@ -722,7 +698,7 @@ def kinetic_he(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,T
    # Set up arrays for charge exchange and elastic collision computations, if needed
    #________________________________________________________________________________
 
-   if Do_v_v2 eq 1:
+   if Do_v_v2 == 1:
       if debrief > 1:
          print(prompt + 'Computing v_v2, v_v, vr2_vx2, and vx_vx')
 
@@ -772,12 +748,12 @@ def kinetic_he(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,T
       # Compute sigma_cx * v_v at all possible relative velocities
 
       _Sig = np.zeros((nvr*nvx*nvr*nvx,ntheta))
-      _Sig[*] = v_v*sigma_cx_h0(v_v2*(0.5*mH*vth2/q))
+      _Sig[:] = v_v*sigma_cx_h0(v_v2*(0.5*mH*vth2/q))
 
       # Set SIG_CX = vr' x Integral{v_v*sigma_cx} over theta=0,2pi times differential velocity space element vr'2pidVr'*dVx'
 
       SIG_CX = np.zeros((nvr*nvx,nvr*nvx))
-      SIG_CX[*] = Vr2pidVrdVx*np.concatenate((_Sig, dtheta))
+      SIG_CX[:] = Vr2pidVrdVx*np.concatenate((_Sig, dtheta))
 
       # SIG_CX is now vr' * sigma_cx(v_v) * v_v (intergated over theta) for all possible ([vr,vx],[vr',vx'])
 
@@ -849,7 +825,7 @@ def kinetic_he(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,T
       # Set SIG_H_P = vr' x vx_vx x Integral{v_v*sigma_H_P} over theta=0,2pi times differential velocity space element vr'2pidVr'*dVx'
 
       SIG_H_P = np.zeros((nvr*nvx,nvr*nvx))
-      SIG_H_P[*] = Vr2pidVrdVx*vx_vx*np.concatenate((_Sig, dtheta))
+      SIG_H_P[:] = Vr2pidVrdVx*vx_vx*np.concatenate((_Sig, dtheta))
 
       # SIG_H_P is now vr' *vx_vx * sigma_H_P(v_v) * v_v (intergated over theta) for all possible ([vr,vx],[vr',vx'])
 
@@ -932,7 +908,9 @@ def kinetic_he(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,T
    print('max and min (gamma_wall) = ', np.max(gamma_wall), np.min(gamma_wall))
 
 
-def fH_Iterate():
+def fH_Iterate(count, H_P_EL, H_H2_EL, H_H_EL, nx, vth, Vr2pidVr, vx, dVx, debrief, prompt, vxi, DeltaVx_tol, Alpha_H_P, vxH2, Alpha_H_H2, 
+               nvr, vr2_2vx_ran2, Wperp_paraH, vr, vr2_2vx2_2D, Work, Alpha_H_H, SIG_H_H, Wpp_tol, nvx, H_P_CX, alpha_cx, alpha_ion,
+               gamma_wall, Sn, ip, fHG, NHG, plot, i_n, _H, fH_generations):
 
    #  This is the entry point for fH iteration.
    #  Save 'seed' values for comparison later
@@ -982,7 +960,7 @@ def fH_Iterate():
       if H_H_EL:
          if debrief > 1:
             print(prompt+'Computing Omega_H_H')
-         if total(MH_H_sum) <= 0:
+         if np.sum(MH_H_sum) <= 0:
             for k in range(nx):
                for i in range(nvr):
                   vr2_2vx_ran2[i, :] = vr[i]**2-2*(vx-VxH[k]/vth)**2
@@ -990,9 +968,9 @@ def fH_Iterate():
          else:
             for k in range(nx):
                M_fH = MH_H_sum[:, :, k]-fH[:, :, k]
-               Wperp_paraH[k] = -total(Vr2pidVr*np.concatenate(((vr2_2vx2_2D*M_fH), dVx)))/nH[k]
+               Wperp_paraH[k] = -np.sum(Vr2pidVr*np.concatenate(((vr2_2vx2_2D*M_fH), dVx)))/nH[k]
          for k in range(nx):
-            Work[:] = fH[*,*,k]
+            Work[:] = fH[:,:,k]
             Alpha_H_H[:] = np.concatenate((SIG_H_H, Work))
             Wpp = Wperp_paraH[k]
             MagWpp = np.abs(Wpp) > Wpp_tol
@@ -1109,13 +1087,16 @@ def fH_Iterate():
    nH=NHG[:, 0]
 
    if fH_generations == 0:
-      fH_done()
+      fH_done(plot, NHG, igen, pause, nx, nH, Vr2pidVr, fH, dVx, truncate, nHs, nvr, nvx, H_P_CX, debrief, prompt,Simple_CX, fi)
 
-def next_generation():
+def next_generation(max_gen, debrief, prompt, nvr, nvx, nx, H_P_CX, Simple_CX, fi_hat, Vr2pidVr, alpha_cx, Work,
+                    fHG, ni, SIG_CX, H_H_EL, H_P_EL, H_H2_EL, VxHG, vth, vr2vx2_ran2, vr, vx, ihe, mH, THG, vth2,
+                    dVx, NHG, Maxwell, Omega_H_H, vxi, Omega_H_P, vxH2, TH2, Omega_H_H2, ip, Ak, Bk, Ck, i_n,
+                    Dk, nHG, plot, debug, Delta_nHs, truncate, Ti):
    if igen+1 > max_gen:
       if debrief > 0:
          print(prompt+'Completed '+sval(max_gen)+' generations. Returning present solution...')
-      fH_done()
+      fH_done(plot, NHG, igen, pause, nx, nH, Vr2pidVr, fH, dVx, truncate, nHs, nvr, nvx, H_P_CX, debrief, prompt,Simple_CX, fi)
    igen=igen+1
    if debrief > 0:
       print(prompt+'Computing atomic neutral generation#'+sval(igen))
@@ -1132,7 +1113,7 @@ def next_generation():
          #             ion distribution function
 
          for k in range(nx):
-            Beta_CX[:, :, k] = fi_hat[:, :, k]*np.sum(Vr2pidVr*np.concatenate(((alpha_cx(*,*,k)*fHG(*,*,k)), dVx)))
+            Beta_CX[:, :, k] = fi_hat[:, :, k]*np.sum(Vr2pidVr*np.concatenate(((alpha_cx(*,*,k)*fHG[:,:,k]), dVx)))
       else:
 
          # Option (A): Compute charge exchange source using fH and vr x sigma x v_v at each velocity mesh point
@@ -1157,12 +1138,12 @@ def next_generation():
       # Compute VxHG, THG
 
       for k in range(nx):
-         VxHG[k] = vth*np.sum(Vr2pidVr*np.concatenate((fHG(*,*,k),(vx*dVx))))/NHG[k,igen-1]
+         VxHG[k] = vth*np.sum(Vr2pidVr*np.concatenate((fHG[:,:,k],(vx*dVx))))/NHG[k,igen-1]
          for i in range(nvr):
             vr2vx2_ran2[i, :]=vr[i]**2+(vx-VxHG[k]/vth)**2
          
          if ihe == 1:
-           mu_temp=4; helium mass
+           mu_temp=4 # helium mass
            THG[k] = (mu_temp*mH)*vth2*np.sum(Vr2pidVr*(np.concatenate((vr2vx2_ran2*fHG[:, :, k], dVx))))/(3*q*NHG[k,igen-1])
          else:
            THG[k] = (mu*mH)*vth2*np.sum(Vr2pidVr*np.concatenate(((vr2vx2_ran2*fHG[:, :, k]),dVx)))/(3*q*NHG[k,igen-1])
@@ -1195,7 +1176,7 @@ def next_generation():
             mu=4 # for helium
             Shifted_Maxwellian_Debug=0
             #@create_shifted_maxwellian.include
-            mu=2 ; back to input.  I know it is a deuterium
+            mu=2 # back to input.  I know it is a deuterium
          else:
             vx_shift=(VxHG+vxi)/2
             Tmaxwell=THG+(2./4.)*(Ti-THG +mu*mH*(vxi-VxHG)**2/(6*q))
@@ -1257,26 +1238,27 @@ def next_generation():
    # and decide if another generation should be computed
    #________________________________________________________________________________
    Delta_nHG=np.max(NHG[:,igen]/np.max(nH))
-   if fH_Iterate():
+   if fH_Iterate(count, H_P_EL, H_H2_EL, H_H_EL, nx, vth, Vr2pidVr, vx, dVx, debrief, prompt, vxi, DeltaVx_tol, Alpha_H_P, vxH2, Alpha_H_H2, nvr, vr2_2vx_ran2, Wperp_paraH, vr, vr2_2vx2_2D, Work, Alpha_H_H, SIG_H_H, Wpp_tol, nvx, H_P_CX, alpha_cx, alpha_ion,gamma_wall, Sn, ip, fHG, NHG, plot, i_n, _H, fH_generations):
       print('Compute generation error, Delta_nHG= ', Delta_nHG,  ',  0.003*Delta_nHs= ', 0.003*Delta_nHs,  ',   truncate=', truncate)
 
       # If fH 'seed' is being iterated, then do another generation until the 'generation error'
       # is less than 0.003 times the 'seed error' or is less than TRUNCATE
 
       if (Delta_nHG < 0.003*Delta_nHs) or (Delta_nHG < truncate):
-         fH_done()
+         fH_done(plot, NHG, igen, pause, nx, nH, Vr2pidVr, fH, dVx, truncate, nHs, nvr, nvx, H_P_CX, debrief, prompt,Simple_CX, fi)
       else:
 
          # If fH 'seed' is NOT being iterated, then do another generation unitl the 'generation error'
          # is less than parameter TRUNCATE
 
          if Delta_nHG < truncate:
-            fH_done()
+            fH_done(plot, NHG, igen, pause, nx, nH, Vr2pidVr, fH, dVx, truncate, nHs, nvr, nvx, H_P_CX, debrief, prompt,Simple_CX, fi)
       #________________________________________________________________________________
 
-   next_generation()
+   next_generation(max_gen, debrief, prompt, nvr, nvx, nx, H_P_CX, Simple_CX, fi_hat, Vr2pidVr, alpha_cx, Work,fHG, ni, SIG_CX, H_H_EL, H_P_EL, H_H2_EL, VxHG, vth, vr2vx2_ran2, vr, vx, ihe, mH, THG, vth2,dVx, NHG, Maxwell, Omega_H_H, vxi, Omega_H_P, vxH2, TH2, Omega_H_H2, ip, Ak, Bk, Ck, i_n,Dk, nHG, plot, debug, Delta_nHs, truncate, Ti)
 
-def fH_done():
+def fH_done(plot, NHG, igen, pause, nx, nH, Vr2pidVr, fH, dVx, truncate, nHs, nvr, nvx, H_P_CX, debrief, prompt,
+            Simple_CX, fi):
 
    if plot > 0:
       plot(x,NHG[:,0],/nodata,yrange=[np.max(NHG)*truncate,np.max(NHG)],title=_H+' Density by Generation',xtitle='x (m)',ytitle='Density (m!U-3!N)',/ylog)
@@ -1290,7 +1272,7 @@ def fH_done():
    for k in range(nx):
       nH[k]=np.sum(Vr2pidVr*np.concatenate((fH[:,:,k],dVx)))
 
-   if fH_Iterate():
+   if fH_Iterate(count, H_P_EL, H_H2_EL, H_H_EL, nx, vth, Vr2pidVr, vx, dVx, debrief, prompt, vxi, DeltaVx_tol, Alpha_H_P, vxH2, Alpha_H_H2, nvr, vr2_2vx_ran2, Wperp_paraH, vr, vr2_2vx2_2D, Work, Alpha_H_H, SIG_H_H, Wpp_tol, nvx, H_P_CX, alpha_cx, alpha_ion,gamma_wall, Sn, ip, fHG, NHG, plot, i_n, _H, fH_generations):
       #________________________________________________________________________________
       # Compute 'seed error': Delta_nHs=(|nHs-nH|)/max(nH) 
       # If Delta_nHs is greater than 10*truncate then iterate fH
@@ -1298,7 +1280,7 @@ def fH_done():
       print('Compute Seed Error, Delta_nHS = ', Delta_nHs, ',    10*truncate= ',  10*truncate)
       Delta_nHs=np.max(np.abs(nHs-nH))/np.max(nH)
       if Delta_nHs > 10*truncate:
-         fH_Iterate()
+         fH_Iterate(count, H_P_EL, H_H2_EL, H_H_EL, nx, vth, Vr2pidVr, vx, dVx, debrief, prompt, vxi, DeltaVx_tol, Alpha_H_P, vxH2, Alpha_H_H2, nvr, vr2_2vx_ran2, Wperp_paraH, vr, vr2_2vx2_2D, Work, Alpha_H_H, SIG_H_H, Wpp_tol, nvx, H_P_CX, alpha_cx, alpha_ion,gamma_wall, Sn, ip, fHG, NHG, plot, i_n, _H, fH_generations)
    #________________________________________________________________________________
    # Update Beta_CX_sum using last generation
    #________________________________________________________________________________
