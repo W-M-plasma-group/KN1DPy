@@ -66,6 +66,6 @@ def sigmav_cx_h0(T,E):
     result=np.zeros(E2.shape)
     for i in range(9):
         for j in range(9):
-            result+=(alpha[j,i]*alogE**i*alogT**j)
+            result = result+alpha[j,i]*alogE**i*alogT**j
     
     return np.e**result*1e-6
