@@ -2178,7 +2178,7 @@ def Kinetic_H2(vx, vr, x, Tnorm, mu, Ti, Te, n, vxi, fH2BC, GammaxH2BC, NuLoss, 
                 dGammaxH2dx[k] = (GammaxH2[k+1] - GammaxH2[k]) / (x[k + 1] - x[k])
             for k in range(0, nx - 2):
                 SH_p[k] = 0.5 * (SH[k + 1] + SP[k + 1] + 2 * NuLoss[k + 1] * nHP[k + 1] - 2 * 2 * SH2[k + 1] \
-                                 + SH[k] + SP[k] + 2 * NuLoss[k] nHP[k] - 2 * SH2[k])
+                                 + SH[k] + SP[k] + 2 * NuLoss[k] * nHP[k] - 2 * SH2[k])
             max_source = np.max(np.array([SH, 2 * SH2]))
             for k in range(0, nx - 2):
                 Source_Error[k] = np.abs(2 * GammaxH2[k] + SH_p[k]) / np.max(np.abs(np.array([2 * dGammaxH2dx[k], SH_p[k], max_source])))
