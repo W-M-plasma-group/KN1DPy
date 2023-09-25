@@ -147,7 +147,7 @@ def KN1D(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
             fctr = 0.3
             if GaugeH2 > 30.0 :
                 fctr = fctr * 30 / GaugeH2
-            xH,TiA,TeA,nA,PipeDiaA,vxA,vrA,TnormA= create_kinetic_H_mesh(nv,mu,x,Ti,Te,n,PipeDia,fctr=fctr) # finished line since create_kinetic_h_mesh has been programmed - nh
+            xH,TiA,TeA,nA,PipeDiaA,vxA,vrA,TnormA= create_kinetic_h_mesh(nv,mu,x,Ti,Te,n,PipeDia,fctr=fctr) # finished line since create_kinetic_h_mesh has been programmed - nh // fixed capitalization - GG
             
         if mu==1:
             _p='H!U+!N'
