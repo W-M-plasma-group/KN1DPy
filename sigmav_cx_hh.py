@@ -57,8 +57,8 @@ def sigmav_cx_hh(T,E):
   alogT=np.log(T2)
 
   result=np.zeros(E2.shape)
-  for i in range(8):
-    for j in range(8):
+  for i in range(9):
+    for j in range(9):
       result=result+alpha[j,i]*(alogE**j)*(alogT**i)
 
   return np.e**result*1e-6
