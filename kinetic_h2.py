@@ -1210,21 +1210,42 @@ def Kinetic_H2(vx, vr, x, Tnorm, mu, Ti, Te, n, vxi, fH2BC, GammaxH2BC, NuLoss, 
             plt.plot(vx, fH21d[i]) #I cant really tell if this is plotting the data rge same way that the idl version does
         if debug > 0:
             return 
+        
+    # deleted accidental fH2_done partial code and moved up the correct function - GG
     def fH2_done():
-        if plot > 0:
-            plt.plot(x, NH2G[0])
+        if plot > 0: 
+            plt.figure()
+
+            # Plot the first curve with logarithmic y-axis
+            plt.plot(x, NH2G[:, 0], label="0", color="b", linewidth=2)
+
+            # Plot additional curves up to generation igen
+            for i in range(igen + 1):
+                plt.plot(x, NH2G[:, i], label=str(i), color=(i % 8) + 2, linewidth=2)
+            
+            # Set plot attributes
+            plt.title(_HH + ' Density by Generation')
+            plt.xlabel('x (m)')
+            plt.ylabel('Density (m⁻³)')
+            plt.yscale('log')
+            
+            plt.legend(title="Generation")
+            if pause:
+                return
+                # press return 
 
     # Set total molecular neutral distrobution function to first flight generation 
     fH2 = fH2G
     nH2 = NH2G[0]
-    if fH2_generations == 0: #wants it to jump to fH2_done which hasnt been written yet also not sure if this is how we should do the python version 
-        fH2_done = 0
+    if fH2_generations == 0: # completed fH2_done - GG
+        fH2_done()
+    fH2_done = 0 # I am not sure if this is correct because fH2_done is a function, but I'm not sure what the intention of the original IDL code was so I don't know how to change it - GG
     
     def next_generation():
         if igen+1 > Max_Gen: 
             if debrief > 1:
                 print(prompt,'Completed ', sval(Max_Gen), ' generations. Returning present solution...')
-                return fH2_done # I dont know if this is how to do this we have to discuss fh2_done
+                fH2_done() # added fH2_done() - GG
             igen = igen + 1
             if debrief > 0: 
                 print(prompt, 'Computing molecular neutral generation#', sval(igen))
@@ -1347,35 +1368,13 @@ def Kinetic_H2(vx, vr, x, Tnorm, mu, Ti, Te, n, vxi, fH2BC, GammaxH2BC, NuLoss, 
         # If fH2 'seed' is being iterated, then do another generation until the 'generation error'
         # is less than 0.003 times the 'seed error' or is less than TRUNCATE
         if (Delta_nH2G < 0.003 * Delta_nH2s) or (Delta_nH2G < truncate):
-            return fH2_done # Not sure if this is correct fH2_done is causing issues 
+            fH2_done() # added fH2_done - GG
         
     # If fH2 'seed' is NOT being iterated, then do another generation unitl the 'generation error'
     # is less than parameter TRUNCATE
     elif Delta_nH2G < truncate:
-        return fH2_done # same issue as above
+        fH2_done() # added fH2_done - GG
     next_generation() # Come back and double check this function later 
-
-    def fH2_done():
-        if plot > 0: 
-            plt.figure()
-
-            # Plot the first curve with logarithmic y-axis
-            plt.plot(x, NH2G[:, 0], label="0", color="b", linewidth=2)
-
-            # Plot additional curves up to generation igen
-            for i in range(igen + 1):
-                plt.plot(x, NH2G[:, i], label=str(i), color=(i % 8) + 2, linewidth=2)
-            
-            # Set plot attributes
-            plt.title(_HH + ' Density by Generation')
-            plt.xlabel('x (m)')
-            plt.ylabel('Density (m⁻³)')
-            plt.yscale('log')
-            
-            plt.legend(title="Generation")
-            if pause:
-                return
-                # press return 
 
     # Compute H2 density profile
     for k in range(0, nx - 1):
