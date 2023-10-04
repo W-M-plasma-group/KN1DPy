@@ -19,7 +19,7 @@ def create_kinetic_h2_mesh(nv, mu, x, Ti, Te, n, PipeDia, E0 = 0, ixE0 = 0, irE0
     #Estimate total reaction rate for destruction of molecules and for interation with side walls
     RR=n*sigmav_ion_hh(Te)+n*sigmav_h1s_h1s_hh(Te)+n*sigmav_h1s_h2s_hh(Te)
 
-    Y = np.array([0] * nx) # changed to np array to fix error - GG
+    Y = np.zeros(nx) # changed to make more concise  - GG
     for k in range(1, nx-1):
         Y[k]=Y[k-1]-(x[k]-x[k-1])*0.5*(RR[k]+RR[k-1])/v0_bar
 
