@@ -18,7 +18,7 @@ def sigma_cx_h0(E, freeman=0):
                 
   if type(E) != np.ndarray: #converts scalar or list input to np.array
     E=np.array(E)
-  if freeman:
+  if np.any(freeman): # edit so that logic statement does not give error - GG
     E2=np.maximum(E,0.1) #Sets values to minimum .1 and maximum 1e5
     E2=np.minimum(E2,1e5) 
     return 1.0e-4 * 0.6937e-14*(1.0-0.155*np.log10(E2))**2/(1.0+0.1112e-14*E2**3.3)
