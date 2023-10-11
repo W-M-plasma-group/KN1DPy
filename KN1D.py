@@ -140,14 +140,14 @@ def KN1D(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
             fctr = 0.3
             if GaugeH2 > 15.0:
                 fctr = fctr * 15 / GaugeH2
-            xH2,TiM,TeM,nM,PipeDiaM,vxM,vrM,TnormM = create_kinetic_h2_mesh(nv, mu, x, Ti, Te, n, PipeDia) # replaced function inputs, split output list into variables - nh
+            xH2,TiM,TeM,nM,PipeDiaM,vxM,vrM,TnormM = create_kinetic_h2_mesh(nv, mu, x, Ti, Te, n, PipeDia, E0 = Eneut, ixE0 = 0 ,irE0 = 0,fctr = fctr) # replaced function inputs, split output list into variables - nh // fixed keyword inputs - GG
             
             # determine optimized vr, vx grid for kinetic_h (atoms, A)
             nv = 10
             fctr = 0.3
             if GaugeH2 > 30.0 :
                 fctr = fctr * 30 / GaugeH2
-            xH,TiA,TeA,nA,PipeDiaA,vxA,vrA,TnormA= create_kinetic_h_mesh(nv,mu,x,Ti,Te,n,PipeDia,fctr=fctr) # finished line since create_kinetic_h_mesh has been programmed - nh // fixed capitalization - GG
+            xH,TiA,TeA,nA,PipeDiaA,vxA,vrA,TnormA= create_kinetic_h_mesh(nv,mu,x,Ti,Te,n,PipeDia, E0 = 0, ixE0 = 0 ,irE0 = 0,fctr = fctr) # finished line since create_kinetic_h_mesh has been programmed - nh // fixed capitalization - GG // fixed keyword inputs - GG
             
         if mu==1:
             _p='H!U+!N'
@@ -205,28 +205,35 @@ def KN1D(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
         #  Code blocks below use common block variables, should be filled in later
         #  Initialize fH and fH2 (these may be over-written by data from and old run below)
         
-        if refine:
+        if refine: # sets values to previously computed values, maybe we wont do this at least not necessary now - GG
             pass
         else:
-            pass
+            fH = np.zeros((nvrA,nvxA,nxH)).T
+            fH2 = np.zeros((nvrM,nvxM,nxH2)).T
+            nH2 = np.zeros(nxH2)
+            nHP = np.zeros(nxH2)
+            THP = np.zeros(nxH2)
          
          #   Convert pressure (mtorr) to molecular density and flux
          #   (Currently untested)
 
-        fh2BC=np.zeros(nvxM,nvrM)
+        fh2BC=np.zeros((nvxM,nvrM)).T # fixed mistake in defining the array - GG
         DensM=3.537e19*GaugeH2
         GammaxH2BC=0.25*DensM*v0_bar
-        Tmaxwell=[Twall]
-        vx_shift=[0.0]
+        Tmaxwell=np.array([Twall]) # changed list to numpy array 
+        vx_shift=np.array([0.0])
         mol=2
         Maxwell=create_shifted_maxwellian(vrM,vxM,Tmaxwell,vx_shift,mu,mol,TnormM)
         fh2BC[ipM,:]=Maxwell[0,ipM,:]
 
+        # Compute NuLoss:
+            # NuLoss = Cs/LC
         Cs_LC=np.zeros(LC.size)
         for ii in range(LC.size):
             if LC[ii]>0:
-                Cs_LC[ii]=np.sqrt(q*(Ti(ii)+Te(ii))/(mu*mH))/LC(ii)
-        NuLoss=interpolate.interp1d(x,Cs_LC)(xH2)
+                Cs_LC[ii]=np.sqrt(q*(Ti[ii]+Te[ii])/(mu*mH))/LC[ii] # fixed notation of indexing arrays - GG
+        interpfunc = interpolate.interp1d(x,Cs_LC) # fixed the way interpolation was called - GG
+        NuLoss = interpfunc(xH2)
         
         #  Compute first guess SpH2
 
@@ -242,25 +249,35 @@ def KN1D(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
         #	Integral{SpH2}dx =  (2/3) GammaxH2BC = beta Integral{n Cs/LC}dx
         
         nCs_LC=n*Cs_LC
-        SpH2_hat=interpolate.interp1d(x,nCs_LC,fill_value="extrapolate")(xH2)
+
+        interpfunc = interpolate.interp1d(x,nCs_LC,fill_value="extrapolate") # fixed the way interpolation was called - GG
+        SpH2_hat=interpfunc(xH2)
+
         SpH2_hat=SpH2_hat/integ_bl(xH2,SpH2_hat,value_only=1) # not sure if this line is correct
         beta=2/3*GammaxH2BC
         if refine:
+            pass
+            '''
+            # I commented out the following so that we can discuss how to recall previous calculations 
             if SpH2_s!=None:
                 SpH2=SpH2_s # from kn1d_internal common block
             else:
-                SpH2=beta*SpH2_hat
+                SpH2=beta*SpH2_hat'''
         else:
             SpH2=beta*SpH2_hat
         SH2=SpH2
 
         #   Interpolate for vxiM and vxiA
 
-        vxiM=interpolate.interp1d(x,vxi,fill_value="extrapolate")(xH2)
-        vxiA=interpolate.interp1d(x,vxi,fill_value="extrapolate")(xH)
+        interpfunc = interpolate.interp1d(x,vxi,fill_value="extrapolate")
+        vxiM = interpfunc(xH2)
+
+        interpfunc = interpolate.interp1d(x,vxi,fill_value="extrapolate")
+        vxiA = interpfunc(xH)
+
         iter=0
-        EH_hist=[0]
-        SI_hist=[0]
+        EH_hist=np.array([0.0])
+        SI_hist=np.array([0.0])
         oldrun=0
 
         #   Option: Read results from previous run
@@ -281,7 +298,7 @@ def KN1D(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
 
         nvrM=vrM.size
         nvxM=vxM.size
-        vr2vx2_ran2=np.zeros((nvxM,nvrM))
+        vr2vx2_ran2=np.zeros((nvxM,nvrM)).T # transposed - GG
 
         mwell=Maxwell[0,:,:] #  variable named 'Max' in original code; changed here to avoid sharing name with built in function
 
