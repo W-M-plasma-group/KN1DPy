@@ -20,9 +20,9 @@ def collrad_sigmav_ion_h0(N_e, T_e): # removed unused argument p - nh
     dens = dens/1e6
 
     # compute indices for interpolation on sigmav grid:
-    indte=np.maximum(10*(np.log(temp)+1.2),0)
+    indte=np.maximum(10*(np.log10(temp)+1.2),0) # changed log base - GG
     indte=np.minimum(indte,59) 
-    indne=np.maximum(2*(np.log(dens)-10),0)
+    indne=np.maximum(2*(np.log10(dens)-10),0) # changed log base - GG
     indne=np.minimum(indne,14) # replaced > and < with np.maximum and np.minimum - nh
 
     column_1 = np.array( \

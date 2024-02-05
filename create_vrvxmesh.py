@@ -21,7 +21,7 @@ def create_VrVxMesh(nv, Ti, E0 = np.array([0.0]), Tmax = 0.0): # removed unused 
     Tnorm = np.mean(_Ti)
     vmax = 3.5
     if maxTi - minTi <= 0.1 * maxTi: # changed < to <= like from IDL code - nh
-        v = np.arange(nv+1, float)*vmax/nv # added *vmax/nv from IDL code - nh
+        v = np.arange(nv+1)*vmax/nv # added *vmax/nv from IDL code - nh // deleted float type because it caused bug - GG
     else:
         G = 2 * nv * np.sqrt(minTi / maxTi) / (1- np.sqrt(minTi / maxTi))
         b = vmax / (nv * (nv + G))
