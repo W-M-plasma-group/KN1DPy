@@ -27,6 +27,15 @@ def JHAlpha_coef(Density, Te,  create = 0, no_null = 0, g=None):
         LogAlpha_BSCoef=s['LogAlpha_BSCoef']
         A_Lyman=s['A_Lyman']
         A_Balmer=s['A_Balmer']
+        # update global vars
+        g.JH_Coef_DKnot=Dknot
+        g.JH_Coef_TKnot=Tknot
+        g.JH_Coef_order=order
+        g.JH_Coef_LogR_BSCoef=LogR_BSCoef
+        g.JH_Coef_LogS_BSCoef=LogS_BSCoef
+        g.JH_Coef_LogAlpha_BSCoef=LogAlpha_BSCoef
+        g.JH_Coef_A_Lyman=A_Lyman
+        g.JH_Coef_A_Balmer=A_Balmer
 
     # Evaluate Alpha coefficients 
     if np.size(Density) != np.size(Te):

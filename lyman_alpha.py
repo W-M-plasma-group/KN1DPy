@@ -54,6 +54,15 @@ def Lyman_Alpha(Density, Te, N0, photons = 0, create = 0, no_null = 0, g=None):
         LogAlpha_BSCoef=s['LogAlpha_BSCoef']
         A_Lyman=s['A_Lyman']
         A_Balmer=s['A_Balmer']
+        # update global vars
+        g.JH_Coef_DKnot=Dknot
+        g.JH_Coef_TKnot=Tknot
+        g.JH_Coef_order=order
+        g.JH_Coef_LogR_BSCoef=LogR_BSCoef
+        g.JH_Coef_LogS_BSCoef=LogS_BSCoef
+        g.JH_Coef_LogAlpha_BSCoef=LogAlpha_BSCoef
+        g.JH_Coef_A_Lyman=A_Lyman
+        g.JH_Coef_A_Balmer=A_Balmer
     
     # From Johnson-Hinnov, eq (11):
     # n(2) =  ( r0(2) + r1(2) * n(1) / NHsaha(1) ) * NHsaha(2)

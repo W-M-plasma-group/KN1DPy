@@ -12,6 +12,8 @@ from sval import sval
 from interp_fvrvxx import interp_fvrvxx
 from create_kinetic_h_mesh import create_kinetic_h_mesh
 
+from global_vars import global_vars
+
 #   Computes the molecular and atomic neutral profiles for inputted profiles
 # of Ti(x), Te(x), n(x), and molecular neutral pressure, GaugeH2, at the boundary using
 # IDL routines Kinetic_H and Kinetic_H2. Molecular densities, ionization profiles,
@@ -98,8 +100,10 @@ def KN1D(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
 
 
         prompt = 'KN1D => '
-        global xH2,TiM,TeM,nM,PipeDiaM,vxM,vrM,TnormM,xH,TiA,TeA,nA,PipeDiaA,vxA,vrA,TnormA # necessary for setting variables from input_dict (lines 132-133) - nh
+        #global xH2,TiM,TeM,nM,PipeDiaM,vxM,vrM,TnormM,xH,TiA,TeA,nA,PipeDiaA,vxA,vrA,TnormA # necessary for setting variables from input_dict (lines 132-133) - nh
         #   Note that these are global to this file only, they are not used / cannot be called in other files
+
+        g=global_vars()
 
         #   set kn1d_internal common block variables here
         # resets variables to be values from input file 
@@ -129,8 +133,8 @@ def KN1D(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
             # edit keys for C-Mod Files 
             edit_keys(input_dict) # Not sure if we need this in the final code - not sure the C-Mod files are really intended to be used as inputs - nh
             
-            for i in ['xH2','TiM','TeM','nM','PipeDiaM','vxM','vrM','TnormM','xH','TiA','TeA','nA','PipeDiaA','vxA','vrA','TnormA']:
-                globals()[i]=input_dict[i.lower()] # Takes entries from input_dict and defines them as variables 
+            #for i in ['xH2','TiM','TeM','nM','PipeDiaM','vxM','vrM','TnormM','xH','TiA','TeA','nA','PipeDiaA','vxA','vrA','TnormA']:
+            #    globals()[i]=input_dict[i.lower()] # Takes entries from input_dict and defines them as variables 
                 #   slightly messy, but should solve comment below - nh
             # i think in the end we will have to use the dictionary to manually define the variables
         else:
@@ -147,7 +151,7 @@ def KN1D(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
             fctr = 0.3
             if GaugeH2 > 30.0 :
                 fctr = fctr * 30 / GaugeH2
-            xH,TiA,TeA,nA,PipeDiaA,vxA,vrA,TnormA= create_kinetic_h_mesh(nv,mu,x,Ti,Te,n,PipeDia, E0 = 0, ixE0 = 0 ,irE0 = 0,fctr = fctr) # finished line since create_kinetic_h_mesh has been programmed - nh // fixed capitalization - GG // fixed keyword inputs - GG
+            xH,TiA,TeA,nA,PipeDiaA,vxA,vrA,TnormA= create_kinetic_h_mesh(nv,mu,x,Ti,Te,n,PipeDia, E0 = 0, ixE0 = 0 ,irE0 = 0,fctr = fctr, g=g) # finished line since create_kinetic_h_mesh has been programmed - nh // fixed capitalization - GG // fixed keyword inputs - GG
             
         if mu==1:
             _p='H!U+!N'
@@ -336,7 +340,7 @@ def KN1D(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
 
                 ni_correct=1
                 Compute_H_Source=1
-                H2compute_errors=compute_errors and H2debrief
+                H2compute_errors=compute_errors and H2debreif
 
                 #   Calls kinetic_h2 and kinteic_h
                 #   Section skipped for now, as those functions are unfinished
