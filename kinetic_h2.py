@@ -23,7 +23,7 @@ from scipy.ndimage import shift
 from sval import sval
 from locate import locate
 import matplotlib.pyplot as plt
-import g # not sure if I needed this 
+ 
 
 # This subroutine is part of the "KN1D" atomic and molecular neutal transport code.
 
@@ -62,7 +62,7 @@ def Kinetic_H2(vx, vr, x, Tnorm, mu, Ti, Te, n, vxi, fH2BC, GammaxH2BC, NuLoss, 
                truncate = 1.0e-4, Simple_CX = 1, Max_Gen = 50,  Compute_H_Source = 0, \
                No_Sawada = 0, H2_H2_EL = 0, H2_P_EL = 0, _H2_H_EL = 0, H2_HP_CX = 0, \
                ni_correct = 0, ESH = 0, Eaxis = 0, Compute_Errors = 0,  plot = 0, debug = 0,\
-               debrief = 0, pause = 0):
+               debrief = 0, pause = 0, g = None):
     
     # Kinetic_H2_Output common block
     piH2_xx = g.Kinetic_H2_Output_piH2_xx
@@ -2304,66 +2304,66 @@ def Kinetic_H2(vx, vr, x, Tnorm, mu, Ti, Te, n, vxi, fH2BC, GammaxH2BC, NuLoss, 
     QH_total_error = g.Kinetic_H_Errors_QH_total_error
 
     # Kinetic_H2_input common  
-    vx_s=g.Kinetic_H2_input_vx_s
-    vr_s=g.Kinetic_H2_input_vr_s
-    x_s=g.Kinetic_H2_input_x_s
-    Tnorm_s=g.Kinetic_H2_input_Tnorm_s
-    mu_s=g.Kinetic_H2_input_mu_s
-    Ti_s=g.Kinetic_H2_input_Ti_s
-    Te_s=g.Kinetic_H2_input_Te_s
-    n_s=g.Kinetic_H2_input_n_s
-    vxi_s=g.Kinetic_H2_input_vxi_s
-    fHBC_s=g.Kinetic_H2_input_fH2BC_
-    GammaxHBC_s=g.Kinetic_H2_input_GammaxH2BC_
-    Nuloss = g.Kinetic_H2_input_NuLoss_s
-    PipeDia_s=g.Kinetic_H2_input_PipeDia_s
-    fH_s=g.Kinetic_H2_input_fH_s
-    SH2_s=g.Kinetic_H2_input_SH2_s
-    fH2_s=g.Kinetic_H2_input_fH2_s
+    g.Kinetic_H2_input_vx_s=vx_s
+    g.Kinetic_H2_input_vr_s=vr_s
+    g.Kinetic_H2_input_x_s=x_s
+    g.Kinetic_H2_input_Tnorm_s=Tnorm_s
+    g.Kinetic_H2_input_mu_s=mu_s
+    g.Kinetic_H2_input_Ti_s=Ti_s
+    g.Kinetic_H2_input_Te_s=Te_s
+    g.Kinetic_H2_input_n_s=n_s
+    g.Kinetic_H2_input_vxi_s=vxi_s
+    g.Kinetic_H2_input_fH2BC_=fHBC_s
+    g.Kinetic_H2_input_GammaxH2BC_=GammaxHBC_s
+    g.Kinetic_H2_input_NuLoss_s=Nuloss 
+    g.Kinetic_H2_input_PipeDia_s=PipeDia_s
+    g.Kinetic_H2_input_fH_s=fH_s
+    g.Kinetic_H2_input_SH2_s=SH2_s
+    g.Kinetic_H2_input_fH2_s=fH2_s
 
-    nHP_s=g.Kinetic_H2_input_nHP_s
-    THP_s=g.Kinetic_H2_input_THP_s
-    Simple_CX_s=g.Kinetic_H2_input_Simple_CX_s
-    Sawada_s=g.Kinetic_H2_input_Sawada_s
-    H2_H2_EL_s=g.Kinetic_H2_input_H2_H2_EL_s
-    H2_P_EL_s=g.Kinetic_H2_input_H2_P_EL_s
-    H2_H_EL_s=g.Kinetic_H2_input_H2_H_EL_s
-    H2_HP_CX_s=g.Kinetic_H2_input_H2_HP_CX_s
-    ni_correct_s =g.Kinetic_H2_input_ni_correct_s
+    g.Kinetic_H2_input_nHP_s=nHP_s
+    g.Kinetic_H2_input_THP_s=THP_s
+    g.Kinetic_H2_input_Simple_CX_s=Simple_CX_s
+    g.Kinetic_H2_input_Sawada_s=Sawada_s
+    g.Kinetic_H2_input_H2_H2_EL_s=H2_H2_EL_s
+    g.Kinetic_H2_input_H2_P_EL_s=H2_P_EL_s
+    g.Kinetic_H2_input_H2_H_EL_s=H2_H_EL_s
+    g.Kinetic_H2_input_H2_HP_CX_s=H2_HP_CX_s
+    g.Kinetic_H2_input_ni_correct_s=ni_correct_s
 
     # kinetic_h2_internal common block  
-    vr2vx2=g.Kinetic_H2_internal_vr2vx2
-    vr2vx_vxi2=g.Kinetic_H2_internal_vr2vx_vxi2
-    fw_hat=g.Kinetic_H2_internal_fw_hat
-    fi_hat=g.Kinetic_H2_internal_fi_hat
-    fHp_hat=g.Kinetic_H2_internal_fHp_hat
-    EH2_P=g.Kinetic_H2_internal_EH2_P
-    sigv=g.Kinetic_H2_internal_sigv
-    Alpha_Loss=g.Kinetic_H2_internal_Alpha_Loss
-    v_v2=g.Kinetic_H2_internal_v_v2
-    v_v=g.Kinetic_H2_internal_v_v
-    vr2_vx2=g.Kinetic_H2_internal_vr2_vx2
-    vx_vx=g.Kinetic_H2_internal_vx_vx
+    g.Kinetic_H2_internal_vr2vx2=vr2vx2
+    g.Kinetic_H2_internal_vr2vx_vxi2=vr2vx_vxi2
+    g.Kinetic_H2_internal_fw_hat=fw_hat
+    g.Kinetic_H2_internal_fi_hat=fi_hat
+    g.Kinetic_H2_internal_fHp_hat=fHp_hat
+    g.Kinetic_H2_internal_EH2_P=EH2_P
+    g.Kinetic_H2_internal_sigv=sigv
+    g.Kinetic_H2_internal_Alpha_Loss=Alpha_Loss
+    g.Kinetic_H2_internal_v_v2=v_v2
+    g.Kinetic_H2_internal_v_v=v_v
+    g.Kinetic_H2_internal_vr2_vx2=vr2_vx2
+    g.Kinetic_H2_internal_vx_vx=vx_vx
 
-    Vr2pidVrdVx=g.Kinetic_H2_internal_Vr2pidVrdVx
-    SIG_CX=g.Kinetic_H2_internal_SIG_CX
-    SIG_H2_H2=g.Kinetic_H2_internal_SIG_H2_H2
-    SIG_H2_H=g.Kinetic_H2_internal_SIG_H2_H
-    SIG_H2_P=g.Kinetic_H2_internal_SIG_H2_P
-    Alpha_CX=g.Kinetic_H2_internal_Alpha_CX
-    Alpha_H2_H=g.Kinetic_H2_internal_Alpha_H2_H
-    MH2_H2_sum=g.Kinetic_H2_internal_MH2_H2_sum
-    Delta_nH2s=g.Kinetic_H2_internal_Delta_nH2s
+    g.Kinetic_H2_internal_Vr2pidVrdVx=Vr2pidVrdVx
+    g.Kinetic_H2_internal_SIG_CX=SIG_CX
+    g.Kinetic_H2_internal_SIG_H2_H2=SIG_H2_H2
+    g.Kinetic_H2_internal_SIG_H2_H=SIG_H2_H
+    g.Kinetic_H2_internal_SIG_H2_P=SIG_H2_P
+    g.Kinetic_H2_internal_Alpha_CX=Alpha_CX
+    g.Kinetic_H2_internal_Alpha_H2_H=Alpha_H2_H
+    g.Kinetic_H2_internal_MH2_H2_sum=MH2_H2_sum
+    g.Kinetic_H2_internal_Delta_nH2s=Delta_nH2s
 
     # kinetic_h2_moments common block
-    nH2=g.Kinetic_H2_H_moments_nH
-    VxH2=g.Kinetic_H2_H_moments_VxH
-    TH2=g.Kinetic_H2_H_moments_TH
+    g.Kinetic_H2_H_moments_nH=nH2
+    g.Kinetic_H2_H_moments_VxH=VxH2
+    g.Kinetic_H2_H_moments_TH=TH2
     
     if debug > 0:
         print(prompt, 'Finished')
         # Press_return 
-    return g
+    return 
 
 
             
