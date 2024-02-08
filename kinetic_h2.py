@@ -23,7 +23,7 @@ from scipy.ndimage import shift
 from sval import sval
 from locate import locate
 import matplotlib.pyplot as plt
-import g # not sure if I needed this 
+ 
 
 # This subroutine is part of the "KN1D" atomic and molecular neutal transport code.
 
