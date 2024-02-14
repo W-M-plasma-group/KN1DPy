@@ -304,7 +304,9 @@ def kinetic_h(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,TH
 	H_H2_EL_s=g.Kinetic_H_input_H_H2_EL_s
 	H_P_CX_s=g.Kinetic_H_input_H_P_CX_s
 	#	FS: added collrad_s
+
 	#	Kinetic_H_internal common block
+
 	vr2vx2=g.Kinetic_H_internal_vr2vx2
 	vr2vx_vxi2=g.Kinetic_H_internal_vr2vx_vxi2
 	fi_hat=g.Kinetic_H_internal_fi_hat
@@ -329,7 +331,9 @@ def kinetic_h(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,TH
 	Delta_nHs=g.Kinetic_H_internal_Delta_nHs
 	Sn=g.Kinetic_H_internal_Sn
 	Rec=g.Kinetic_H_internal_Rec
+
 	#	Kinetic_H_Moments
+	
 	nH2=g.Kinetic_H_H2_Moments_nH2
 	VxH2=g.Kinetic_H_H2_Moments_VxH2
 	TH2=g.Kinetic_H_H2_Moments_TH2 # changed to fit current global_vars structure
@@ -1757,7 +1761,7 @@ def kinetic_h(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,TH
 	#	lines 1665 - 1748 in original code are used for plotting
 	#		This may be added later, but has been left out for now
 
-	#	Save input parameters in kinetic_H_imput common block
+	#	Save input parameters in kinetic_H_input common block
 
 	g.Kinetic_H_input_vx_s=vx
 	g.Kinetic_H_input_vr_s=vr
@@ -1785,5 +1789,38 @@ def kinetic_h(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,TH
 	g.Kinetic_H_input_H_P_EL_s=H_P_EL
 	g.Kinetic_H_input_H_H2_EL_s=H_H2_EL
 	g.Kinetic_H_input_H_P_CX_s=H_P_CX
+
+	#	Save input parameters in kinetic_H_internal common block
+
+	g.Kinetic_H_internal_vr2vx2=vr2vx2
+	g.Kinetic_H_internal_vr2vx_vxi2=vr2vx_vxi2
+	g.Kinetic_H_internal_fi_hat=fi_hat
+	g.Kinetic_H_internal_ErelH_P=ErelH_P
+	g.Kinetic_H_internal_Ti_mu=Ti_mu
+	g.Kinetic_H_internal_ni=ni
+	g.Kinetic_H_internal_sigv=sigv
+	g.Kinetic_H_internal_alpha_ion=alpha_ion
+	g.Kinetic_H_internal_v_v2=v_v2
+	g.Kinetic_H_internal_v_v=v_v
+	g.Kinetic_H_internal_vr2_vx2=vr2_vx2
+	g.Kinetic_H_internal_vx_vx=vx_vx
+	g.Kinetic_H_internal_Vr2pidVrdVx=Vr2pidVrdVx
+	g.Kinetic_H_internal_SIG_CX=SIG_CX
+	g.Kinetic_H_internal_SIG_H_H=SIG_H_H
+	g.Kinetic_H_internal_SIG_H_H2=SIG_H_H2
+	g.Kinetic_H_internal_SIG_H_P=SIG_H_P
+	g.Kinetic_H_internal_Alpha_CX=Alpha_CX
+	g.Kinetic_H_internal_Alpha_H_H2=Alpha_H_H2
+	g.Kinetic_H_internal_Alpha_H_P=Alpha_H_P
+	g.Kinetic_H_internal_MH_H_sum=MH_H_sum
+	g.Kinetic_H_internal_Delta_nHs=Delta_nHs
+	g.Kinetic_H_internal_Sn=Sn
+	g.Kinetic_H_internal_Rec=Rec
+
+	#	Save input parameters in kinetic_H_Moments common block
+
+	g.Kinetic_H_H2_Moments_nH2=nH2
+	g.Kinetic_H_H2_Moments_VxH2=VxH2
+	g.Kinetic_H_H2_Moments_TH2=TH2
 
 	return fH,nH,GammaxH,VxH,pH,TH,qxH,qxH_total,NetHSource,Sion,QH,RxH,QH_total,AlbedoH,WallH,error
