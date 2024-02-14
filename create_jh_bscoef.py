@@ -195,6 +195,7 @@ def Create_JH_BSCoef():
     
     LogAlpha_Interp = scipy.interpolate.RectBivariateSpline(LogTe, LogDensity, LogAlpha)
     LogAlpha_BSCoef = LogAlpha_Interp.get_coeffs()
+    TKnot,DKnot=LogAlpha_Interp.get_knots() # get knot locations
 
     print('Saving results in file: jh_bscoef.npz')
     np.savez("jh_bscoef",

@@ -45,7 +45,7 @@ def N0_from_balmer_alpha(B_Alpha, Density, Te , Source = 0, Ionization = 0,Recom
         LogAlpha_BSCoef=s['LogAlpha_BSCoef']
         A_Lyman=s['A_Lyman']
         A_Balmer=s['A_Balmer']
-        # update global vars
+        # update global vars JH_coef common block
         g.JH_Coef_DKnot=Dknot
         g.JH_Coef_TKnot=Tknot
         g.JH_Coef_order=order

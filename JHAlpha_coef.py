@@ -27,7 +27,7 @@ def JHAlpha_coef(Density, Te,  create = 0, no_null = 0, g=None):
         LogAlpha_BSCoef=s['LogAlpha_BSCoef']
         A_Lyman=s['A_Lyman']
         A_Balmer=s['A_Balmer']
-        # update global vars
+        # update global vars JH_coef common block
         g.JH_Coef_DKnot=Dknot
         g.JH_Coef_TKnot=Tknot
         g.JH_Coef_order=order

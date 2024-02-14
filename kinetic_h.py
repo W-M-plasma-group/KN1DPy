@@ -277,7 +277,7 @@ def kinetic_h(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,TH
 
 	prompt='Kinetic_H => '
 
-	#	Set common block variables 
+	#	Set Kinetic_H_input common block variables 
 	vx_s=g.Kinetic_H_input_vx_s
 	vr_s=g.Kinetic_H_input_vr_s
 	x_s=g.Kinetic_H_input_x_s
@@ -304,6 +304,7 @@ def kinetic_h(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,TH
 	H_H2_EL_s=g.Kinetic_H_input_H_H2_EL_s
 	H_P_CX_s=g.Kinetic_H_input_H_P_CX_s
 	#	FS: added collrad_s
+	#	Kinetic_H_internal common block
 	vr2vx2=g.Kinetic_H_internal_vr2vx2
 	vr2vx_vxi2=g.Kinetic_H_internal_vr2vx_vxi2
 	fi_hat=g.Kinetic_H_internal_fi_hat
@@ -328,7 +329,7 @@ def kinetic_h(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,TH
 	Delta_nHs=g.Kinetic_H_internal_Delta_nHs
 	Sn=g.Kinetic_H_internal_Sn
 	Rec=g.Kinetic_H_internal_Rec
-
+	#	Kinetic_H_Moments
 	nH2=g.Kinetic_H_H2_Moments_nH2
 	VxH2=g.Kinetic_H_H2_Moments_VxH2
 	TH2=g.Kinetic_H_H2_Moments_TH2 # changed to fit current global_vars structure
@@ -1756,7 +1757,7 @@ def kinetic_h(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,TH
 	#	lines 1665 - 1748 in original code are used for plotting
 	#		This may be added later, but has been left out for now
 
-	#	Save input parameters in common block
+	#	Save input parameters in kinetic_H_imput common block
 
 	g.Kinetic_H_input_vx_s=vx
 	g.Kinetic_H_input_vr_s=vr
@@ -1785,4 +1786,4 @@ def kinetic_h(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,TH
 	g.Kinetic_H_input_H_H2_EL_s=H_H2_EL
 	g.Kinetic_H_input_H_P_CX_s=H_P_CX
 
-	return fH,nH,GammaxH,VxH,pH,TH,qxH,qxH_total,NetHSource,Sion,QH,RxH,QH_total,AlbedoH,WallH,error,g
+	return fH,nH,GammaxH,VxH,pH,TH,qxH,qxH_total,NetHSource,Sion,QH,RxH,QH_total,AlbedoH,WallH,error
