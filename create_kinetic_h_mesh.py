@@ -75,7 +75,7 @@ def create_kinetic_h_mesh(nv, mu, x, Ti, Te, n, PipeDia, E0 = 0, ixE0 = 0 ,irE0 
         ioniz_rate = collrad_sigmav_ion_h0(nfine, Tefine)
     else:
         if JH:
-            ioniz_rate = JHS_coef(nfine, Tefine, no_null = True) # deleted unecessary variable - GG
+            ioniz_rate = JHS_coef(nfine, Tefine, no_null = True, g=g) # deleted unecessary variable - GG
         else:
             ioniz_rate = sigmav_ion_h0(Tefine)
     RR = nfine * ioniz_rate + nfine * sigma_cx_h0(Tifine, np.array([minE0] * nxfine)) + gamma_wall # replaced size(nxfine) with nxfine

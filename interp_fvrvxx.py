@@ -178,11 +178,11 @@ def interp_fvrvxx(fa,Vra,Vxa,Xa,Tnorma,Vrb,Vxb,Xb,Tnormb,do_warn=None, debug=0, 
         for ib in range(nvrb):
             for jb in range(nvxb):
                 for ia in range(nvra):
-                    vraMin=max([fv*vrbL[ib],vraL[ia]])
-                    vraMax=min([fv*vrbR[ib],vraR[ia]])
+                    vraMin=max([fV*vrbL[ib],vraL[ia]])
+                    vraMax=min([fV*vrbR[ib],vraR[ia]])
                     for ja in range(nvxa):
-                        vxaMin=max([fv*vxbL[jb],vxaL[ja]])
-                        vxaMax=min([fv*vxbR[jb],vxaR[ja]])
+                        vxaMin=max([fV*vxbL[jb],vxaL[ja]])
+                        vxaMax=min([fV*vxbR[jb],vxaR[ja]])
                         if vraMax>vraMin and vxaMax>vxaMin:
                             _weight[ja,ia,jb,ib]=2*np.pi*(vraMax**2-vraMin**2)*(vxaMax-vxaMin)/(Vr2pidVrb[ib]*dVxb[jb])
 
@@ -218,7 +218,7 @@ def interp_fvrvxx(fa,Vra,Vxa,Xa,Tnorma,Vrb,Vxb,Xb,Tnormb,do_warn=None, debug=0, 
 
         f=(Xb[k]-Xa[kL])/(Xa[kR]-Xa[kL])
         fb[k,:,:]=np.reshape(fb_xa[kL,:]+(fb_xa[kR,:]-fb_xa[kL,:])*f,fb[k,:,:].shape) # previous version caused error
-        Wxa[k]=_Wxa[kL]+(_Wxa[kR]-_Wxa[kL])*f
+        wxa[k]=_Wxa[kL]+(_Wxa[kR]-_Wxa[kL])*f
         Ea[k]=_Ea[kL]+(_Ea[kR]-_Ea[kL])*f
 
     #   Correct fb so that it has the same Wx and E moments as fa
@@ -386,7 +386,7 @@ def interp_fvrvxx(fa,Vra,Vxa,Xa,Tnorma,Vrb,Vxb,Xb,Tnormb,do_warn=None, debug=0, 
 
         k0_error=0
         k1_error=1
-        if k0 > 0 or k1 < nXb-1:
+        if k0 > 0 or k1 < nxb-1:
             for i in range(i0,i1+1):
                 for j in range(j0,j1+1):
                     if (k0_error == 0) and (k0 > 0) and (fb[k0,j,i] > do_warn*big):
@@ -446,7 +446,7 @@ def interp_fvrvxx(fa,Vra,Vxa,Xa,Tnorma,Vrb,Vxb,Xb,Tnormb,do_warn=None, debug=0, 
 
         #   Plotting stuff was here in the original code
         #   May be added later, but has been left out for now
-
+    #   update INTERP_FVRVXX_internal1 and INTERP_FVRVXX_internal2 common blocks
     if w_new:
         if w1_active:
             if debug:
