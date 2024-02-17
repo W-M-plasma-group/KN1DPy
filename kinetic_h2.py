@@ -23,6 +23,7 @@ from scipy.ndimage import shift
 from sval import sval
 from locate import locate
 import matplotlib.pyplot as plt
+from global_vars import mH, q, k_boltz, Twall
  
 
 # This subroutine is part of the "KN1D" atomic and molecular neutal transport code.
@@ -655,10 +656,7 @@ def Kinetic_H2(vx, vr, x, Tnorm, mu, Ti, Te, n, vxi, fH2BC, GammaxH2BC, NuLoss, 
     Eaxis = np.zeros(nx)
 
     # Internal Varibales 
-    mH = 1.6726231e-27
-    q = 1.602177e-19				
-    k_boltz = 1.380658e-23                 # Bolzmann's constant, J K^-1
-    Twall = 293.0 * k_boltz / q                # room temperature (eV)
+
     Work = np.zeros(nvr * nvx)
     fH2G = np.zeros(nvr,nvx,nx).T
     NH2G = np.zeros(nx, Max_Gen + 1).T
@@ -2363,7 +2361,8 @@ def Kinetic_H2(vx, vr, x, Tnorm, mu, Ti, Te, n, vxi, fH2BC, GammaxH2BC, NuLoss, 
     if debug > 0:
         print(prompt, 'Finished')
         # Press_return 
-    return 
+    return fH2, nHP, THP, nH2, GammaxH2, VxH2, pH2, TH2, qxH2, qxH2_total, Sloss, QH2, RxH2, QH2_total, AlbedoH2, \
+        WallH2, nHP, THP, fSH, SH, SP, SHP, NuE, NuDis, ESH, Eaxis, error
 
 
             

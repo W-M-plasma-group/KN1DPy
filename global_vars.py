@@ -1,4 +1,12 @@
 #   This file contains global variables to be used throughout KN1Dpy
+
+#   constants
+
+mH = 1.6726231e-27		            #Hydrogen mass, kg
+q = 1.602177e-19				    #electron/proton charge magnitude, coulombs
+k_boltz = 1.380658e-23				#Boltzmann's constant, J K^-1
+Twall = 293.0*k_boltz/q			    #room temperature (eV)
+
 #   Common block references are to the original IDL code
 class global_vars(object):
 

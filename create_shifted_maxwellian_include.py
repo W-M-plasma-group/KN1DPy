@@ -1,5 +1,6 @@
 import numpy as np
 from sval import sval
+from global_vars import mH, q
 
 #   This INCLUDE file is used by Kinetic_H2 and Kinetic_H
 #   The code is also written within the create_shifted_maxwellian function
@@ -35,8 +36,6 @@ def create_shifted_maxwellian_include(vr,vx,Tnorm,vx_shift,Tmaxwell,Shifted_Maxw
     #   In order to insure that Maxwell has the desired vx and T moments when evaluated numerically, a compensation
     #   scheme is employed - similar to that used in Interp_fVrVxX
   
-  mH=1.6726231e-27
-  q=1.602177e-19
 
   AN=BN=np.zeros((2,nvx,nvr)) # fixed array creation - nh
   sgn=[-1,1]
