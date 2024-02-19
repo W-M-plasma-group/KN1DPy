@@ -14,6 +14,7 @@ from sign import sign
 from sval import sval
 from locate import locate
 from x import x
+from global_vars import mH, q, k_boltz, Twall
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -57,6 +58,232 @@ def kinetic_he(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,T
                truncate=1e-4,Compute_Errors=0,plot=0,debug=0,pause=0,debrief=0,Simple_CX=1,
 	            Max_Gen=50,No_Johnson_Hinnov=0,No_Recomb=0,H_H_EL=0,H_P_EL=0,_H_H2_EL=0,
 		        H_P_CX=0,ni_correct=0, g=None):
+   
+#  Input:
+#		  vx(*)	- fltarr(nvx), normalized x velocity coordinate 
+#			  [negative values, positive values],
+#			  monotonically increasing. Note: a nonuniform mesh can be used.
+#			  Dimensional velocity (note: Vth is based on ATOM mass)
+#			  is v = Vth * vx where Vth=sqrt(2 k Tnorm/(mH*mu))
+#			  Note: nvx must be even and vx(*) symmetric about 
+#			  zero but not contain a zero element
+#		  vr(*)	- fltarr(nvr), normalized radial velocity coordinate 
+#			  [positive values], monotonically increasing. Note: a non-uniform mesh can be used.
+#			  Dimensional velocity is v = Vth * vr where Vth=sqrt(2 k Tnorm/(mH*mu)) 
+#			  Note: vr must not contain a zero element
+#		   x(*)	- fltarr(nx), spatial coordinate (meters), 
+#			  positive, monontonically increasing. Note: a non-uniform mesh can be used.
+#		  Tnorm	- Float, temperature corresponding to the thermal speed (see vx and vr above) (eV)
+#		     mu	- Float, 1=hydrogen, 2=deuterium
+#		     Ti	- fltarr(nx), Ion temperature profile (eV)
+#		     Te	- fltarr(nx), electron temperature profile (eV)
+#		      n	- fltarr(nx), electron density profile (m^-3)
+#		    vxi	- fltarr(nx), x-directed plasma ion and molecular ion flow profile (m s^-1)
+#		   fHBC	- fltarr(nvr,nvx), this is an input boundary condition
+#			  specifying the shape of the neutral atom velocity distribution 
+#			  function at location x(0). Normalization is arbitrary.
+#		          Only values with positive vx, fHBC(*,nvx/2:*) are used
+#		          by the code.
+#	      GammaxHBC	- float, desired neutral atom flux density in the +Vx
+#			  direction at location x(0) (m^-2 s^-1)
+#			  fHBC is scaled to yield this flux density.
+#	        PipeDia	- fltarr(nx), effective pipe diameter (meters)
+#			  This variable allows collisions with the 'side-walls' to be simulated.
+#			  If this variable is undefined, then PipeDia set set to zero. Zero values
+#			  of PipeDia are ignored (i.e., treated as an infinite diameter).
+#                   fH2	- fltarr(nvr,nvx,nx), neutral molecule velocity distribution
+#                         function. fH2 is normalized so that the molecular neutral density, nH2(k), is 
+#			  defined as the velocity space integration: nH2(k)=total(Vr2pidVr*(fH2(*,*,k)#dVx))
+#                         If this variable is undefined, then it is set equal to zero and
+#                         no molecule-atom collisions are included.
+#			  NOTE: dVx is velocity space differential for Vx axis and Vr2pidVr = Vr*!pi*dVr
+#		                with dVr being velocity space differential for Vr axis.
+#                   fSH	- fltarr(nvr,nvx,nx), atomic hydrogen source velocity distribution.
+#                         fSH must be normalized so that the total atomic neutral
+#                         source, SourceH(k), is defined as the velocity space integration:
+#                             SourceH(k)=total(Vr2pidVr*(fSH(*,*,k)#dVx))
+#			  fSH can be computed from IDL procedure Kinetic_H2.pro
+#                         If this variable is undefined, then it is set equal to zero.
+#                   nHP	- fltarr(nx), molecular ion density profile (m^-3)
+#                         If this parameter is undefined, then it is set equal to zero.
+#			  nHP can be computed from IDL procedure Kinetic_H2.pro
+#                   THP	- fltarr(nx), molecular ion temperature profile (m^-3)
+#                         If this parameter is undefined, then it is set equal to 3 eV at each grid point.
+#			  THP can be computed from IDL procedure Kinetic_H2.pro
+#
+#  Input & Output:
+#                    fH	- fltarr(nvr,nvx,nx), neutral atom velocity distribution
+#                         function. 'Seed' values for this may be specified on input. 
+#		          If this parameter is undefined on input, then a zero 'seed' value will be used. 
+#			  The algorithm outputs a self-consistent fH.
+#			  fH is normalized so that the neutral density, nH(k), is defined as 
+#			  the velocity space integration: nH(k)=total(Vr2pidVr*(fH(*,*,k)#dVx))
+#
+#  Output:
+#                    nH	- fltarr(nx), neutral atom density profile (m^-3)
+#               GammaxH	- fltarr(nx), neutral atom flux profile (# m^-2 s^-1)
+#                             computed from GammaxH(k)=Vth*total(Vr2pidVr*(fH(*,*,k)#(Vx*dVx)))
+#                   VxH	- fltarr(nx), neutral atom velocity profile (m s^-1)
+#                             computed from GammaxH/nH
+#
+#                       To aid in computing the some of the quantities below, the procedure internally
+#                       defines the quantities:
+#                       vr2vx2_ran(i,j,k)=vr(i)^2+(vx(j)-VxH(k))^2
+#                                     which is the magnitude of 'random v^2' at each mesh point
+#                       vr2vx2(i,j,k)=vr(i)^2+vx(j)^2
+#                                     which is the magnitude of 'total v^2' at each mesh point
+#                       q=1.602177D-19, mH=1.6726231D-27
+#                       C(*,*,*) is the right hand side of the Boltzmann equation, evaluated
+#                                using the computed neutral distribution function
+#
+#                    pH	- fltarr(nx), neutral atom pressure (eV m^-2) computed from:
+#                         pH(k)~vth2*total(Vr2pidVr*(vr2vx2_ran(*,*,k)*fH(*,*,k))#dVx))*(mu*mH)/(3*q)
+#                    TH	- fltarr(nx), neutral atom temperature profile (eV) computed from: TH=pH/nH
+#                   qxH	- fltarr(nx), neutral atom random heat flux profile (watts m^-2) computed from:
+#                          qxH(k)~vth3*total(Vr2pidVr*((vr2vx2_ran(*,*,k)*fH(*,*,k))#(dVx*(vx-VxH(k)))))*0.5*(mu*mH)
+#             qxH_total	- fltarr(nx), total neutral atom heat flux profile (watts m^-2)
+#                             This is the total heat flux transported by the neutrals:
+#                         qxH_total=(0.5*nH*(mu*mH)*VxH*VxH + 2.5*pH*q)*VxH + piH_xx*VxH + qxH
+#	     NetHSource	- fltarr(nx), net H0 source [H0 source - ionization sink - wall sink] (m^-3 s^-1) computed from
+#				NetHSource(k)=total(Vr2pidVr*(C(*,*,k)#dVx))
+#		   Sion	- fltarr(nx), H ionization rate (m^-3 s^-1) 
+#                    QH	- fltarr(nx), rate of net thermal energy transfer into neutral atoms (watts m^-3) computed from
+#                               QH(k)~vth2*total(Vr2pidVr*((vr2vx2_ran(*,*,k)*C(*,*,k))#dVx))*0.5*(mu*mH)
+#                   RxH	- fltarr(nx), rate of x momentum transfer to neutral atoms (=force, N m^-2).
+#                               RxH(k)~Vth*total(Vr2pidVr*(C(*,*,k)#(dVx*(vx-VxH(k)))))*(mu*mH)
+#              QH_total	- fltarr(nx), net rate of total energy transfer into neutral atoms
+#                          = QH + RxH*VxH - 0.5*(mu*mH)*(Sloss-SourceH)*VxH*VxH (watts m^-3)
+#               AlbedoH	- float, Ratio of atomic neutral particle flux with Vx < 0 divided by particle flux
+#                          with Vx > 0  at x=x(0)
+#                          (Note: For fSH non-zero, the flux with Vx < 0 will include
+#                          contributions from molecular hydrogen sources within the 'slab'.
+#                          In this case, this parameter does not return the true 'Albedo'.)
+#	          WallH	- fltarr(nx), atomic neutral sink rate arising from hitting the 'side walls' (m^-3 s^-1)
+#			   Unlike the molecules in Kinetic_H2, wall collisions result in the destruction of atoms.
+#			   This parameter can be used to specify a resulting source of molecular
+#			   neutrals in Kinetic_H2. (molecular source = 2 times WallH)
+#
+# KEYWORDS:
+#   Output:
+#	          error	- Returns error status: 0=no error, solution returned
+#					        1=error, no solution returned
+#
+# COMMON BLOCK Kinetic_H_OUTPUT
+#    Output:
+#                piH_xx	- fltarr(nx), xx element of stress tensor (eV m^-2) computed from:
+#                         piH_xx(k)~vth2*total(Vr2pidVr*(fH(*,*,k)#(dVx*(vx-VxH(k))^2)))*(mu*mH)/q - pH
+#                piH_yy	- fltarr(nx), yy element of stress tensor (eV m^-2) computed from:
+#                         piH_yy(k)~vth2*total((Vr2pidVr*Vr^2)*(fH(*,*,k)#dVx))*(mu*mH)/q - pH
+#                piH_zz	- fltarr(nx), zz element of stress tensor (eV m^-2) = piH_yy
+#			   Note: cylindrical system relates r^2 = y^2 + z^2. All other stress tensor elements are zero.
+#
+#           The following momentum and energy transfer rates are computed from charge-exchange collsions between species:
+#                 RxHCX	- fltarr(nx), rate of x momentum transfer from hydrogren ions to atoms (=force/vol, N m^-3).
+#                  EHCX	- fltarr(nx), rate of energy transfer from hydrogren ions to atoms (watts m^-3).
+#               
+#           The following momentum and energy transfer rates are computed from elastic collsions between species:
+#                RxH2_H	- fltarr(nx), rate of x momentum transfer from neutral molecules to atoms (=force/vol, N m^-3).
+#                 RxP_H	- fltarr(nx), rate of x momentum transfer from hydrogen ions to neutral atoms (=force/vol, N m^-3).
+#                 EH2_H	- fltarr(nx), rate of energy transfer from neutral molecules to atoms (watts m^-3).
+#                  EP_H	- fltarr(nx), rate of energy transfer from hydrogen ions to neutral atoms (watts m^-3).
+#
+#           The following momentum and energy transfer rates are computed from collisions with the 'side-walls'
+#                 RxW_H	- fltarr(nx), rate of x momentum transfer from wall to neutral atoms (=force/vol, N m^-3).
+#                  EW_H	- fltarr(nx), rate of energy transfer from wall to neutral atoms (watts m^-3).
+#
+#           The following is the rate of parallel to perpendicular energy transfer computed from elastic collisions
+#         Epara_PerpH_H	- fltarr(nx), rate of parallel to perp energy transfer within atomic hydrogen species (watts m^-3).
+#
+#           Source/Sink info:
+#               SourceH	- fltarr(nx), source rate of neutral atoms from H2 dissociation (from integral of inputted fSH) (m^-3 s^-1).
+#                SRecom	- fltarr(nx), source rate of neutral atoms from recombination (m^-3 s^-1).
+#
+# KEYWORDS:
+#   Input:
+#	       truncate	- float, stop computation when the maximum 
+#			  increment of neutral density normalized to 
+#			  inputed neutral density is less than this 
+#	    		  value in a subsequent generation. Default value is 1.0e-4
+#
+#             Simple_CX	- if set, then use CX source option (B): Neutrals are born
+#                         in velocity with a distribution proportional to the local
+#                         ion distribution function. Simple_CX=1 is default.
+#
+#                         if not set, then use CX source option (A): The CX source
+#                         neutral atom distribution function is computed by evaluating the
+#                         the CX cross section for each combination of (vr,vx,vr',vx')
+#                         and convolving it with the neutral atom distribution function.
+#                         This option requires more CPU time and memory.
+#
+#      	  	Max_gen	- integer, maximum number of collision generations to try including before giving up.
+#                         Default is 50.
+#
+#     No_Johnson_Hinnov	- if set, then compute ionization and recombination rates
+#			  directly from reaction rates published by Janev* for
+#			  ground state hydrogen
+#
+#			      Ionization:    e + H(1s) -> p + e 
+#			      Recombination: e + p -> H(1s) + hv
+#
+#			  *Janev, R.K., et al, "Elementary processes in hydrogen-helium plasmas",
+#			   (Springer-Verlag, Berlin ; New York, 1987)
+#
+#			  Otherwise, compute ionization and recombination rates using
+#		          results from the collisional-radiative model published by Johnson
+#			  and Hinnov [L.C.Johnson and E. Hinnov, J. Quant. Spectrosc. Radiat.
+# 			  Transfer. vol. 13 pp.333-358]. This is the default.
+#			  Note: charge exchange is always computed using the ground state reaction
+#		          rates published by Janev:
+#
+#			      Charge Exchange: p + H(1s) -> H(1s) + p
+#			  
+#	      No_Recomb	- if set, then DO NOT include recombination as a source of atomic neutrals
+#		          in the algorithm
+#
+#	 	 H_H_EL	- if set, then include H -> H elastic self collisions
+#			     Note: if H_H_EL is set, then algorithm iterates fH until
+#	                     self consistent fH is achieved.
+#	 	 H_P_CX	- if set, then include H -> H(+) charge exchange collisions 
+#	         H_P_EL	- if set, then include H -> H(+) elastic collisions 
+#	        H_H2_EL	- if set, then include H -> H2 elastic collisions 
+#            ni_correct	- if set, then algorithm corrects hydrogen ion density
+#			     according to quasineutrality: ni=ne-nHP. Otherwise, nHP is assumed to be small.
+#
+#	 Compute_Errors	- if set, then return error estimates in common block Kinetic_H_ERRORS below
+#
+#		   plot	- 0= no plots, 1=summary plots, 2=detail plots, 3=very detailed plots
+#		  debug	- 0= do not execute debug code, 1=summary debug, 2=detail debug, 3=very detailed debug
+#	        debrief	- 0= do not print, 1=print summary information, 2=print detailed information
+#	          pause	- if set, then pause between plots
+#
+# COMMON BLOCK Kinetic_H_ERRORS
+#
+#	if COMPUTE_ERRORS keyword is set then the following is returned in common block Kinetic_H_ERRORS
+#
+#	         Max_dx	- float(nx), Max_dx(k) for k=0:nx-2 returns maximum 
+#			  allowed x(k+1)-x(k) that avoids unphysical negative 
+#			  contributions to fH
+#	     Vbar_error	- float(nx), returns numerical error in computing
+#			  the speed of ions averged over maxwellian distribution.
+#			  The average speed should be:
+#				 vbar_exact=2*Vth*sqrt(Ti(*)/Tnorm)/sqrt(!pi)
+#			  Vbar_error returns: abs(vbar-vbar_exact)/vbar_exact
+#			  where vbar is the numerically computed value.
+#	     mesh_error	- fltarr(nvr,nvx,nx), normalized error of solution
+#			  based on substitution into Boltzmann equation.
+#	   moment_error	- fltarr(nx,m), normalized error of solution
+#			  based on substitution into velocity space
+#			  moments (v^m) of Boltzmann equation, m=[0,1,2,3,4]
+#      	        C_error	- fltarr(nx), normalized error in charge exchange and elastic scattering collision 
+#				      operator. This is a measure of how well the charge exchange and
+#				      elastic scattering portions of the collision operator
+#				      conserve particles.
+#      	       CX_error	- fltarr(nx), normalized particle conservation error in charge exchange collision operator.
+#	      H_H_error	-  fltarr(nx,[0,1,2]) return normalized errors associated with 
+#		           particle [0], x-momentum [1], and total energy [2] convervation of the elastic self-collision operator
+#
+#       qxH_total_error	- fltarr(nx), normalized error estimate in computation of qxH_total
+#        QH_total_error	- fltarr(nx), normalized error estimate in computation of QH_total
 
    prompt='Kinetic_H => '
 
@@ -131,10 +358,10 @@ def kinetic_he(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,T
    #	Test input parameters (copied from kinetic_h.py because the idl code is the same in this section)
 
    if debug > 0:
-	   plot = plot > 1
+      plot = plot > 1
       debrief = debrief > 1
-		pause = 1
-	JH = 1
+      pause = 1
+   JH = 1
    if No_Johnson_Hinnov:
       JH = 0
    Recomb = 1
@@ -148,10 +375,10 @@ def kinetic_he(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,T
    dx = dx[1:] # moved to new line- fixed error
 
    while error == 0:
-    	notpos = dx[dx <= 0]
+      notpos = dx[dx <= 0]
       if notpos.size > 0:
 	      print(prompt + 'x[*] must be increasing with index!')
-		   error = 1
+         error = 1
 	   if nvx % 2 != 0:
 		   print(prompt + 'Number of elements in vx must be even!') 
 		   error = 1
@@ -339,10 +566,6 @@ def kinetic_he(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,T
 
 	#	Internal variables (first 7 variables are the same as kinetic_h.py)
 
-   mH = 1.6726231e-27
-   q = 1.602177e-19				
-   k_boltz = 1.380658e-23                 #	Bolzmann's constant, J K^-1
-   Twall = 293.0*k_boltz/q                #	room temperature (eV)
    Work = np.zeros((nvx*nvr))
    fHG = np.zeros((nx, nvx, nvr))
    NHG = np.zeros((Max_Gen+1, nx))
@@ -1946,4 +2169,4 @@ def Return():
    if debug > 0:
       print(prompt+'Finished')
       press_return()
-   return
+   return fH, nH, GammaxH, VxH, pH, TH, qxH, qxH_total, NetHSource, Sion, QH, RxH, QH_total, AlbedoH, WallH, error

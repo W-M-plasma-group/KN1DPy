@@ -6,14 +6,15 @@ from collrad_sigmav_ion_h0 import collrad_sigmav_ion_h0
 from sigma_cx_h0 import sigma_cx_h0
 from JHS_coef import JHS_coef
 
+from global_vars import mH, q
+
 def create_kinetic_h_mesh(nv, mu, x, Ti, Te, n, PipeDia, E0 = 0, ixE0 = 0 ,irE0 = 0,fctr = 1, g=None): # added common block input
     # add these lines to improve velocity space resolution (use with care):
     nv = 20
     # E0[.1]
     JH = 0 
     Use_Collrad_Ionization = 1
-    mH = 1.6726231e-27
-    q=1.602177e-19
+
     nx = np.size(x)
 
     # estimate Interaction rate with side walls
@@ -75,7 +76,7 @@ def create_kinetic_h_mesh(nv, mu, x, Ti, Te, n, PipeDia, E0 = 0, ixE0 = 0 ,irE0 
         ioniz_rate = collrad_sigmav_ion_h0(nfine, Tefine)
     else:
         if JH:
-            ioniz_rate = JHS_coef(nfine, Tefine, no_null = True) # deleted unecessary variable - GG
+            ioniz_rate = JHS_coef(nfine, Tefine, no_null = True, g=g) # deleted unecessary variable - GG
         else:
             ioniz_rate = sigmav_ion_h0(Tefine)
     RR = nfine * ioniz_rate + nfine * sigma_cx_h0(Tifine, np.array([minE0] * nxfine)) + gamma_wall # replaced size(nxfine) with nxfine

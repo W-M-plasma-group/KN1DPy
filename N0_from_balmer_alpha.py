@@ -45,6 +45,15 @@ def N0_from_balmer_alpha(B_Alpha, Density, Te , Source = 0, Ionization = 0,Recom
         LogAlpha_BSCoef=s['LogAlpha_BSCoef']
         A_Lyman=s['A_Lyman']
         A_Balmer=s['A_Balmer']
+        # update global vars JH_coef common block
+        g.JH_Coef_DKnot=Dknot
+        g.JH_Coef_TKnot=Tknot
+        g.JH_Coef_order=order
+        g.JH_Coef_LogR_BSCoef=LogR_BSCoef
+        g.JH_Coef_LogS_BSCoef=LogS_BSCoef
+        g.JH_Coef_LogAlpha_BSCoef=LogAlpha_BSCoef
+        g.JH_Coef_A_Lyman=A_Lyman
+        g.JH_Coef_A_Balmer=A_Balmer
 
     # From Johnson-Hinnov, eq(11):
     #   n(3) =  ( r0(3) + r1(3) * n(1) / NHsaha(1) ) * NHsaha(3)
