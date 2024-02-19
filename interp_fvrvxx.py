@@ -6,6 +6,8 @@ from Make_dVr_dVx import Make_dVr_dVx
 from locate import locate
 from sval import sval
 
+from global_vars import mH, q
+
 def interp_fvrvxx(fa,Vra,Vxa,Xa,Tnorma,Vrb,Vxb,Xb,Tnormb,do_warn=None, debug=0, correct=1,g=None): # added global variable argument
 
     #  Input:
@@ -62,8 +64,6 @@ def interp_fvrvxx(fa,Vra,Vxa,Xa,Tnorma,Vrb,Vxb,Xb,Tnormb,do_warn=None, debug=0, 
     nvxa=Vxa.size
     nxa=Xa.size
 
-    mH=1.6726231e-27
-    q=1.602177e-19	
     mu=1
 
     fV=np.sqrt(Tnormb/Tnorma)

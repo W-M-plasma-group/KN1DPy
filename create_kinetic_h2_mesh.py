@@ -6,12 +6,12 @@ from sigmav_cx_hh import sigmav_cx_hh
 from create_vrvxmesh import create_VrVxMesh # fixed capitalization
 from scipy import interpolate
 
+from global_vars import mH, q, k_boltz, Twall
+
 def create_kinetic_h2_mesh(nv, mu, x, Ti, Te, n, PipeDia, E0 = 0, ixE0 = 0, irE0 = 0, fctr = 1.0): # - removed output variables from input - GG
-    mH = 1.6726231e-27		
-    q = 1.602177e-19				
-    k_boltz = 1.380658e-23				#Boltzmann's constant, J K^-1
-    Twall = 293.0*k_boltz/q			    #room temperature (eV)
+
     v0_bar = np.sqrt(8.0*Twall*q/(np.pi*2*mu*mH))	#directed random velocity of diatomic molecule
+
     nx=np.size(x)
 
     gamma_wall = [0] * nx

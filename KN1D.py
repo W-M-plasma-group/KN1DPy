@@ -12,6 +12,7 @@ from sval import sval
 from interp_fvrvxx import interp_fvrvxx
 from create_kinetic_h_mesh import create_kinetic_h_mesh
 
+from global_vars import mH, q, k_boltz, Twall
 from global_vars import global_vars
 
 #   Computes the molecular and atomic neutral profiles for inputted profiles
@@ -182,12 +183,6 @@ def KN1D(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
         _e='e!U-!N'
         _hv='hv'
 
-        #   constants can probably be referenced from elsewhere
-
-        mH=1.6726231e-27
-        q=1.602177e-19
-        k_boltz=1.380658e-23
-        Twall=293.0*k_boltz/q
         v0_bar=np.sqrt(8.0*Twall*q/(np.pi*2*mu*mH))
 
         #   Set up molecular flux BC from inputted neutral pressure

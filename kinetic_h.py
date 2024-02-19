@@ -17,6 +17,7 @@ from sigmav_cx_h0 import sigmav_cx_h0
 from sign import sign
 from sval import sval
 
+from global_vars import mH, q, k_boltz, Twall
 
 # This subroutine is part of the "KN1D" atomic and molecular neutral transport code.
 
@@ -585,10 +586,6 @@ def kinetic_h(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,TH
 
 	#	Internal variables
 
-	mH=1.6726231e-27
-	q=1.602177e-19				
-	k_boltz=1.380658e-23                 #	Bolzmann's constant, J K^-1
-	Twall=293.0*k_boltz/q                #	room temperature (eV)
 	Work=np.zeros((nvx*nvr))
 	fHG=np.zeros((nx,nvx,nvr))
 	NHG=np.zeros((Max_Gen+1,nx)) # fixed capitalization
