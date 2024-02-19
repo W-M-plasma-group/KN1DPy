@@ -2363,7 +2363,3 @@ def Kinetic_H2(vx, vr, x, Tnorm, mu, Ti, Te, n, vxi, fH2BC, GammaxH2BC, NuLoss, 
         # Press_return 
     return fH2, nHP, THP, nH2, GammaxH2, VxH2, pH2, TH2, qxH2, qxH2_total, Sloss, QH2, RxH2, QH2_total, AlbedoH2, \
         WallH2, nHP, THP, fSH, SH, SP, SHP, NuE, NuDis, ESH, Eaxis, error
-
-
-            
-
