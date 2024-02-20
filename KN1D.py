@@ -380,12 +380,28 @@ def KN1D(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
             #   Plotting - will maybe add later
 
         #   Starting back at line 429 from IDL code
-        #   Entry point for fH/fH2 iteration
-        # goto block for fh_fh2_iterate
-        fh_fh2_iterate=True
-        while fh_fh2_iterate: # Used goto statements in IDL; changed here to while loop
-            if not oldrun:
-                iter+=1
+            
+        if oldrun:
+            # checks if the previous run satisfies the required conditions 
+            if debrief: 
+                print(prompt, 'Maximum Normalized change in nH2: ', sval(nDelta_nH2))
+            if debrief and pause: 
+                # press_return 
+                return
+            if nDelta_nH2 > truncate: 
+                # goto fH_fH2_iterate I think we will have to make fH_fH2_iterate a function 
+                # since we wont be reading old runs right now I am going to leave this as is 
+                pass
+        else:
+            #   Entry point for fH_fH2 iteration : iterates through solving fh and fh2 until they satisfy boltzmans equation
+            while nDelta_nH2 > truncate: # Used goto statements in IDL; changed here to while loop
+                if debrief: 
+                    print(prompt, 'Maximum Normalized change in nH2: ', sval(nDelta_nH2))
+                if debrief and pause: 
+                    # press_return
+                    pass
+
+                # iter+=1 I dont think this line is necessary 
                 if debrief:
                     print(prompt+'fH/fH2 Iteration: '+sval(iter))
                 nH2s = nH2
@@ -510,86 +526,72 @@ def KN1D(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
                         print(prompt, 'Normalized H2 <-> H Momentum Transfer Error: ', sval(nDRx))
                 Delta_nH2 = np.abs(nH2-nH2s)
                 nDelta_nH2=np.max(Delta_nH2/np.max(nH2))
-            
-        # Test_nDelta_nH2 goto block 
-        Test_nDelta_nH2 = True
-        while Test_nDelta_nH2:
-            # Test for convergence/iterate
-            if debrief: 
-                print(prompt, 'Maximum Normalized change in nH2: ', sval(nDelta_nH2))
-            if debrief and pause: 
-                return
-            if nDelta_nH2 < truncate: 
-                # goto fH_fH2_done
-                pass
         
-        # fH_fH2_done goto block 
-        fH_fH2_done = True 
-        while fH_fH2_done:
-            error = 0
-            # Compute total H flux through crossing limiter radius
-            _GammaxH2 = interp_scalarx(GammaxH2, xH2, xH, do_warn=do_warn, debug=interp_debug)
-            Gam=2*_GammaxH2+GammaxH
-            interpfunc = interpolate.interp1d(xH, Gam, fill_value="extrapolate")
-            GammaHLim = interpfunc(xlimiter)
+        # fH_fH2_done code section  
+        error = 0
+        # Compute total H flux through crossing limiter radius
+        _GammaxH2 = interp_scalarx(GammaxH2, xH2, xH, do_warn=do_warn, debug=interp_debug)
+        Gam=2*_GammaxH2+GammaxH
+        interpfunc = interpolate.interp1d(xH, Gam, fill_value="extrapolate")
+        GammaHLim = interpfunc(xlimiter)
 
-            # Compute positive and negative particle flux contributions
-            gammaxH_plus = np.zeros(nxH)
-            gammaxH_minus = np.zeros(nxH)
-            i_p = np.argwhere(vxA > 0).T 
-            i_n = np.argwhere(vxA < 0).T # changed formatting to avoid confusion with python function in
-            for k in range(0, nxH):
-                gammaxH_plus[k] = vthA * np.sum(Vr2pidVrA, np.dot(fH[k][i_p][:], vxA[i_p] * dVxA[i_p]))
-                gammaxH_minus[k] = vthA * np.sum(Vr2pidVrA, np.dot(fH[k][i_n][:], vxA[i_n] * dVxA[i_n]))
-            
-            gammaxH2_plus = np.zeros(nxH2)
-            gammaxH2_minus = np.zeros(nxH2)
-            i_p = np.argwhere(vxM > 0).T 
-            i_n = np.argwhere(vxM < 0).T
-            for k in range(0, nxH2):
-                gammaxH_plus[k] = vthM * np.sum(Vr2pidVrM, np.dot(fH2[k][i_p][:], vxM[i_p] * dVxM[i_p]))
-                gammaxH_minus[k] = vthM * np.sum(Vr2pidVrM, np.dot(fH2[k][i_n][:], vxM[i_n] * dVxM[i_n]))
-            
-            # Compute Lyman and Balmer
-            Lyman = Lyman_Alpha(nA, TeA, nH, no_null = 1)
-            Balmer = Balmer_Alpha(nA, TeA, nH, no_null = 1)
+        # Compute positive and negative particle flux contributions
+        gammaxH_plus = np.zeros(nxH)
+        gammaxH_minus = np.zeros(nxH)
+        i_p = np.argwhere(vxA > 0).T 
+        i_n = np.argwhere(vxA < 0).T # changed formatting to avoid confusion with python function in
+        for k in range(0, nxH):
+            gammaxH_plus[k] = vthA * np.sum(Vr2pidVrA, np.dot(fH[k][i_p][:], vxA[i_p] * dVxA[i_p]))
+            gammaxH_minus[k] = vthA * np.sum(Vr2pidVrA, np.dot(fH[k][i_n][:], vxA[i_n] * dVxA[i_n]))
+        
+        gammaxH2_plus = np.zeros(nxH2)
+        gammaxH2_minus = np.zeros(nxH2)
+        i_p = np.argwhere(vxM > 0).T 
+        i_n = np.argwhere(vxM < 0).T
+        for k in range(0, nxH2):
+            gammaxH_plus[k] = vthM * np.sum(Vr2pidVrM, np.dot(fH2[k][i_p][:], vxM[i_p] * dVxM[i_p]))
+            gammaxH_minus[k] = vthM * np.sum(Vr2pidVrM, np.dot(fH2[k][i_n][:], vxM[i_n] * dVxM[i_n]))
+        
+        # Compute Lyman and Balmer
+        Lyman = Lyman_Alpha(nA, TeA, nH, no_null = 1)
+        Balmer = Balmer_Alpha(nA, TeA, nH, no_null = 1)
 
-            fH_s=fH
-            fH2_s=fH2
-            nH2_s=nH2
-            SpH2_s=SpH2
-            nHP_s=nHP
-            THP_s=THP
+        fH_s=fH
+        fH2_s=fH2
+        nH2_s=nH2
+        SpH2_s=SpH2
+        nHP_s=nHP
+        THP_s=THP
 
-            #   Update KN1D_internal common block - GG 2/15
-            g.KN1D_internal_fH_s = fH_s 
-            g.KN1D_internal_fH2_s = fH2_s 
-            g.KN1D_internal_nH2_s = nH2_s 
-            g.KN1D_internal_SpH2_s = SpH2_s 
-            g.KN1D_internal_nHP_s = nHP_s
-            g.KN1D_internal_THP_s = THP_s 
+        #   Update KN1D_internal common block - GG 2/15
+        g.KN1D_internal_fH_s = fH_s 
+        g.KN1D_internal_fH2_s = fH2_s 
+        g.KN1D_internal_nH2_s = nH2_s 
+        g.KN1D_internal_SpH2_s = SpH2_s 
+        g.KN1D_internal_nHP_s = nHP_s
+        g.KN1D_internal_THP_s = THP_s 
 
-            # define variables to save into files 
-            x_s=x
-            GaugeH2_s=GaugeH2
-            mu_s=mu
-            Ti_s=Ti
-            Te_s=Te
-            n_s=n
-            vxi_s=vxi
-            PipeDia_s=PipeDia
-            LC_s=LC
-            xH2_s=xH2
-            vxM_s=vxM
-            vrM_s=vrM
-            TnormM_s=TnormM
-            xH_s=xH
-            vxA_s=vxA
-            vrA_s=vrA
-            TnormA_s=TnormA
-            EH_hist=EH_hist[0:,:] # double check this indexing 
-            SI_hist=SI_hist[0:, :] # double check this indexing 
+        # define variables to save into files 
+        x_s=x
+        GaugeH2_s=GaugeH2
+        mu_s=mu
+        Ti_s=Ti
+        Te_s=Te
+        n_s=n
+        vxi_s=vxi
+        PipeDia_s=PipeDia
+        LC_s=LC
+        xH2_s=xH2
+        vxM_s=vxM
+        vrM_s=vrM
+        TnormM_s=TnormM
+        xH_s=xH
+        vxA_s=vxA
+        vrA_s=vrA
+        TnormA_s=TnormA
+        EH_hist=EH_hist[0:,:] # double check this indexing 
+        SI_hist=SI_hist[0:, :] # double check this indexing 
 
-            # The rest of the code for KN1D is for saving files and plotting which we can implement at a later date 
-            return xH2, nH2, GammaxH2, TH2, qxH2_total, nHP, THP, SH, SP, \
-                xH, nH, GammaxH, TH, qxH_total, NetHSource, Sion, QH_total, SideWallH, Lyman, Balmer
+        # The rest of the code for KN1D is for saving files and plotting which we can implement at a later date 
+        return xH2, nH2, GammaxH2, TH2, qxH2_total, nHP, THP, SH, SP, \
+            xH, nH, GammaxH, TH, qxH_total, NetHSource, Sion, QH_total, SideWallH, Lyman, Balmer
