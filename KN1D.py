@@ -33,11 +33,10 @@ from global_vars import global_vars
  
 
 def KN1D(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
-         nH, GammaxH, TH, qxH_total, NetHSource, Sion, QH_total, SideWallH, Lyman, Balmer, \
          truncate = 1.0e-3, refine = 0, File = '', NewFile = 0, ReadInput = 0, \
          error = 0, compute_errors = 0, plot = 0, debug = 0, debrief = 0, pause = 0, \
          Hplot = 0, Hdebug = 0, Hdebrief = 0, Hpause = 0, \
-         H2plot = 0, H2debug = 0, H2debrief = 0, H2pause = 0):  # Added atomic info parameters - GG 2/19, corrected typos
+         H2plot = 0, H2debug = 0, H2debrief = 0, H2pause = 0):  # deleted what i added before dont know what I was thinking?? - GG 2/19, corrected typos
 
         # Input: 
         #	x	- fltarr(nx), cross-field coordinate (meters)
