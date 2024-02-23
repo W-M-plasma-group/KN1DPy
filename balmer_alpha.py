@@ -1,7 +1,7 @@
 import numpy as np
 from NHSaha import NHSaha
 from create_jh_bscoef import Create_JH_BSCoef
-from JHR_Coef import JHR_Coef
+from JHR_coef import JHR_Coef # fixed capotalization - GG
 
 #   Computes Balmer-alpha emissivity (watts m^-3) given the local
 # electron density, electron temperature, and ground-state

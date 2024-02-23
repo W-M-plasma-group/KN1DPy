@@ -283,7 +283,7 @@ def KN1D(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
         vx_shift=np.array([0.0])
         mol=2
         Maxwell=create_shifted_maxwellian(vrM,vxM,Tmaxwell,vx_shift,mu,mol,TnormM)
-        fh2BC[ipM,:]=Maxwell[0,ipM,:]
+        fh2BC[ipM]=Maxwell[0,ipM] # fixed indexing - GG
 
         # Compute NuLoss:
             # NuLoss = Cs/LC
@@ -354,7 +354,7 @@ def KN1D(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
 
         nvrM=vrM.size
         nvxM=vxM.size
-        vr2vx2_ran2=np.zeros((nvxM,nvrM)).T # transposed - GG
+        vr2vx2_ran2=np.zeros((nvrM,nvxM)).T # fixed indexing - GG
 
         mwell=Maxwell[0,:,:] #  variable named 'Max' in original code; changed here to avoid sharing name with built in function
 
@@ -393,6 +393,7 @@ def KN1D(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
                 pass
         else:
             #   Entry point for fH_fH2 iteration : iterates through solving fh and fh2 until they satisfy boltzmans equation
+            nDelta_nH2 = truncate + 1
             while nDelta_nH2 > truncate: # Used goto statements in IDL; changed here to while loop
                 if debrief: 
                     print(prompt, 'Maximum Normalized change in nH2: ', sval(nDelta_nH2))
