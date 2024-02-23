@@ -50,7 +50,7 @@ def interp_fvrvxx(fa,Vra,Vxa,Xa,Tnorma,Vrb,Vxb,Xb,Tnormb,do_warn=None, debug=0, 
     vrb1=g.INTERP_FVRVXX_internal1_vrb1
     vxb1=g.INTERP_FVRVXX_internal1_vxb1
     Tnormb1=g.INTERP_FVRVXX_internal1_Tnormb1
-    weight1=g.INTERP_FVRVXX_internal1_Weight1
+    weight1=g.INTERP_FVRVXX_internal1_weight1 # fixed capitalization - GG
     
     vra2=g.INTERP_FVRVXX_internal2_vra2
     vxa2=g.INTERP_FVRVXX_internal2_vxa2
