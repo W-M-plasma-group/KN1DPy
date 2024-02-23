@@ -11,6 +11,11 @@ from Make_dVr_dVx import Make_dVr_dVx
 from sval import sval
 from interp_fvrvxx import interp_fvrvxx
 from create_kinetic_h_mesh import create_kinetic_h_mesh
+from kinetic_h import kinetic_h 
+from kinetic_h2 import Kinetic_H2 
+from interp_scalarx import interp_scalarx 
+from lyman_alpha import Lyman_Alpha
+from balmer_alpha import Balmer_Alpha 
 
 from global_vars import mH, q, k_boltz, Twall
 from global_vars import global_vars
@@ -29,9 +34,9 @@ from global_vars import global_vars
 
 def KN1D(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
          truncate = 1.0e-3, refine = 0, File = '', NewFile = 0, ReadInput = 0, \
-         error = 0, compute_errors = 0, plot = 0, debug = 0, debreif = 0, pause = 0, \
-         Hplot = 0, Hdebug = 0, Hdebreif = 0, Hpause = 0, \
-         H2plot = 0, H2debug = 0, H2debreif = 0, H2pause = 0):
+         error = 0, compute_errors = 0, plot = 0, debug = 0, debrief = 0, pause = 0, \
+         Hplot = 0, Hdebug = 0, Hdebrief = 0, Hpause = 0, \
+         H2plot = 0, H2debug = 0, H2debrief = 0, H2pause = 0):  # deleted what i added before dont know what I was thinking?? - GG 2/19, corrected typos
 
         # Input: 
         #	x	- fltarr(nx), cross-field coordinate (meters)
@@ -71,6 +76,29 @@ def KN1D(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
         #
         #     ReadInput - if set, then reset all input variables to that contained in 'file'.KN1D_input
 
+        # Collision options inputted via common block KN1D_collisions (default parameter values is true for all collisions):
+
+        # KN1D_Collisions common block - GG 2/15
+        H2_H2_EL = g.KN1D_Collisions_H2_H2_EL # fixed typo - GG 2/19
+        H2_P_EL = g.KN1D_Collisions_H2_P_EL
+        H2_H_EL = g.KN1D_Collisions_H2_H_EL
+        H2_HP_CX = g.KN1D_Collisions_H2_HP_CX
+        H_H_EL = g.KN1D_Collisions_H_H_E
+        H_P_EL = g.KN1D_Collisions_H_P_EL
+        H_P_CX = g.KN1D_Collisions_H_P_CX
+        Simple_CX = g.KN1D_Collisions_Simple_CX
+
+            # H2_H2_EL	- if set, then include H2 -> H2 elastic self collisions
+            # H2_P_EL	- if set, then include H2 -> H(+) elastic collisions 
+            # H2_H_EL	- if set, then include H2 <-> H elastic collisions 
+            # H2_HP_CX	- if set, then include H2 -> H2(+) charge exchange collisions
+            # H_H_EL	- if set, then include H -> H elastic self collisions
+            # H_P_CX	- if set, then include H -> H(+) charge exchange collisions 
+            # H_P_EL	- if set, then include H -> H(+) elastic collisions 
+            # Simple_CX	- if set, then use CX source option (B): Neutrals are born
+            #              in velocity with a distribution proportional to the local
+            #              ion distribution function. Simple_CX=1 is default.
+
         #   Output:
         #   Molecular info
         #      xH2	- fltarr(nxH2), cross-field coordinate for molecular quantities (meters)
@@ -106,14 +134,26 @@ def KN1D(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
 
         g=global_vars()
 
-        #   set kn1d_internal common block variables here
-        # resets variables to be values from input file 
+        #   KN1D_internal common block - GG 2/15
+        fH_s = g.KN1D_internal_fH_s
+        fH2_s = g.KN1D_internal_fH2_s
+        nH2_s = g.KN1D_internal_nH2_s
+        SpH2_s = g.KN1D_internal_SpH2_s
+        nHP_s = g.KN1D_internal_nHP_s
+        THP_s = g.KN1D_internal_THP_s
+
+        # Set defaults - GG - 2/15
+        interp_debug = 0 
+        max_gen = 100
+        error = 1 # This i think should be moved to the keyword in the call line
+
+         
         # Option: Read input parameters stored in file from previous run
         if ReadInput: 
             input = File
             fp = os.path.exists(input)
             if fp:
-                if debreif:
+                if debrief:
                     print(prompt, ' Reading input variables stored in ', input)
                     if File[ len(File) - 4 : len(File) ] == '.sav':
                         input_dict = sav_read(File, '//Users/Gwen/Desktop/test.nc')
@@ -121,7 +161,9 @@ def KN1D(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
                         input_dict = nc_read(File)
                     else: 
                         if debug:
-                            print(prompt, ' Error reading the file')
+                            print(prompt, ' Error reading the file') # may be missing some statements 
+                            print(prompt, ' finished')
+                            # Press_return
                             return 
             else:
                 try:
@@ -205,7 +247,26 @@ def KN1D(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
         #  Initialize fH and fH2 (these may be over-written by data from and old run below)
         
         if refine: # sets values to previously computed values, maybe we wont do this at least not necessary now - GG
-            pass
+            if fH_s == None: # updated it via common block - GG 2/15
+                fH = np.zeros((nvrA,nvxA,nxH)).T
+            else:
+                fH = fH_s
+            if fH2_s == None: 
+                fH2 = np.zeros((nvrM,nvxM,nxH2)).T
+            else:
+                fH2 = fH2_s
+            if nH2_s == None:
+                nH2 = np.zeros(nxH2)
+            else:
+                nH2 = nH2_s
+            if nHP_s == None:
+                nHP = np.zeros(nxH2)
+            else:
+                nHP = nHP_s
+            if THP_s == None:
+                THP = np.zeros(nxH2)
+            else:
+                THP = THP_s
         else:
             fH = np.zeros((nvrA,nvxA,nxH)).T
             fH2 = np.zeros((nvrM,nvxM,nxH2)).T
@@ -213,8 +274,7 @@ def KN1D(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
             nHP = np.zeros(nxH2)
             THP = np.zeros(nxH2)
          
-         #   Convert pressure (mtorr) to molecular density and flux
-         #   (Currently untested)
+        #   Convert pressure (mtorr) to molecular density and flux
 
         fh2BC=np.zeros((nvxM,nvrM)).T # fixed mistake in defining the array - GG
         DensM=3.537e19*GaugeH2
@@ -223,7 +283,7 @@ def KN1D(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
         vx_shift=np.array([0.0])
         mol=2
         Maxwell=create_shifted_maxwellian(vrM,vxM,Tmaxwell,vx_shift,mu,mol,TnormM)
-        fh2BC[ipM,:]=Maxwell[0,ipM,:]
+        fh2BC[ipM]=Maxwell[0,ipM] # fixed indexing - GG
 
         # Compute NuLoss:
             # NuLoss = Cs/LC
@@ -254,14 +314,11 @@ def KN1D(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
 
         SpH2_hat=SpH2_hat/integ_bl(xH2,SpH2_hat,value_only=1) # not sure if this line is correct
         beta=2/3*GammaxH2BC
-        if refine:
-            pass
-            '''
-            # I commented out the following so that we can discuss how to recall previous calculations 
+        if refine: # readded this section now that we have the internal common block called - GG 2/15
             if SpH2_s!=None:
                 SpH2=SpH2_s # from kn1d_internal common block
             else:
-                SpH2=beta*SpH2_hat'''
+                SpH2=beta*SpH2_hat
         else:
             SpH2=beta*SpH2_hat
         SH2=SpH2
@@ -297,7 +354,7 @@ def KN1D(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
 
         nvrM=vrM.size
         nvxM=vxM.size
-        vr2vx2_ran2=np.zeros((nvxM,nvrM)).T # transposed - GG
+        vr2vx2_ran2=np.zeros((nvrM,nvxM)).T # fixed indexing - GG
 
         mwell=Maxwell[0,:,:] #  variable named 'Max' in original code; changed here to avoid sharing name with built in function
 
@@ -312,7 +369,7 @@ def KN1D(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
             vr2vx2_ran2[:,i]=vrM[i]**2+(vxM-UxHMax/vthM)**2
         THMax=(2*mu*mH)*vthM**2*np.sum(Vr2pidVrM*np.matmul(dVxM,vr2vx2_ran2*fh2BC))/(3*q*nbarHMax)
 
-        if compute_errors and debreif:
+        if compute_errors and debrief:
             print(prompt+'VbarM_error: '+sval(vbarM_error))
             print(prompt+'TWall Maxwellian: '+sval(TMax))
             print(prompt+'TWall Half Maxwellian: '+sval(THMax))
@@ -322,31 +379,219 @@ def KN1D(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
             #   Plotting - will maybe add later
 
         #   Starting back at line 429 from IDL code
-        #   Entry point for fH/fH2 iteration
+            
+        if oldrun:
+            # checks if the previous run satisfies the required conditions 
+            if debrief: 
+                print(prompt, 'Maximum Normalized change in nH2: ', sval(nDelta_nH2))
+            if debrief and pause: 
+                # press_return 
+                return
+            if nDelta_nH2 > truncate: 
+                # goto fH_fH2_iterate I think we will have to make fH_fH2_iterate a function 
+                # since we wont be reading old runs right now I am going to leave this as is 
+                pass
+        else:
+            #   Entry point for fH_fH2 iteration : iterates through solving fh and fh2 until they satisfy boltzmans equation
+            nDelta_nH2 = truncate + 1
+            while nDelta_nH2 > truncate: # Used goto statements in IDL; changed here to while loop
+                if debrief: 
+                    print(prompt, 'Maximum Normalized change in nH2: ', sval(nDelta_nH2))
+                if debrief and pause: 
+                    # press_return
+                    pass
 
-        fh_fh2_iterate=True
-        while fh_fh2_iterate: # Used goto statements in IDL; changed here to while loop
-            if not oldrun:
-                iter+=1
-                if debreif:
+                # iter+=1 I dont think this line is necessary 
+                if debrief:
                     print(prompt+'fH/fH2 Iteration: '+sval(iter))
-                do_warn=5e-3
-                fHM=interp_fvrvxx(fH,vrA,vxA,xH,TnormA,vrM,vxM,xH2,TnormM,do_warn=do_warn) # need to set interp_debug
+                nH2s = nH2
 
+                # interpolate fH data onto H2 mesh: fH -> fHM
+                do_warn=5e-3
+                fHM=interp_fvrvxx(fH,vrA,vxA,xH,TnormA,vrM,vxM,xH2,TnormM,do_warn=do_warn, debug=interp_debug) 
+
+                # Compute fH2 using Kinetic_H2
                 ni_correct=1
                 Compute_H_Source=1
-                H2compute_errors=compute_errors and H2debreif
+                H2compute_errors=compute_errors and H2debrief # is this accurate, how can it be equal to both? - GG 2/15
+                fH2, nHP, THP, nH2, GammaxH2, VxH2, pH2, TH2, qxH2, qxH2_total, Sloss, \
+                    QH2, RxH2, QH2_total, AlbedoH2, WallH2, fSH, SH, SP, SHP, NuE, NuDis = Kinetic_H2(\
+                        vxM, vrM, xH2, TnormM, mu, TiM, TeM, nM, vxiM, fh2BC, GammaxH2BC, NuLoss, PipeDiaM, fHM, SH2, fH2, nH2, TH2, \
+                        truncate=truncate, Simple_CX=Simple_CX, Max_Gen=max_gen, Compute_H_Source=Compute_H_Source, No_Sawada=No_Sawada,\
+                        H2_H2_EL=H2_H2_El,H2_P_EL=H2_P_EL,H2_H_EL=H2_H_EL,H2_HP_CX=H2_HP_CX, ni_correct=ni_correct, ESH=ESH,\
+                        Eaxis=Eaxis,error=H2error,compute_errors=H2compute_errors, plot=H2plot,debug=H2debug,debrief=H2debrief,pause=H2pause)
 
-                #   Calls kinetic_h2 and kinteic_h
-                #   Section skipped for now, as those functions are unfinished
+                # Kinetic_H2_Ouput common block- GG 2/15
+                piH2_xx = g.Kinetic_H2_Output_piH2_xx
+                piH2_yy = g.Kinetic_H2_Output_piH2_yy
+                piH2_zz = g.Kinetic_H2_Output_piH2_zz
+                RxH2CX = g.Kinetic_H2_Output_RxH2CX
+                RxH_H2 = g.Kinetic_H2_Output_RxH_H2
+                RxP_H2 = g.Kinetic_H2_Output_RxP_H2
+                RxW_H2 = g.Kinetic_H2_Output_RxW_H2
+                EH2CX = g.Kinetic_H2_Output_EH2CX
+                EH_H2 = g.Kinetic_H2_Output_EH_H2
+                EP_H2 = g.Kinetic_H2_Output_EP_H2
+                EW_H2 = g.Kinetic_H2_Output_EW_H2
+                Epara_PerpH2_H2 = g.Kinetic_H2_Output_Epara_PerpH2_H2       
 
-            #   Starting back at line 543 from IDL code
-            #   Test for convergence/iterate
-            if debreif:
-                print(prompt+'Maximum Normalized change in nH2: ',sval(nDelta_nH2))
-            if nDelta_nH2 < truncate:
-                fh_fh2_iterate=False
+                # kinetic_h2_moments common block - GG 2/15
+                nH2 = g.Kinetic_H2_H_moments_nH
+                VxH2 = g.Kinetic_H2_H_moments_VxH
+                TH2 = g.Kinetic_H2_H_moments_TH
 
-        error=0
+                # Interpolate H2 data onto H mesh: fH2 -> fH2A, fSH -> fSHA, nHP -> nHPA, THP -> THPA
+                do_warn = 5.0E-3
+                fH2A = interp_fvrvxx(fH2,vrM,vxM,xH2,TnormM,vrA,vxA,xH,TnormA, do_warn=do_warn, debug=interp_debug) 
+                fSHA = interp_fvrvxx(fSH,vrM,vxM,xH2,TnormM,vrA,vxA,xH,TnormA, do_warn=do_warn, debug=interp_debug) 
+                nHPA = interp_scalarx(nHP,xH2,xH, do_warn=do_warn, debug=interp_debug) 
+                THPA = interp_scalarx(THP,xH2,xH, do_warn=do_warn, debug=interp_debug)     
 
-        #   Compute total H flux through crossing limiter radius
+                # Compute fH using Kinetic_H
+                GammaxHBC = 0
+                fHBC = np.zeros((nvrA,nvxA,nxH)).T
+                H2_H2_EL= H2_H_EL # fixed typo - GG 2/19
+                ni_correct = 1
+                Hcompute_errors = compute_errors and Hdebrief
+                fH,nH,GammaxH,VxH,pH,TH,qxH,qxH_total,NetHSource,Sion,QH,RxH,QH_total,AlbedoH,WallH,error = kinetic_h(
+                    vxA,vrA,xH,TnormA,mu,TiA,TeA,nA,vxiA,fHBC,GammaxHBC,PipeDiaA,fH2A,fSHA,nHPA,THPA, fH=fH,\
+                        truncate=truncate, Simple_CX=Simple_CX, Max_Gen=max_gen, Compute_H_Source = Compute_H_Source, \
+                        No_Johnson_Hinnov=No_Johnson_Hinnov, Use_Collrad_Ionization=Use_Collrad_Ionization, No_Recomb=No_Recomb,\
+                        H_H_EL=H_H_EL, H_P_EL=H2_P_EL, H_H2_EL= H2_H2_EL, H_P_CX=H_P_CX, ni_correct=ni_correct, \
+                        error=error, Compute_Errors=Hcompute_errors, plot=Hplot, debug=Hdebug, debrief=Hdebrief, pause=Hpause) # Not sure where some of the keywords are defined
+                
+                # Kinetic_H_Output Common Block 
+                piH_xx = g.Kinetic_H_Output_piH_xx
+                piH_yy = g.Kinetic_H_Output_piH_yy
+                piH_zz = g.Kinetic_H_Output_piH_zz
+                RxHCX = g.Kinetic_H_Output_RxHCX
+                RxH2_H = g.Kinetic_H_Output_RxH2_H
+                RxP_H = g.Kinetic_H_Output_RxP_H
+                RxW_H = g.Kinetic_H_Output_RxW_H
+                EHCX = g.Kinetic_H_Output_EHCX
+                EH2_H = g.Kinetic_H_Output_EH2_H
+                EP_H = g.Kinetic_H_Output_EP_H
+                EW_H = g.Kinetic_H_Output_EW_H
+                Epara_PerpH_H = g.Kinetic_H_Output_Epara_PerpH_H
+                SourceH = g.Kinetic_H_Output_SourceH
+                SRecomb = g.Kinetic_H_Output_SRecomb
+
+                # Kinetic_H_H2_Moments Common Block 
+                nH2 = g.Kinetic_H_H2_Moments_nH2
+                VxH2 = g.Kinetic_H_H2_Moments_VxH2
+                TH2 = g.Kinetic_H_H2_Moments_TH2
+
+                # Interpolate SideWallH data onto H2 mesh: SideWallH -> SideWallHM
+                SideWallHM= interp_scalarx(SideWallH, xH, xH2, do_warn=do_warn, debug=interp_debug)
+                # Adjust SpH2 to achieve net zero hydrogen atom/molecule flux from wall
+                # (See notes "Procedure to adjust the normalization of the molecular source at the 
+                # limiters (SpH2) to attain a net zero atom/molecule flux from wall")
+
+                # Compute SI, GammaH2Wall_minus, and GammaHWall_minus
+                SI = integ_bl(xH2, SpH2, value_only=True)
+                SwallI = integ_bl(xH2,0.5*SideWallHM, value_only = True)
+                GammaH2Wall_minus = AlbedoH2*GammaxH2BC
+                GammaHWall_minus=-GammaxH[0]
+
+                # Compute Epsilon and alphaplus1RH0Dis
+                Epsilon = 2*GammaH2Wall_minus/(SI+SwallI)
+                alphaplus1RH0Dis = GammaHWall_minus/( (1-0.5*Epsilon)*(SI+SwallI)+GammaxH2BC)
+
+                # Compute flux error, EH, and dEHdSI
+                EH=2*GammaxH2[0]-GammaHWall_minus
+                dEHdSI=-Epsilon-alphaplus1RH0Dis*(1-0.5*Epsilon)
+
+                # Option: print normalized flux error
+                nEH=np.abs(EH)/np.max(np.abs( np.array([2*GammaxH2[0],GammaHWall_minus] )))
+                if debrief and compute_errors:
+                    print(prompt, 'Normalized Hydrogen Flux Error: ', sval(nEH))
+                
+                # Compute Adjustment 
+                Delta_SI=-EH/dEHdSI
+                SI=SI+Delta_SI
+
+                # Rescale SpH2 to have new integral value, SI
+                SpH2=SI*SpH2_hat
+                EH_hist=np.array([EH_hist,EH])
+                SI_hist=np.array([SI_hist,SI])
+
+                # Set total H2 source
+                SH2=SpH2+0.5*SideWallHM
+
+                if compute_errors:
+                    _RxH_H2 = interp_scalarx(RxH_H2,xH2, xH, do_warn=do_warn, debug=interp_debug)
+                    DRx=_RxH_H2+RxH2_H
+                    nDRx=np.max(np.abs(DRx))/np.max(np.abs(np.array([_RxH_H2,RxH2_H])))
+                    if debrief:
+                        print(prompt, 'Normalized H2 <-> H Momentum Transfer Error: ', sval(nDRx))
+                Delta_nH2 = np.abs(nH2-nH2s)
+                nDelta_nH2=np.max(Delta_nH2/np.max(nH2))
+        
+        # fH_fH2_done code section  
+        error = 0
+        # Compute total H flux through crossing limiter radius
+        _GammaxH2 = interp_scalarx(GammaxH2, xH2, xH, do_warn=do_warn, debug=interp_debug)
+        Gam=2*_GammaxH2+GammaxH
+        interpfunc = interpolate.interp1d(xH, Gam, fill_value="extrapolate")
+        GammaHLim = interpfunc(xlimiter)
+
+        # Compute positive and negative particle flux contributions
+        gammaxH_plus = np.zeros(nxH)
+        gammaxH_minus = np.zeros(nxH)
+        i_p = np.argwhere(vxA > 0).T 
+        i_n = np.argwhere(vxA < 0).T # changed formatting to avoid confusion with python function in
+        for k in range(0, nxH):
+            gammaxH_plus[k] = vthA * np.sum(Vr2pidVrA, np.dot(fH[k][i_p][:], vxA[i_p] * dVxA[i_p]))
+            gammaxH_minus[k] = vthA * np.sum(Vr2pidVrA, np.dot(fH[k][i_n][:], vxA[i_n] * dVxA[i_n]))
+        
+        gammaxH2_plus = np.zeros(nxH2)
+        gammaxH2_minus = np.zeros(nxH2)
+        i_p = np.argwhere(vxM > 0).T 
+        i_n = np.argwhere(vxM < 0).T
+        for k in range(0, nxH2):
+            gammaxH_plus[k] = vthM * np.sum(Vr2pidVrM, np.dot(fH2[k][i_p][:], vxM[i_p] * dVxM[i_p]))
+            gammaxH_minus[k] = vthM * np.sum(Vr2pidVrM, np.dot(fH2[k][i_n][:], vxM[i_n] * dVxM[i_n]))
+        
+        # Compute Lyman and Balmer
+        Lyman = Lyman_Alpha(nA, TeA, nH, no_null = 1)
+        Balmer = Balmer_Alpha(nA, TeA, nH, no_null = 1)
+
+        fH_s=fH
+        fH2_s=fH2
+        nH2_s=nH2
+        SpH2_s=SpH2
+        nHP_s=nHP
+        THP_s=THP
+
+        #   Update KN1D_internal common block - GG 2/15
+        g.KN1D_internal_fH_s = fH_s 
+        g.KN1D_internal_fH2_s = fH2_s 
+        g.KN1D_internal_nH2_s = nH2_s 
+        g.KN1D_internal_SpH2_s = SpH2_s 
+        g.KN1D_internal_nHP_s = nHP_s
+        g.KN1D_internal_THP_s = THP_s 
+
+        # define variables to save into files 
+        x_s=x
+        GaugeH2_s=GaugeH2
+        mu_s=mu
+        Ti_s=Ti
+        Te_s=Te
+        n_s=n
+        vxi_s=vxi
+        PipeDia_s=PipeDia
+        LC_s=LC
+        xH2_s=xH2
+        vxM_s=vxM
+        vrM_s=vrM
+        TnormM_s=TnormM
+        xH_s=xH
+        vxA_s=vxA
+        vrA_s=vrA
+        TnormA_s=TnormA
+        EH_hist=EH_hist[0:,:] # double check this indexing 
+        SI_hist=SI_hist[0:, :] # double check this indexing 
+
+        # The rest of the code for KN1D is for saving files and plotting which we can implement at a later date 
+        return xH2, nH2, GammaxH2, TH2, qxH2_total, nHP, THP, SH, SP, \
+            xH, nH, GammaxH, TH, qxH_total, NetHSource, Sion, QH_total, SideWallH, Lyman, Balmer

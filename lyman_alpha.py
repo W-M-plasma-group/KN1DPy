@@ -1,6 +1,6 @@
 import numpy as np
 from create_jh_bscoef import Create_JH_BSCoef
-from JHR_Coef import JHR_Coef
+from JHR_coef import JHR_Coef # fixed capitalization - GG
 from NHSaha import NHSaha
 
 #     Computes Lyman-alpha emissivity (watts m^-3) given the local
