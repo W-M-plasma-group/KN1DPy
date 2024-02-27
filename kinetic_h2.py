@@ -415,7 +415,7 @@ def Kinetic_H2(vx, vr, x, Tnorm, mu, Ti, Te, n, vxi, fH2BC, GammaxH2BC, NuLoss, 
         print(prompt, 'x[:] must be increasing with index!')
         error = 1
         return
-    if (n % 2) != 0:
+    if (nvx % 2) != 0:
         print(prompt, 'x[:]] must be increasing with index!')
         error = 1
         return 
@@ -481,8 +481,8 @@ def Kinetic_H2(vx, vr, x, Tnorm, mu, Ti, Te, n, vxi, fH2BC, GammaxH2BC, NuLoss, 
         print(prompt, 'Number of elements in fH2[0][0][:] and vr do not agree!') # come back and double check the error messages 
         error = 1
         return 
-    if len(fH2[0]) != nvr:
-        print(prompt, 'Number of elements in fH2[0][:] and vx do not agree!')
+    if len(fH2[0][:][0]) != nvr: # fixed indexing - GG
+        print(prompt, 'Number of elements in fH2[0][:][0] and vx do not agree!')
         error = 1
         return 
     if len(fH2) != nx: 
@@ -582,7 +582,7 @@ def Kinetic_H2(vx, vr, x, Tnorm, mu, Ti, Te, n, vxi, fH2BC, GammaxH2BC, NuLoss, 
     _R14 = _HH + plus + _Hp + arrow + _Hp + plus + _HH
     _Rn=[' ',_R1,_R2,_R3,_R4,_R5,_R6,_R7,_R8,_R9,_R10,_R11,_R12,_R13,_R14]
 
-    i_n = np.argwher(vx < 0 )
+    i_n = np.argwhere(vx < 0 ) # fixed typo - GG
     count = np.size(i_n)
     if count < 1:
         print(prompt, 'vx contains no negative elements!')

@@ -92,7 +92,7 @@ def interp_fvrvxx(fa,Vra,Vxa,Xa,Tnorma,Vrb,Vxb,Xb,Tnormb,do_warn=None, debug=0, 
         raise Exception('No values of Vxb are within range of Vxa')
     j0,j1=okj[0],okj[-1]
 
-    okk=np.bitwise_and(fV*Xb<=max(Xa),fV*Xb>=min(Xa)).nonzero()[0]
+    okk=np.bitwise_and(Xb<=max(Xa), Xb>=min(Xa)).nonzero()[0] # deleted fV terms because they shouldnt be there - GG
     if okk.size<1:
         raise Exception('No values of Xb are within range of Xa')
     k0,k1=okk[0],okk[-1]
@@ -101,7 +101,7 @@ def interp_fvrvxx(fa,Vra,Vxa,Xa,Tnorma,Vrb,Vxb,Xb,Tnormb,do_warn=None, debug=0, 
     nvxb=Vxb.size
     nxb=Xb.size
 
-    fb=np.zeros(nxb,nvxb,nvrb)
+    fb=np.zeros((nxb,nvxb,nvrb)) # added parenthesis - GG
 
     make_dvr_dvx_out=Make_dVr_dVx(Vra,Vxa)
     Vr2pidVra,VrVr4pidVra,dVxa,vraL,vraR,vxaL,vxaR=make_dvr_dvx_out[:7]
@@ -203,7 +203,7 @@ def interp_fvrvxx(fa,Vra,Vxa,Xa,Tnorma,Vrb,Vxb,Xb,Tnormb,do_warn=None, debug=0, 
     _Ea=np.zeros(nxa)
 
     for k in range(nxa):
-        na[k]=np.sum(Vr2pidVrb*np.matmul(dVxa,fa[k,:,:]))
+        na[k]=np.sum(Vr2pidVra*np.matmul(dVxa,fa[k,:,:])) # fixed typo - GG
         if na[k]>0:
             _Wxa[k]=np.sqrt(Tnorma)*np.sum(Vr2pidVra*np.matmul((Vxa*dVxa),fa[k,:,:]))/na[k]
             _Ea[k]=Tnorma*np.sum(Vr2pidVra*np.matmul(dVxa,(Vra2Vxa2*fa[k,:,:])))/na[k]
