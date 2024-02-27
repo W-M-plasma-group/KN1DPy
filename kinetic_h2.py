@@ -61,7 +61,7 @@ from global_vars import mH, q, k_boltz, Twall
 def Kinetic_H2(vx, vr, x, Tnorm, mu, Ti, Te, n, vxi, fH2BC, GammaxH2BC, NuLoss, PipeDia, fH, SH2,\
                fH2, nHP, THP, \
                truncate = 1.0e-4, Simple_CX = 1, Max_Gen = 50,  Compute_H_Source = 0, \
-               No_Sawada = 0, H2_H2_EL = 0, H2_P_EL = 0, _H2_H_EL = 0, H2_HP_CX = 0, \
+               No_Sawada = 0, H2_H2_EL = 0, H2_P_EL = 0, H2_H_EL = 0, H2_HP_CX = 0, \
                ni_correct = 0, ESH = 0, Eaxis = 0, Compute_Errors = 0,  plot = 0, debug = 0,\
                debrief = 0, pause = 0, g = None):
     
@@ -686,7 +686,7 @@ def Kinetic_H2(vx, vr, x, Tnorm, mu, Ti, Te, n, vxi, fH2BC, GammaxH2BC, NuLoss, 
     
     # Vr^2-2*Vx^2
     for i in range(0, nvr):
-        vr2_2vx2_2D[i][:] = (vr[i] ** 2) - 2 * (vx ** 2)
+        vr2_2vx2_2D[:, i] = (vr[i] ** 2) - 2 * (vx ** 2) # fixed indexing - GG
     
     # Theta-prime Coordinate
     ntheta = 5      # use 5 theta mesh points for theta integration
@@ -696,8 +696,8 @@ def Kinetic_H2(vx, vr, x, Tnorm, mu, Ti, Te, n, vxi, fH2BC, GammaxH2BC, NuLoss, 
 
     # Determine Energy Space Differentials 
     Eaxis = Vth2 * 0.5 * mu * mH * vr ** 2 / q
-    _Eaxis = np.concatenate([Eaxis, 2 * Eaxis[nvr - 1] - Eaxis[nvr - 2]])
-    Eaxis_mid = np.concatenate([ 0.0, 0.5 * ( _Eaxis + np.roll(_Eaxis, -1) ) ])
+    _Eaxis = np.append(Eaxis, 2 * Eaxis[nvr - 1] - Eaxis[nvr - 2]) # changed to append to stop error - GG
+    Eaxis_mid = np.appende(0.0, 0.5 * ( _Eaxis + np.roll(_Eaxis, -1) )) # changed to append to stop error - GG
     dEaxis = np.roll(Eaxis_mid, -1) - Eaxis_mid
     dEaxis = dEaxis[0 : nvr-1]
 
@@ -713,7 +713,7 @@ def Kinetic_H2(vx, vr, x, Tnorm, mu, Ti, Te, n, vxi, fH2BC, GammaxH2BC, NuLoss, 
         fH2[0][i][:] = fH2BC_input[i][:]
     
     # if fh is zero, then turn off elastic H2 <-> H collisions
-    H2_H_EL=_H2_H_EL
+    H2_H_EL=H2_H_EL # fixed typo - GG
     if np.sum(fH) <= 0.0:
         H2_H_EL=0
 
