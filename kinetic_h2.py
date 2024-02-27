@@ -600,20 +600,15 @@ def Kinetic_H2(vx, vr, x, Tnorm, mu, Ti, Te, n, vxi, fH2BC, GammaxH2BC, NuLoss, 
         print(prompt, 'vx contains one or more zero elements!')
         error = 1
         return 
-    for i in i_p:
-        vx_p = vx[i]
-    for i in i_n:
-        vx_n = vx[i]
-    diff = np.argwhere(vx_p != -np.fliplr(vx_n))
+    diff = np.argwhere(vx[i_p] != -np.flipud(vx[i_n])) # fixed how the array is reversed - GG
     count = np.size(diff)
     if count > 0:
         print(prompt, 'vx array elements are not symmetric about zero!')
         error = 1
         return 
-    fH2BC_input = fH2BC
-    fH2BC_input[:]=0.0
+    fH2BC_input = np.zeros(fH2BC.shape) # simplified code - GG
     for i in i_p:
-        fH2BC_input[i][:] = fH2BC[i][:]
+        fH2BC_input[i] = fH2BC[i] # fixed indexing - GG
     test = np.sum(fH2BC_input)
     if test <= 0.0:
         print(prompt, 'Values for fH2BC(*,*) with vx > 0 are all zero!')
@@ -652,14 +647,14 @@ def Kinetic_H2(vx, vr, x, Tnorm, mu, Ti, Te, n, vxi, fH2BC, GammaxH2BC, NuLoss, 
     SH = np.zeros(nx)
     SP = np.zeros(nx)
     SHP = np.zeros(nx)
-    ESH = np.zeros(nvr,nx)
+    ESH = np.zeros((nvr,nx)).T
     Eaxis = np.zeros(nx)
 
     # Internal Varibales 
 
     Work = np.zeros(nvr * nvx)
-    fH2G = np.zeros(nvr,nvx,nx).T
-    NH2G = np.zeros(nx, Max_Gen + 1).T
+    fH2G = np.zeros((nvr,nvx,nx)).T
+    NH2G = np.zeros((nx, Max_Gen + 1)).T 
     Vth = np.sqrt(2 * q * Tnorm / (mu * mH))
     Vth2 = Vth * Vth
     Vth3 = Vth2 * Vth
