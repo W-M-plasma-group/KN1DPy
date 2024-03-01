@@ -408,7 +408,7 @@ def KN1D(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
 
                 # interpolate fH data onto H2 mesh: fH -> fHM
                 do_warn=5e-3
-                fHM=interp_fvrvxx(fH,vrA,vxA,xH,TnormA,vrM,vxM,xH2,TnormM,do_warn=do_warn, debug=interp_debug) 
+                fHM=interp_fvrvxx(fH,vrA,vxA,xH,TnormA,vrM,vxM,xH2,TnormM,do_warn=do_warn, debug=interp_debug, g=g) 
 
                 # Compute fH2 using Kinetic_H2
                 ni_correct=1
@@ -417,9 +417,9 @@ def KN1D(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
                 fH2, nHP, THP, nH2, GammaxH2, VxH2, pH2, TH2, qxH2, qxH2_total, Sloss, \
                     QH2, RxH2, QH2_total, AlbedoH2, WallH2, fSH, SH, SP, SHP, NuE, NuDis = Kinetic_H2(\
                         vxM, vrM, xH2, TnormM, mu, TiM, TeM, nM, vxiM, fh2BC, GammaxH2BC, NuLoss, PipeDiaM, fHM, SH2, fH2, nH2, TH2, \
-                        truncate=truncate, Simple_CX=Simple_CX, Max_Gen=max_gen, Compute_H_Source=Compute_H_Source, No_Sawada=No_Sawada,\
-                        H2_H2_EL=H2_H2_El,H2_P_EL=H2_P_EL,H2_H_EL=H2_H_EL,H2_HP_CX=H2_HP_CX, ni_correct=ni_correct, ESH=ESH,\
-                        Eaxis=Eaxis,error=H2error,compute_errors=H2compute_errors, plot=H2plot,debug=H2debug,debrief=H2debrief,pause=H2pause)
+                        truncate=truncate, Simple_CX=Simple_CX, Max_Gen=max_gen, Compute_H_Source=Compute_H_Source,\
+                        H2_H2_EL=H2_H2_EL,H2_P_EL=H2_P_EL,H2_H_EL=H2_H_EL,H2_HP_CX=H2_HP_CX, ni_correct=ni_correct,\
+                        compute_errors=H2compute_errors, plot=H2plot,debug=H2debug,debrief=H2debrief,pause=H2pause, g=g) # fixed inputs - GG 2/26
 
                 # Kinetic_H2_Ouput common block- GG 2/15
                 piH2_xx = g.Kinetic_H2_Output_piH2_xx
@@ -442,8 +442,8 @@ def KN1D(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
 
                 # Interpolate H2 data onto H mesh: fH2 -> fH2A, fSH -> fSHA, nHP -> nHPA, THP -> THPA
                 do_warn = 5.0E-3
-                fH2A = interp_fvrvxx(fH2,vrM,vxM,xH2,TnormM,vrA,vxA,xH,TnormA, do_warn=do_warn, debug=interp_debug) 
-                fSHA = interp_fvrvxx(fSH,vrM,vxM,xH2,TnormM,vrA,vxA,xH,TnormA, do_warn=do_warn, debug=interp_debug) 
+                fH2A = interp_fvrvxx(fH2,vrM,vxM,xH2,TnormM,vrA,vxA,xH,TnormA, do_warn=do_warn, debug=interp_debug, g=g) 
+                fSHA = interp_fvrvxx(fSH,vrM,vxM,xH2,TnormM,vrA,vxA,xH,TnormA, do_warn=do_warn, debug=interp_debug, g=g) 
                 nHPA = interp_scalarx(nHP,xH2,xH, do_warn=do_warn, debug=interp_debug) 
                 THPA = interp_scalarx(THP,xH2,xH, do_warn=do_warn, debug=interp_debug)     
 
@@ -458,7 +458,7 @@ def KN1D(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
                         truncate=truncate, Simple_CX=Simple_CX, Max_Gen=max_gen, Compute_H_Source = Compute_H_Source, \
                         No_Johnson_Hinnov=No_Johnson_Hinnov, Use_Collrad_Ionization=Use_Collrad_Ionization, No_Recomb=No_Recomb,\
                         H_H_EL=H_H_EL, H_P_EL=H2_P_EL, H_H2_EL= H2_H2_EL, H_P_CX=H_P_CX, ni_correct=ni_correct, \
-                        error=error, Compute_Errors=Hcompute_errors, plot=Hplot, debug=Hdebug, debrief=Hdebrief, pause=Hpause) # Not sure where some of the keywords are defined
+                        error=error, Compute_Errors=Hcompute_errors, plot=Hplot, debug=Hdebug, debrief=Hdebrief, pause=Hpause, g=g) # Not sure where some of the keywords are defined
                 
                 # Kinetic_H_Output Common Block 
                 piH_xx = g.Kinetic_H_Output_piH_xx
@@ -553,8 +553,8 @@ def KN1D(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
             gammaxH_minus[k] = vthM * np.sum(Vr2pidVrM, np.dot(fH2[k][i_n][:], vxM[i_n] * dVxM[i_n]))
         
         # Compute Lyman and Balmer
-        Lyman = Lyman_Alpha(nA, TeA, nH, no_null = 1)
-        Balmer = Balmer_Alpha(nA, TeA, nH, no_null = 1)
+        Lyman = Lyman_Alpha(nA, TeA, nH, no_null = 1, g=g)
+        Balmer = Balmer_Alpha(nA, TeA, nH, no_null = 1, g=g)
 
         fH_s=fH
         fH2_s=fH2
