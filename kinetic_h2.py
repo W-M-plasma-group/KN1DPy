@@ -61,7 +61,7 @@ from global_vars import mH, q, k_boltz, Twall
 def Kinetic_H2(vx, vr, x, Tnorm, mu, Ti, Te, n, vxi, fH2BC, GammaxH2BC, NuLoss, PipeDia, fH, SH2,\
                fH2, nHP, THP, \
                truncate = 1.0e-4, Simple_CX = 1, Max_Gen = 50,  Compute_H_Source = 0, \
-               No_Sawada = 0, H2_H2_EL = 0, H2_P_EL = 0, _H2_H_EL = 0, H2_HP_CX = 0, \
+               No_Sawada = 0, H2_H2_EL = 0, H2_P_EL = 0, H2_H_EL = 0, H2_HP_CX = 0, \
                ni_correct = 0, ESH = 0, Eaxis = 0, Compute_Errors = 0,  plot = 0, debug = 0,\
                debrief = 0, pause = 0, g = None):
     
@@ -415,7 +415,7 @@ def Kinetic_H2(vx, vr, x, Tnorm, mu, Ti, Te, n, vxi, fH2BC, GammaxH2BC, NuLoss, 
         print(prompt, 'x[:] must be increasing with index!')
         error = 1
         return
-    if (n % 2) != 0:
+    if (nvx % 2) != 0:
         print(prompt, 'x[:]] must be increasing with index!')
         error = 1
         return 
@@ -481,8 +481,8 @@ def Kinetic_H2(vx, vr, x, Tnorm, mu, Ti, Te, n, vxi, fH2BC, GammaxH2BC, NuLoss, 
         print(prompt, 'Number of elements in fH2[0][0][:] and vr do not agree!') # come back and double check the error messages 
         error = 1
         return 
-    if len(fH2[0]) != nvr:
-        print(prompt, 'Number of elements in fH2[0][:] and vx do not agree!')
+    if len(fH2[0][:][0]) != nvr: # fixed indexing - GG
+        print(prompt, 'Number of elements in fH2[0][:][0] and vx do not agree!')
         error = 1
         return 
     if len(fH2) != nx: 
@@ -582,7 +582,7 @@ def Kinetic_H2(vx, vr, x, Tnorm, mu, Ti, Te, n, vxi, fH2BC, GammaxH2BC, NuLoss, 
     _R14 = _HH + plus + _Hp + arrow + _Hp + plus + _HH
     _Rn=[' ',_R1,_R2,_R3,_R4,_R5,_R6,_R7,_R8,_R9,_R10,_R11,_R12,_R13,_R14]
 
-    i_n = np.argwher(vx < 0 )
+    i_n = np.argwhere(vx < 0 ) # fixed typo - GG
     count = np.size(i_n)
     if count < 1:
         print(prompt, 'vx contains no negative elements!')
@@ -600,20 +600,15 @@ def Kinetic_H2(vx, vr, x, Tnorm, mu, Ti, Te, n, vxi, fH2BC, GammaxH2BC, NuLoss, 
         print(prompt, 'vx contains one or more zero elements!')
         error = 1
         return 
-    for i in i_p:
-        vx_p = vx[i]
-    for i in i_n:
-        vx_n = vx[i]
-    diff = np.argwhere(vx_p != -np.fliplr(vx_n))
+    diff = np.argwhere(vx[i_p] != -np.flipud(vx[i_n])) # fixed how the array is reversed - GG
     count = np.size(diff)
     if count > 0:
         print(prompt, 'vx array elements are not symmetric about zero!')
         error = 1
         return 
-    fH2BC_input = fH2BC
-    fH2BC_input[:]=0.0
+    fH2BC_input = np.zeros(fH2BC.shape) # simplified code - GG
     for i in i_p:
-        fH2BC_input[i][:] = fH2BC[i][:]
+        fH2BC_input[i] = fH2BC[i] # fixed indexing - GG
     test = np.sum(fH2BC_input)
     if test <= 0.0:
         print(prompt, 'Values for fH2BC(*,*) with vx > 0 are all zero!')
@@ -652,14 +647,14 @@ def Kinetic_H2(vx, vr, x, Tnorm, mu, Ti, Te, n, vxi, fH2BC, GammaxH2BC, NuLoss, 
     SH = np.zeros(nx)
     SP = np.zeros(nx)
     SHP = np.zeros(nx)
-    ESH = np.zeros(nvr,nx)
+    ESH = np.zeros((nvr,nx)).T
     Eaxis = np.zeros(nx)
 
     # Internal Varibales 
 
     Work = np.zeros(nvr * nvx)
-    fH2G = np.zeros(nvr,nvx,nx).T
-    NH2G = np.zeros(nx, Max_Gen + 1).T
+    fH2G = np.zeros((nvr,nvx,nx)).T
+    NH2G = np.zeros((nx, Max_Gen + 1)).T 
     Vth = np.sqrt(2 * q * Tnorm / (mu * mH))
     Vth2 = Vth * Vth
     Vth3 = Vth2 * Vth
@@ -691,7 +686,7 @@ def Kinetic_H2(vx, vr, x, Tnorm, mu, Ti, Te, n, vxi, fH2BC, GammaxH2BC, NuLoss, 
     
     # Vr^2-2*Vx^2
     for i in range(0, nvr):
-        vr2_2vx2_2D[i][:] = (vr[i] ** 2) - 2 * (vx ** 2)
+        vr2_2vx2_2D[:, i] = (vr[i] ** 2) - 2 * (vx ** 2) # fixed indexing - GG
     
     # Theta-prime Coordinate
     ntheta = 5      # use 5 theta mesh points for theta integration
@@ -701,8 +696,8 @@ def Kinetic_H2(vx, vr, x, Tnorm, mu, Ti, Te, n, vxi, fH2BC, GammaxH2BC, NuLoss, 
 
     # Determine Energy Space Differentials 
     Eaxis = Vth2 * 0.5 * mu * mH * vr ** 2 / q
-    _Eaxis = np.concatenate([Eaxis, 2 * Eaxis[nvr - 1] - Eaxis[nvr - 2]])
-    Eaxis_mid = np.concatenate([ 0.0, 0.5 * ( _Eaxis + np.roll(_Eaxis, -1) ) ])
+    _Eaxis = np.append(Eaxis, 2 * Eaxis[nvr - 1] - Eaxis[nvr - 2]) # changed to append to stop error - GG
+    Eaxis_mid = np.appende(0.0, 0.5 * ( _Eaxis + np.roll(_Eaxis, -1) )) # changed to append to stop error - GG
     dEaxis = np.roll(Eaxis_mid, -1) - Eaxis_mid
     dEaxis = dEaxis[0 : nvr-1]
 
@@ -718,7 +713,7 @@ def Kinetic_H2(vx, vr, x, Tnorm, mu, Ti, Te, n, vxi, fH2BC, GammaxH2BC, NuLoss, 
         fH2[0][i][:] = fH2BC_input[i][:]
     
     # if fh is zero, then turn off elastic H2 <-> H collisions
-    H2_H_EL=_H2_H_EL
+    H2_H_EL=H2_H_EL # fixed typo - GG
     if np.sum(fH) <= 0.0:
         H2_H_EL=0
 
