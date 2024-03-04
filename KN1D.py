@@ -76,6 +76,8 @@ def KN1D(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
         #
         #     ReadInput - if set, then reset all input variables to that contained in 'file'.KN1D_input
 
+        g=global_vars() # moved global_vars decleration up
+
         # Collision options inputted via common block KN1D_collisions (default parameter values is true for all collisions):
 
         # KN1D_Collisions common block - GG 2/15
@@ -83,7 +85,7 @@ def KN1D(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
         H2_P_EL = g.KN1D_Collisions_H2_P_EL
         H2_H_EL = g.KN1D_Collisions_H2_H_EL
         H2_HP_CX = g.KN1D_Collisions_H2_HP_CX
-        H_H_EL = g.KN1D_Collisions_H_H_E
+        H_H_EL = g.KN1D_Collisions_H_H_EL
         H_P_EL = g.KN1D_Collisions_H_P_EL
         H_P_CX = g.KN1D_Collisions_H_P_CX
         Simple_CX = g.KN1D_Collisions_Simple_CX
@@ -132,7 +134,7 @@ def KN1D(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
         #global xH2,TiM,TeM,nM,PipeDiaM,vxM,vrM,TnormM,xH,TiA,TeA,nA,PipeDiaA,vxA,vrA,TnormA # necessary for setting variables from input_dict (lines 132-133) - nh
         #   Note that these are global to this file only, they are not used / cannot be called in other files
 
-        g=global_vars()
+        
 
         #   KN1D_internal common block - GG 2/15
         fH_s = g.KN1D_internal_fH_s
@@ -276,7 +278,7 @@ def KN1D(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
          
         #   Convert pressure (mtorr) to molecular density and flux
 
-        fh2BC=np.zeros((nvxM,nvrM)).T # fixed mistake in defining the array - GG
+        fh2BC=np.zeros((nvxM,nvrM)) # fixed mistake in defining the array - GG
         DensM=3.537e19*GaugeH2
         GammaxH2BC=0.25*DensM*v0_bar
         Tmaxwell=np.array([Twall]) # changed list to numpy array 
@@ -416,10 +418,10 @@ def KN1D(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
                 H2compute_errors=compute_errors and H2debrief # is this accurate, how can it be equal to both? - GG 2/15
                 fH2, nHP, THP, nH2, GammaxH2, VxH2, pH2, TH2, qxH2, qxH2_total, Sloss, \
                     QH2, RxH2, QH2_total, AlbedoH2, WallH2, fSH, SH, SP, SHP, NuE, NuDis = Kinetic_H2(\
-                        vxM, vrM, xH2, TnormM, mu, TiM, TeM, nM, vxiM, fh2BC, GammaxH2BC, NuLoss, PipeDiaM, fHM, SH2, fH2, nH2, TH2, \
+                        vxM, vrM, xH2, TnormM, mu, TiM, TeM, nM, vxiM, fh2BC, GammaxH2BC, NuLoss, PipeDiaM, fHM, SH2, fH2, nH2, THP, \
                         truncate=truncate, Simple_CX=Simple_CX, Max_Gen=max_gen, Compute_H_Source=Compute_H_Source,\
                         H2_H2_EL=H2_H2_EL,H2_P_EL=H2_P_EL,H2_H_EL=H2_H_EL,H2_HP_CX=H2_HP_CX, ni_correct=ni_correct,\
-                        compute_errors=H2compute_errors, plot=H2plot,debug=H2debug,debrief=H2debrief,pause=H2pause, g=g) # fixed inputs - GG 2/26
+                        Compute_Errors=H2compute_errors, plot=H2plot,debug=H2debug,debrief=H2debrief,pause=H2pause, g=g) # fixed inputs - GG 2/26
 
                 # Kinetic_H2_Ouput common block- GG 2/15
                 piH2_xx = g.Kinetic_H2_Output_piH2_xx
@@ -453,10 +455,9 @@ def KN1D(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
                 H2_H2_EL= H2_H_EL # fixed typo - GG 2/19
                 ni_correct = 1
                 Hcompute_errors = compute_errors and Hdebrief
-                fH,nH,GammaxH,VxH,pH,TH,qxH,qxH_total,NetHSource,Sion,QH,RxH,QH_total,AlbedoH,WallH,error = kinetic_h(
+                fH,nH,GammaxH,VxH,pH,TH,qxH,qxH_total,NetHSource,Sion,QH,RxH,QH_total,AlbedoH,SideWallH,error = kinetic_h(
                     vxA,vrA,xH,TnormA,mu,TiA,TeA,nA,vxiA,fHBC,GammaxHBC,PipeDiaA,fH2A,fSHA,nHPA,THPA, fH=fH,\
                         truncate=truncate, Simple_CX=Simple_CX, Max_Gen=max_gen, Compute_H_Source = Compute_H_Source, \
-                        No_Johnson_Hinnov=No_Johnson_Hinnov, Use_Collrad_Ionization=Use_Collrad_Ionization, No_Recomb=No_Recomb,\
                         H_H_EL=H_H_EL, H_P_EL=H2_P_EL, H_H2_EL= H2_H2_EL, H_P_CX=H_P_CX, ni_correct=ni_correct, \
                         error=error, Compute_Errors=Hcompute_errors, plot=Hplot, debug=Hdebug, debrief=Hdebrief, pause=Hpause, g=g) # Not sure where some of the keywords are defined
                 
