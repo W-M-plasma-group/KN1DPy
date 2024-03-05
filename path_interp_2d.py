@@ -28,4 +28,7 @@ def path_interp_2d(p,px,py,x,y):
   ix=interpolate.interp1d(px,ipx)(x)
   iy=interpolate.interp1d(py,ipy)(y)
 
-  return interpolate.interp1d(p,ix)(iy)
+  # mimic IDL interpolate function - there's probably an easier way to get the same values
+  interpfunc=interpolate.RectBivariateSpline(np.arange(p.shape[0]),np.arange(p.shape[1]),p,kx=min(p.shape[0]-1,3),ky=min(p.shape[1]-1,3))
+  out_array=interpfunc(ix,iy)
+  return np.diagonal(out_array)
