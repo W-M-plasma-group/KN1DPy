@@ -710,7 +710,7 @@ def Kinetic_H2(vx, vr, x, Tnorm, mu, Ti, Te, n, vxi, fH2BC, GammaxH2BC, NuLoss, 
     if abs(ratio -1) > 0.01 * truncate:
         fH2BC=fH2BC_input
     for i in i_p:
-        fH2[0][i][:] = fH2BC_input[i][:]
+        fH2[0][i] = fH2BC_input[i]
     
     # if fh is zero, then turn off elastic H2 <-> H collisions
     H2_H_EL=H2_H_EL # fixed typo - GG
@@ -1036,6 +1036,13 @@ def Kinetic_H2(vx, vr, x, Tnorm, mu, Ti, Te, n, vxi, fH2BC, GammaxH2BC, NuLoss, 
             Alpha_H2_H[k] = np.dot(SIG_H2_H, Work)
         
     # Compute nH2
+    for k in range(0, nx):
+        nH2[k] = np.sum(Vr2pidVr * np.dot(dVx, fH2[k]))
+
+    if New_H2_Seed:
+        MH2_H2_sum = np.zeros((nvr,nvx,nx)).T
+        Delta_nH2s = 1.0
+
     gamma_wall = np.zeros((nvr, nvx, nx)).T
     for k in range(0, nx):
         if PipeDia[k] > 0.0:
@@ -1264,7 +1271,7 @@ def Kinetic_H2(vx, vr, x, Tnorm, mu, Ti, Te, n, vxi, fH2BC, GammaxH2BC, NuLoss, 
         fH2_done()
     fH2_done = 0 # I am not sure if this is correct because fH2_done is a function, but I'm not sure what the intention of the original IDL code was so I don't know how to change it - GG
     
-    def next_generation():
+    def next_generation(igen, Max_Gen, debrief, prompt):
         if igen+1 > Max_Gen: 
             if debrief > 1:
                 print(prompt,'Completed ', sval(Max_Gen), ' generations. Returning present solution...')
@@ -1272,7 +1279,7 @@ def Kinetic_H2(vx, vr, x, Tnorm, mu, Ti, Te, n, vxi, fH2BC, GammaxH2BC, NuLoss, 
             igen = igen + 1
             if debrief > 0: 
                 print(prompt, 'Computing molecular neutral generation#', sval(igen))
-    next_generation()
+    next_generation(igen, Max_Gen, debrief, prompt)
     
     #Compute Swall from previous generation
     Swall = np.zeros((nvr, nvx, nx)).T
@@ -1280,7 +1287,7 @@ def Kinetic_H2(vx, vr, x, Tnorm, mu, Ti, Te, n, vxi, fH2BC, GammaxH2BC, NuLoss, 
         if debrief > 1:
             print(prompt, 'Computing Swall')
         for k in range(0, nx - 1): 
-            Swall[k] = fw_hat * np.sum(Vr2pidVr * np.dot(gamma_wall[k]*fH2G[k], dVx))
+            Swall[k] = fw_hat * np.sum(Vr2pidVr * np.dot(dVx, gamma_wall[k]*fH2G[k]))
         #Sum wall collision source over all generations
         Swall_sum = Swall_sum + Swall 
 
@@ -1293,7 +1300,7 @@ def Kinetic_H2(vx, vr, x, Tnorm, mu, Ti, Te, n, vxi, fH2BC, GammaxH2BC, NuLoss, 
             # Option (B): Compute charge exchange source with assumption that CX source neutrals have 
             # molecular ion distribution function
             for k in range(0, nx-1): 
-                Beta_CX[k] = fHp_hat[k] * np.sum(Vr2pidVr * np.dot(alpha_cx[k]*fH2G[k], dVx))
+                Beta_CX[k] = fHp_hat[k] * np.sum(Vr2pidVr * np.dot(dVx, alpha_cx[k]*fH2G[k]))
         else: 
             # Option (A): Compute charge exchange source using fH2 and vr x sigma x v_v at each velocity mesh point
             for k in range(0, nx -1):
@@ -1310,10 +1317,10 @@ def Kinetic_H2(vx, vr, x, Tnorm, mu, Ti, Te, n, vxi, fH2BC, GammaxH2BC, NuLoss, 
     if H2_H2_EL or H2_P_EL or H2_H_EL:
         # Compute VxH2G, TH2G
         for k in range(0, nx - 1):
-            VxH2G[k] = Vth * np.sum(Vr2pidVr * np.dot(fH2G[k], vx * dVx)) / NH2G[igen - 1, k]
+            VxH2G[k] = Vth * np.sum(Vr2pidVr * np.dot(vx * dVx, fH2G[k])) / NH2G[igen - 1, k]
             for i in range(0, nvr - 1):
                 vr2vx2_ran2[:,i] = vr[i]**2 + (vx - VxH2G[k]/Vth)**2
-            TH2G[k] = (2 * mu * mH) * Vth2 * np.sum(Vr2pidVr * (np.dot(vr2vx2_ran2 * fH2G[k], dVx)))/(3 * q * NH2G[igen - 1, k])
+            TH2G[k] = (2 * mu * mH) * Vth2 * np.sum(Vr2pidVr * (np.dot(dVx, vr2vx2_ran2 * fH2G[k])))/(3 * q * NH2G[igen - 1, k])
         if H2_H2_EL:
             if debrief > 1: 
                 print(prompt, 'Computing MH2_H2')
@@ -1321,7 +1328,9 @@ def Kinetic_H2(vx, vr, x, Tnorm, mu, Ti, Te, n, vxi, fH2BC, GammaxH2BC, NuLoss, 
             vx_shift = VxH2G
             Tmaxwell = TH2G
             mol = 2
-            create_shifted_maxwellian_include()
+            Maxwell = create_shifted_maxwellian_include(vr,vx,Tnorm,vx_shift,Tmaxwell,shifted_Maxwellian_debug,mu,mol,
+                                      nx,nvx,nvr,Vth,Vth2,Maxwell,vr2vx2_ran2,
+                                      Vr2pidVr,dVx,vol,Vth_DeltaVx,Vx_DeltaVx,Vr_DeltaVr,vr2_2vx2_2D,jpa,jpb,jna,jnb)
             for k in range(0, nx-1):
                 MH2_H2[k] = Maxwell[k] * NH2G[igen - 1, k]
                 OmegaM[k] = OmegaM[k] + Omega_H2_H2[k] * MH2_H2[k]
@@ -1333,7 +1342,9 @@ def Kinetic_H2(vx, vr, x, Tnorm, mu, Ti, Te, n, vxi, fH2BC, GammaxH2BC, NuLoss, 
             vx_shift = (2 * VxH2G + vxi)/3
             Tmaxwell = TH2G + (4/9) * (Ti - TH2G + mu * mH * (vxi - VxH2G)**2 / (6*q))
             mol = 2
-            create_shifted_maxwellian_include()
+            Maxwell = create_shifted_maxwellian_include(vr,vx,Tnorm,vx_shift,Tmaxwell,shifted_Maxwellian_debug,mu,mol,
+                                      nx,nvx,nvr,Vth,Vth2,Maxwell,vr2vx2_ran2,
+                                      Vr2pidVr,dVx,vol,Vth_DeltaVx,Vx_DeltaVx,Vr_DeltaVr,vr2_2vx2_2D,jpa,jpb,jna,jnb)
             for k in range(0, nx - 1):
                 MH2_P[k] = Maxwell[k] * NH2G[igen - 1, k]
                 OmegaM[k] = OmegaM[k] + Omega_H2_P[k] * MH2_P[k]
@@ -1345,7 +1356,9 @@ def Kinetic_H2(vx, vr, x, Tnorm, mu, Ti, Te, n, vxi, fH2BC, GammaxH2BC, NuLoss, 
             vx_shift = (2 * VxH2G * VxH)/3
             Tmaxwell = TH2G + (4/9) * (TH - TH2G + mu * mH * (VxH - VxH2G)**2 / (6*q))
             mol = 2
-            create_shifted_maxwellian_include()
+            create_shifted_maxwellian_include(vr,vx,Tnorm,vx_shift,Tmaxwell,shifted_Maxwellian_debug,mu,mol,
+                                      nx,nvx,nvr,Vth,Vth2,Maxwell,vr2vx2_ran2,
+                                      Vr2pidVr,dVx,vol,Vth_DeltaVx,Vx_DeltaVx,Vr_DeltaVr,vr2_2vx2_2D,jpa,jpb,jna,jnb)
             for k in range(0, nx - 1):
                 MH2_H[k] = Maxwell[k] * NH2G[igen - 1, k]
                 OmegaM[k] = OmegaM[k] + Omega_H2_H[k] * MH2_H[k]
@@ -1360,7 +1373,7 @@ def Kinetic_H2(vx, vr, x, Tnorm, mu, Ti, Te, n, vxi, fH2BC, GammaxH2BC, NuLoss, 
         fH2G[k - 1, i_n] = Ck[k, i_n] * fH2G[k, i_n]\
         + Dk[k, i_n] * (Swall[k - 1, i_n] + Beta_CX[k - 1, i_n] + OmegaM[k - 1, i_n] + Swall[k, i_n] + Beta_CX[k, i_n] + OmegaM[k, i_n])
     for k in range(0, nx - 1):
-        NH2G[k, igen] = np.sum(Vr2pidVr * np.dot(fH2G[k], dVx))
+        NH2G[k, igen] = np.sum(Vr2pidVr * np.dot(dVx, fH2G[k]))
 
     if plot > 1:
         fH21d = np.zeros((nvx, nx)).T
@@ -1390,21 +1403,21 @@ def Kinetic_H2(vx, vr, x, Tnorm, mu, Ti, Te, n, vxi, fH2BC, GammaxH2BC, NuLoss, 
     if fH2_iterate:
         # If fH2 'seed' is being iterated, then do another generation until the 'generation error'
         # is less than 0.003 times the 'seed error' or is less than TRUNCATE
-        if (Delta_nH2G < 0.003 * Delta_nH2s) or (Delta_nH2G < truncate):
+        if (Delta_nH2G < 0.003 * Delta_nH2s) or (Delta_nH2G < truncate): 
             fH2_done() # added fH2_done - GG
         
     # If fH2 'seed' is NOT being iterated, then do another generation unitl the 'generation error'
     # is less than parameter TRUNCATE
     elif Delta_nH2G < truncate:
         fH2_done() # added fH2_done - GG
-    next_generation() # Come back and double check this function later 
+    next_generation(igen, Max_Gen, debrief, prompt) # Come back and double check this function later 
 
     # Compute H2 density profile
     for k in range(0, nx - 1):
-        nH2[k] = np.sum(Vr2pidVr * (np.dot(fH2[k,:], dVx)))
+        nH2[k] = np.sum(Vr2pidVr * (dVx, np.dot(fH2[k,:])))
     # GammaxH2 - particle flux in x direction
     for k in range(0, nx -1):
-        GammaxH2[k] = Vth * np.sum(Vr2pidVr * np.dot(fH2[k,:], vx * dVx))
+        GammaxH2[k] = Vth * np.sum(Vr2pidVr * np.dot(vx * dVx, fH2[k,:]))
     # VxH2 - x velocity
     VxH2 = GammaxH2 / nH2
     _VxH2 = VxH2 / Vth 
@@ -1415,11 +1428,12 @@ def Kinetic_H2(vx, vr, x, Tnorm, mu, Ti, Te, n, vxi, fH2BC, GammaxH2BC, NuLoss, 
         vr2vx2_ran[k, :, i] = vr[i]**2 + (vx - _VxH2[k])**2
     # pH2 - pressure 
     for k in range(0, nx - 1):
-        pH2[k] = (2 * mu * mH) * Vth2 * np.sum(Vr2pidVr * np.dot(vr2vx2_ran[k] * fH2[k])) / (3 * q)
+        pH2[k] = (2 * mu * mH) * Vth2 * np.sum(Vr2pidVr * np.dot(dVx, vr2vx2_ran[k] * fH2[k])) / (3 * q)
     #TH2 - temperature 
     TH2 = pH2 / nH2   
     # Compute NuDis - Dissociation frequency 
-    NuDis = n * np.sum(sigv[10:7, :], 2) # not sure if I did this correctly 
+
+    NuDis = n * np.sum(sigv[7:10], 0) # the indexing could be wrong here 
     # Compute NuE (assume np=ne) - Energy equilibration frequency H(+) <-> H2(+)
     NuE = 7.7e-7 * n * 1.0e-6 / np.sqrt(mu) * Ti**1.5 
     # Compute H2(+) density profile
@@ -1438,7 +1452,7 @@ def Kinetic_H2(vx, vr, x, Tnorm, mu, Ti, Te, n, vxi, fH2BC, GammaxH2BC, NuLoss, 
     Swall = np.zeros((nvr, nvx, nx)).T
     if np.sum(gamma_wall) > 0:
         for k in range(0, nx - 1):
-            Swall[k] = fw_hat * np.sum(Vr2pidVr * np.dot(gamma_wall[k, :] * fH2G[k, :], dVx))
+            Swall[k] = fw_hat * np.sum(Vr2pidVr * np.dot(dVx, gamma_wall[k, :] * fH2G[k, :]))
             Swall_sum = Swall_sum + Swall 
     
     # Update Beta_CX_sum using last generation
@@ -1450,7 +1464,7 @@ def Kinetic_H2(vx, vr, x, Tnorm, mu, Ti, Te, n, vxi, fH2BC, GammaxH2BC, NuLoss, 
             # Option (B): Compute charge exchange source with assumption that CX source neutrals have
             # molecular ion distribution function
             for k in range(0, nx - 1):
-                Beta_CX[k, :] = fHp_hat[k, :] * np.sum(Vr2pidVr * np.dot(alpha_cx[k] * fH2G[k], dVx))
+                Beta_CX[k, :] = fHp_hat[k, :] * np.sum(Vr2pidVr * np.dot(dVx, alpha_cx[k] * fH2G[k]))
         else:
             # Option (A): Compute charge exchange source using fH2 and vr x sigma x v_v at each velocity mesh point
             for k in range(0, nx - 1):
@@ -1466,10 +1480,10 @@ def Kinetic_H2(vx, vr, x, Tnorm, mu, Ti, Te, n, vxi, fH2BC, GammaxH2BC, NuLoss, 
     if H2_H2_EL or H2_P_EL or H2_H2_EL: 
         # Compute VxH2G, TH2G
         for k in range( 0, nx - 1):
-            VxH2G[k] = Vth * np.sum(Vr2pidVr * np.dot(fH2G[k], vx * dVx)) / NH2G[igen, k]
+            VxH2G[k] = Vth * np.sum(Vr2pidVr * np.dot(vx * dVx, fH2G[k])) / NH2G[igen, k]
             for i in range(0, nvr - 1):
                 vr2vx2_ran2[:, i] = vr[i]**2 + (vx - VxH2G[k]/Vth)**2
-            TH2G = (2 * mu * mH) * Vth2 * np.sum(Vr2pidVr * np.dot(vr2vx2_ran2 * fH2G[k], dVx)) / (3 * q * NH2G[igen, k])
+            TH2G = (2 * mu * mH) * Vth2 * np.sum(Vr2pidVr * np.dot( dVx, vr2vx2_ran2 * fH2G[k])) / (3 * q * NH2G[igen, k])
         if H2_H2_EL:
             if debrief > 1: 
                 print(prompt, 'Computing MH2_H2')
@@ -1477,7 +1491,9 @@ def Kinetic_H2(vx, vr, x, Tnorm, mu, Ti, Te, n, vxi, fH2BC, GammaxH2BC, NuLoss, 
             vx_shift = VxH2G
             Tmaxwell = TH2G
             mol = 2
-            create_shifted_maxwellian_include()
+            create_shifted_maxwellian_include(vr,vx,Tnorm,vx_shift,Tmaxwell,shifted_Maxwellian_debug,mu,mol,
+                                      nx,nvx,nvr,Vth,Vth2,Maxwell,vr2vx2_ran2,
+                                      Vr2pidVr,dVx,vol,Vth_DeltaVx,Vx_DeltaVx,Vr_DeltaVr,vr2_2vx2_2D,jpa,jpb,jna,jnb)
             for k in range(0, nx-1):
                 MH2_H2[k] = Maxwell[k] * NH2G[igen, k]
                 OmegaM[k] = OmegaM[k] + Omega_H2_H2[k] * MH2_H2[k]
@@ -1489,7 +1505,9 @@ def Kinetic_H2(vx, vr, x, Tnorm, mu, Ti, Te, n, vxi, fH2BC, GammaxH2BC, NuLoss, 
                 vx_shift = (2 * VxH2G + vxi) / 3
                 Tmaxwell = TH2G + (4/9) * (Ti - TH2G + mu * mH * (vxi - VxH2G)**2 / (6 * q))
                 mol = 2
-                create_shifted_maxwellian_include()
+                create_shifted_maxwellian_include(vr,vx,Tnorm,vx_shift,Tmaxwell,shifted_Maxwellian_debug,mu,mol,
+                                      nx,nvx,nvr,Vth,Vth2,Maxwell,vr2vx2_ran2,
+                                      Vr2pidVr,dVx,vol,Vth_DeltaVx,Vx_DeltaVx,Vr_DeltaVr,vr2_2vx2_2D,jpa,jpb,jna,jnb)
                 for k in range(0, nx - 1):
                     MH2_P[k] = Maxwell[k] * NH2G[igen, k]
                     OmegaM[k] = OmegaM[k] + Omega_H2_P[k] * MH2_P[k]
@@ -1502,7 +1520,9 @@ def Kinetic_H2(vx, vr, x, Tnorm, mu, Ti, Te, n, vxi, fH2BC, GammaxH2BC, NuLoss, 
             Tmaxwell = TH2G + (4/9) * (TH - TH2G + mu * mH *(VxH - VxH2G)**2 / (6 * q))
             mol = 2
 
-            create_shifted_maxwellian_include()
+            create_shifted_maxwellian_include(vr,vx,Tnorm,vx_shift,Tmaxwell,shifted_Maxwellian_debug,mu,mol,
+                                      nx,nvx,nvr,Vth,Vth2,Maxwell,vr2vx2_ran2,
+                                      Vr2pidVr,dVx,vol,Vth_DeltaVx,Vx_DeltaVx,Vr_DeltaVr,vr2_2vx2_2D,jpa,jpb,jna,jnb)
             for k in range(0, nx - 1):
                 MH2_H[k] = Maxwell[k] * NH2G[igen, k]
                 OmegaM[k] = OmegaM[k] + Omega_H2_H[k] * MH2_H
@@ -2062,7 +2082,9 @@ def Kinetic_H2(vx, vr, x, Tnorm, mu, Ti, Te, n, vxi, fH2BC, GammaxH2BC, NuLoss, 
             vx_shift = TFC; vx_shift[:] = 0.0 
             Tmaxwell = TFC
             mol = 1
-            create_shifted_maxwellian_include()
+            create_shifted_maxwellian_include(vr,vx,Tnorm,vx_shift,Tmaxwell,shifted_Maxwellian_debug,mu,mol,
+                                      nx,nvx,nvr,Vth,Vth2,Maxwell,vr2vx2_ran2,
+                                      Vr2pidVr,dVx,vol,Vth_DeltaVx,Vx_DeltaVx,Vr_DeltaVr,vr2_2vx2_2D,jpa,jpb,jna,jnb)
             vbar_test = Vth * np.sqrt(vr2vx2(0))
             for k in range(0, nx - 1):
                 vbar = np.sum(Vr2pidVr * (vbar_test * np.dot(Maxwell[k], dVx)))
