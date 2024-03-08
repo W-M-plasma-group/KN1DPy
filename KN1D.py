@@ -282,7 +282,7 @@ def KN1D(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
         DensM=3.537e19*GaugeH2
         GammaxH2BC=0.25*DensM*v0_bar
         Tmaxwell=np.full(nvxM, Twall) # changed list to numpy array 
-        vx_shift=np.zeros( nvxM,0.0) # fixed size of arrays, its unclear in the original code if this is whats supposed to be done but the for loop in create shifted_maxwellian_include wont owrk otherwise - G
+        vx_shift=np.zeros(nvxM) # fixed size of arrays, its unclear in the original code if this is whats supposed to be done but the for loop in create shifted_maxwellian_include wont owrk otherwise - G
         mol=2
         Maxwell=create_shifted_maxwellian(vrM,vxM,Tmaxwell,vx_shift,mu,mol,TnormM)
         fh2BC[ipM]=Maxwell[0,ipM] # fixed indexing - GG

@@ -1414,7 +1414,7 @@ def Kinetic_H2(vx, vr, x, Tnorm, mu, Ti, Te, n, vxi, fH2BC, GammaxH2BC, NuLoss, 
 
     # Compute H2 density profile
     for k in range(0, nx - 1):
-        nH2[k] = np.sum(Vr2pidVr * (dVx, np.dot(fH2[k,:])))
+        nH2[k] = np.sum(Vr2pidVr * ( np.dot(dVx,fH2[k,:])))
     # GammaxH2 - particle flux in x direction
     for k in range(0, nx -1):
         GammaxH2[k] = Vth * np.sum(Vr2pidVr * np.dot(vx * dVx, fH2[k,:]))
@@ -1489,7 +1489,7 @@ def Kinetic_H2(vx, vr, x, Tnorm, mu, Ti, Te, n, vxi, fH2BC, GammaxH2BC, NuLoss, 
                 print(prompt, 'Computing MH2_H2')
             # Compute MH2_H2
             vx_shift = VxH2G
-            Tmaxwell = TH2G
+            Tmaxwell = np.full(nx, TH2G) # this is only temporary TH2G should be an array but because of the issues with nh2 it is not right now
             mol = 2
             create_shifted_maxwellian_include(vr,vx,Tnorm,vx_shift,Tmaxwell,shifted_Maxwellian_debug,mu,mol,
                                       nx,nvx,nvr,Vth,Vth2,Maxwell,vr2vx2_ran2,
@@ -1525,50 +1525,50 @@ def Kinetic_H2(vx, vr, x, Tnorm, mu, Ti, Te, n, vxi, fH2BC, GammaxH2BC, NuLoss, 
                                       Vr2pidVr,dVx,vol,Vth_DeltaVx,Vx_DeltaVx,Vr_DeltaVr,vr2_2vx2_2D,jpa,jpb,jna,jnb)
             for k in range(0, nx - 1):
                 MH2_H[k] = Maxwell[k] * NH2G[igen, k]
-                OmegaM[k] = OmegaM[k] + Omega_H2_H[k] * MH2_H
+                OmegaM[k] = OmegaM[k] + Omega_H2_H[k] * MH2_H[k]
             MH2_H_sum = MH2_H_sum + MH2_H
         
      # Compute remaining moments
     # piH2_xx
     for k in range(0, nx - 1):
-        piH2_xx[k] = (2 * mu * mH) * Vth2 * np.sum(Vr2pidVr * np.dot(fH2[k], dVx * (vx - _VxH2[k])**2)) / q - pH2[k]
+        piH2_xx[k] = (2 * mu * mH) * Vth2 * np.sum(Vr2pidVr * np.dot(dVx * (vx - _VxH2[k])**2), fH2[k]) / q - pH2[k]
     # piH2_yy
     for k in range(0, nx - 1):
-        piH2_yy[k] = (2 * mu * mH) * Vth2 * 0.5 * np.sum((Vr2pidVr * vr**2) * np.dot(fH2[k], dVx)) / q - pH2[k]
+        piH2_yy[k] = (2 * mu * mH) * Vth2 * 0.5 * np.sum((Vr2pidVr * vr**2) * np.dot(dVx, fH2[k])) / q - pH2[k]
     # piH2_zz 
     piH2_zz = piH2_yy 
     # qxH2
     for k in range(0, nx - 1):
-        qxH2[k] = 0.5 * (2 * mu * mH) * Vth3 * np.sum(Vr2pidVr * np.dot(vr2vx2_ran[k] * fH2[k], dVx * (vx - _VxH2[k])))
+        qxH2[k] = 0.5 * (2 * mu * mH) * Vth3 * np.sum(Vr2pidVr * np.dot(dVx * (vx - _VxH2[k]), vr2vx2_ran[k] * fH2[k]))
     
     # C = RHS of Boltzman equation for total fH2
     for k in range(0, nx - 1):
         C = Vth * (fw_hat[:,:] * SH2[k] / Vth + Swall_sum[k] + Beta_CX_sum[k] - alpha_c[k] * fH2[k] + \
                    Omega_H2_P[k] * MH2_P_sum[k] + Omega_H2_H[k] * MH2_H_sum[k] + Omega_H2_H2[k] * MH2_H2_sum[k])
-        QH2[k] = 0.5 * (2 * mu * mH) * Vth * np.sum(Vr2pidVr * np.dot(vr2vx2_ran[k] * C, dVx))
-        RxH2[k] = (2 * mu * mH) * Vth * np.sum(Vr2pidVr * np.dot(C, dVx * (vx - _VxH2[k])))
-        Sloss[k] = np.sum(Vr2pidVr * np.dot(C, dVx)) + SH2[k]
-        WallH2[k] = np.sum[Vr2pidVr * np.dot(gamma_wall[k] * fH2[k], dVx)]
+        QH2[k] = 0.5 * (2 * mu * mH) * Vth * np.sum(Vr2pidVr * np.dot(dVx, vr2vx2_ran[k] * C))
+        RxH2[k] = (2 * mu * mH) * Vth * np.sum(Vr2pidVr * np.dot(dVx * (vx - _VxH2[k]), C))
+        Sloss[k] = np.sum(Vr2pidVr * np.dot(dVx, C)) + SH2[k]
+        WallH2[k] = np.sum(Vr2pidVr * np.dot(dVx, gamma_wall[k] * fH2[k]))
         if H2_H_EL:
             CH2_H = Vth * Omega_H2_H[k] * (MH2_H_sum[k] - fH2[k])
-            RxH_H2[k] = (2 * mu * mH) * Vth * np.sum(Vr2pidVr * np.dot(CH2_H, dVx * (vx - _VxH2[k])))
-            EH_H2[k] = 0.5 * (2 * mu * mH) * Vth2 * np.sum(Vr2pidVr * np.dot(vr2vx2[k] * CH2_H, dVx))
+            RxH_H2[k] = (2 * mu * mH) * Vth * np.sum(Vr2pidVr * np.dot(dVx * (vx - _VxH2[k]), CH2_H))
+            EH_H2[k] = 0.5 * (2 * mu * mH) * Vth2 * np.sum(Vr2pidVr * np.dot(dVx, vr2vx2[k] * CH2_H))
         if H2_P_EL:
             CH2_P = Vth * Omega_H2_P[k] * (MH2_P_sum[k] - fH2[k])
-            RxP_H2[k] = (2 * mu *mH) * Vth * np.sum(Vr2pidVr * np.dot(CH2_P, dVx * (vx - _VxH2[k])))
-            EP_H2[k] = 0.5 * (2 *mu * mH) * Vth2 * np.sum(Vr2pidVr * np.dot(vr2vx2[k] * CH2_P, dVx))
+            RxP_H2[k] = (2 * mu *mH) * Vth * np.sum(Vr2pidVr * np.dot( dVx * (vx - _VxH2[k]), CH2_P))
+            EP_H2[k] = 0.5 * (2 *mu * mH) * Vth2 * np.sum(Vr2pidVr * np.dot(dVx, vr2vx2[k] * CH2_P))
         if H2_HP_CX:
             CH2_HP_CX = Vth * (Beta_CX_sum[k] - alpha_cx[k] * fH2[k])
-            RxH2CX[k] = (2 * mu * mH) * Vth * np.sum(Vr2pidVr * np.dot(CH2_HP_CX, dVx * (vx - _VxH2[k])))
-            EH2CX[k] = 0.5 * (2 * mu * mH) * np.sum(Vr2pidVr * (vr2vx2[k] * CH2_HP_CX, dVx))
+            RxH2CX[k] = (2 * mu * mH) * Vth * np.sum(Vr2pidVr * np.dot(dVx * (vx - _VxH2[k]), CH2_HP_CX))
+            EH2CX[k] = 0.5 * (2 * mu * mH) * np.sum(Vr2pidVr * np.dot(dVx, vr2vx2[k] * CH2_HP_CX))
         CW_H2 = Vth * (Swall_sum[k] - gamma_wall[k] * fH2[k])
-        RxW_H2[k] = (2 * mu * mH) * Vth * np.sum(Vr2pidVr * np.dot(CW_H2, dVx * (vx - _VxH2)))
-        EW_H2[k] = 0.5 * (2 * mu * mH) * Vth2 * np.sum(Vr2pidVr * np.dot(vr2vx2[k] * CW_H2, dVx))
+        RxW_H2[k] = (2 * mu * mH) * Vth * np.sum(Vr2pidVr * np.dot(dVx * (vx - _VxH2[k]), CW_H2))
+        EW_H2[k] = 0.5 * (2 * mu * mH) * Vth2 * np.sum(Vr2pidVr * np.dot(dVx, vr2vx2[k] * CW_H2))
         if H2_H2_EL:
             CH2_H2 = Vth * Omega_H2_H2[k] * (MH2_H2_sum[k] - fH2[k])
             for i in range(0, nvr - 1):
                 vr2_2vx_ran2[:, i] = vr[i]**2 - 2 * (vx - _VxH2[k])**2
-                Epara_PerpH2_H2[k] = - 0.5 * (2 * mu * mH) * Vth2 * np.sum(Vr2pidVr * np.dot(vr2_2vx_ran2 * CH2_H2, dVx))
+                Epara_PerpH2_H2[k] = - 0.5 * (2 * mu * mH) * Vth2 * np.sum(Vr2pidVr * np.dot( dVx, vr2_2vx_ran2 * CH2_H2))
 
     # qxH2_total
     qxH2_total = (0.5 * nH2 * (2 *mu * mH) * VxH2 * VxH2 + 2.5 * pH2 * q) * VxH2 + q * piH2_xx * VxH2 + qxH2
@@ -1765,7 +1765,7 @@ def Kinetic_H2(vx, vr, x, Tnorm, mu, Ti, Te, n, vxi, fH2BC, GammaxH2BC, NuLoss, 
                 # press_return
                 return
     
-    mid1 = locate(x, 0.7 * (np.max[x] + np.min[x]) / 2)
+    mid1 = locate(x, 0.7 * (np.max(x) + np.min(x)) / 2)
     mid2 = locate(x, 0.85 * (np.max(x) + np.min(x)) / 2)
     mid3 = locate(x, (np.max(x) + np.min(x)) / 2)
     mid4 = locate(x, 1.15 * (np.max(x) + np.min(x)) / 2)
@@ -1912,7 +1912,7 @@ def Kinetic_H2(vx, vr, x, Tnorm, mu, Ti, Te, n, vxi, fH2BC, GammaxH2BC, NuLoss, 
         # Compute relative cross-sections for populating a specific n level for reaction R10
         # (see page 62 in Janev, "Elementary Processes in Hydrogen-Helium Plasmas", Springer-Verlag, 1987)
         #   n=2   3    4    5    6
-        R10 = np.array([0.1, 0.45, 0.22, 0.12, 0.069])
+        R10rel = np.array([0.1, 0.45, 0.22, 0.12, 0.069])
         for k in range(7, 10): 
             R10rel =np.array([R10rel, 10.0 / k^3])
             En = 13.58 / (2 + np.arange(9))**2 # Energy of Levels
