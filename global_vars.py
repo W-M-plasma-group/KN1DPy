@@ -147,7 +147,7 @@ class global_vars(object):
         self.Kinetic_H_internal_Alpha_H_H2=None
         self.Kinetic_H_internal_Alpha_H_P=None
         self.Kinetic_H_internal_MH_H_sum=None
-        self.Kinetic_H_internal_Delta_nHs=None
+        self.Kinetic_H_internal_Delta_nHs=0.0
         self.Kinetic_H_internal_Sn=None
         self.Kinetic_H_internal_Rec=None
 
@@ -239,7 +239,7 @@ class global_vars(object):
         self.Kinetic_H2_internal_Alpha_CX=None
         self.Kinetic_H2_internal_Alpha_H2_H=None
         self.Kinetic_H2_internal_MH2_H2_sum=None
-        self.Kinetic_H2_internal_Delta_nH2s=None
+        self.Kinetic_H2_internal_Delta_nH2s=0.0
 
         #   From the Kinetic_H2_H_moments common block
 

@@ -699,7 +699,7 @@ def Kinetic_H2(vx, vr, x, Tnorm, mu, Ti, Te, n, vxi, fH2BC, GammaxH2BC, NuLoss, 
     _Eaxis = np.append(Eaxis, 2 * Eaxis[nvr - 1] - Eaxis[nvr - 2]) # changed to append to stop error - GG
     Eaxis_mid = np.append(0.0, 0.5 * ( _Eaxis + np.roll(_Eaxis, -1) )) # changed to append to stop error - GG
     dEaxis = np.roll(Eaxis_mid, -1) - Eaxis_mid
-    dEaxis = dEaxis[0 : nvr-1]
+    dEaxis = dEaxis[0 : nvr]
 
     # Scale input molecular distribution function to agree with desired flux
     gamma_input = 1.0
@@ -1317,10 +1317,10 @@ def Kinetic_H2(vx, vr, x, Tnorm, mu, Ti, Te, n, vxi, fH2BC, GammaxH2BC, NuLoss, 
     if H2_H2_EL or H2_P_EL or H2_H_EL:
         # Compute VxH2G, TH2G
         for k in range(0, nx - 1):
-            VxH2G[k] = Vth * np.sum(Vr2pidVr * np.dot(vx * dVx, fH2G[k])) / NH2G[igen - 1, k]
+            VxH2G[k] = Vth * np.sum(Vr2pidVr * np.dot(vx * dVx, fH2G[k,:,:])) / NH2G[igen - 1, k]
             for i in range(0, nvr - 1):
                 vr2vx2_ran2[:,i] = vr[i]**2 + (vx - VxH2G[k]/Vth)**2
-            TH2G[k] = (2 * mu * mH) * Vth2 * np.sum(Vr2pidVr * (np.dot(dVx, vr2vx2_ran2 * fH2G[k])))/(3 * q * NH2G[igen - 1, k])
+            TH2G[k] = (2 * mu * mH) * Vth2 * np.sum(Vr2pidVr * (np.dot(dVx, vr2vx2_ran2 * fH2G[k,:,:])))/(3 * q * NH2G[igen - 1, k])
         if H2_H2_EL:
             if debrief > 1: 
                 print(prompt, 'Computing MH2_H2')
@@ -1531,7 +1531,7 @@ def Kinetic_H2(vx, vr, x, Tnorm, mu, Ti, Te, n, vxi, fH2BC, GammaxH2BC, NuLoss, 
      # Compute remaining moments
     # piH2_xx
     for k in range(0, nx - 1):
-        piH2_xx[k] = (2 * mu * mH) * Vth2 * np.sum(Vr2pidVr * np.dot(dVx * (vx - _VxH2[k])**2), fH2[k]) / q - pH2[k]
+        piH2_xx[k] = (2 * mu * mH) * Vth2 * np.sum(Vr2pidVr * np.dot(dVx * (vx - _VxH2[k])**2, fH2[k])) / q - pH2[k]
     # piH2_yy
     for k in range(0, nx - 1):
         piH2_yy[k] = (2 * mu * mH) * Vth2 * 0.5 * np.sum((Vr2pidVr * vr**2) * np.dot(dVx, fH2[k])) / q - pH2[k]
@@ -1913,14 +1913,14 @@ def Kinetic_H2(vx, vr, x, Tnorm, mu, Ti, Te, n, vxi, fH2BC, GammaxH2BC, NuLoss, 
         # (see page 62 in Janev, "Elementary Processes in Hydrogen-Helium Plasmas", Springer-Verlag, 1987)
         #   n=2   3    4    5    6
         R10rel = np.array([0.1, 0.45, 0.22, 0.12, 0.069])
-        for k in range(7, 10): 
-            R10rel =np.array([R10rel, 10.0 / k^3])
-            En = 13.58 / (2 + np.arange(9))**2 # Energy of Levels
-        for k in range(0, nx - 1):
-            EHn = 0.5 * (Ee + En) * R10rel / np.sum(R10rel)
+        for k in range(7, 11): 
+            R10rel.append(10.0 / k**3)
+        En = 13.58 / (2 + np.arange(9))**2 # Energy of Levels
+        for k in range(0, nx):
+            EHn = 0.5 * (Ee[:En.size] + En) * R10rel / np.sum(R10rel) # not sure about this
             EHn = np.maximum(EHn, 0)
             Eave[ii, k] = np.sum(EHn)
-            Eave[ii, k] = np.maximum(Eave[ii, k])
+            Eave[ii, k] = np.maximum(Eave[ii, k],0.25)
             Emax[ii, k] = 1.5 * Eave[ii, k] # Note the max/min values here are a guess
             Emin[ii, k] = 0.5 * Eave[ii, k] # Note the max/min values here are a guess
         
@@ -1929,7 +1929,7 @@ def Kinetic_H2(vx, vr, x, Tnorm, mu, Ti, Te, n, vxi, fH2BC, GammaxH2BC, NuLoss, 
         Tfc = np.zeros((nvr,nvx,nx)).T
         magV = np.sqrt(vr2vx2)
         _THP = np.zeros((nvr,nvx,nx)).T
-        _TH2 = np.zero((nvr,nvx,nx)).T 
+        _TH2 = np.zeros((nvr,nvx,nx)).T 
         for k in range(0, nx - 1):
             _THP[k] = THP[k] / Tnorm
             _TH2[k] = TH2[k] / Tnorm 
@@ -1981,9 +1981,10 @@ def Kinetic_H2(vx, vr, x, Tnorm, mu, Ti, Te, n, vxi, fH2BC, GammaxH2BC, NuLoss, 
         Rn = np.array([2, 3, 4, 5, 6, 7, 8, 10])
         for jRn in range(0, np.size(Rn) - 1):
             ii = nFC[Rn[jRn]]
-            Tfc[0, 0, :] = 0.25 * (Emax[ii] - Emin[ii]) / Tnorm # Franck-Condon 'effective temperature'
-            Vfc[k] = Vfc[k, 0, 0]
-            Tfc[k] = Tfc[k, 0, 0]
+            Tfc[:, 0, 0] = 0.25 * (Emax[ii,:] - Emin[ii,:]) / Tnorm # Franck-Condon 'effective temperature'
+            Vfc[:, 0, 0] = np.sqrt(Eave[ii,:]/Tnorm) # Velocity corresponding to Franck-Condon 'mean evergy'
+            Vfc[k, :, :] = Vfc[k, 0, 0]
+            Tfc[k, :, :] = Tfc[k, 0, 0]
         if Rn[jRn] < 6:
             # For R2-R6, the Franck-Condon 'mean energy' is taken equal to Eave
             #	   and the 'temperature' corresponds to the sum of the Franck-Condon 'temperature', Tfc,
@@ -1998,8 +1999,8 @@ def Kinetic_H2(vx, vr, x, Tnorm, mu, Ti, Te, n, vxi, fH2BC, GammaxH2BC, NuLoss, 
         #	   is not included and assumed to be small)    
             arg = -(magV - Vfc + 1.5 * Tfc / Vfc)**2 / (Tfc + 0.5 * _THP)
             SFCn[ii] = np.exp(np.maximum(arg, (-80)))
-        for k in range(0, nx - 1):
-            SFCn[ii, k] = SFCn[ii, k] / (np.sum(Vr2pidVr * (SFCn[ii, k], dVx)))
+        for k in range(0, nx):
+            SFCn[ii, k, :, :] = SFCn[ii, k, :, :] / (np.sum(Vr2pidVr * np.dot(dVx,SFCn[ii, k, :, :])))
         nm = 3
         if plot > 3:
             ii = nFC[Rn[0]]
@@ -2108,8 +2109,8 @@ def Kinetic_H2(vx, vr, x, Tnorm, mu, Ti, Te, n, vxi, fH2BC, GammaxH2BC, NuLoss, 
         # edit indents 
         SHP = n * nH2 * sigv[1]
         # Compute energy distrobution of H source 
-        for k in range(0, nx - 1):
-            ESH[k] = Eaxis * fSH[i_p[0], k] * Vr2pidVr / dEaxis
+        for k in range(0, nx):
+            ESH[k] = Eaxis * fSH[k, i_p[0], :] * VrVr4pidVr / dEaxis
             ESH[k] = ESH[k] / np.max(ESH[k])
     
         if plot > 2:
@@ -2385,4 +2386,4 @@ def Kinetic_H2(vx, vr, x, Tnorm, mu, Ti, Te, n, vxi, fH2BC, GammaxH2BC, NuLoss, 
         print(prompt, 'Finished')
         # Press_return 
     return fH2, nHP, THP, nH2, GammaxH2, VxH2, pH2, TH2, qxH2, qxH2_total, Sloss, QH2, RxH2, QH2_total, AlbedoH2, \
-        WallH2, nHP, THP, fSH, SH, SP, SHP, NuE, NuDis, ESH, Eaxis, error
+        WallH2, fSH, SH, SP, SHP, NuE, NuDis, ESH, Eaxis, error

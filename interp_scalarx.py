@@ -36,9 +36,9 @@ def interp_scalarx(fa,xa,xb,do_warn=0,debug=0):
   if do_warn!=0: 
     big=max(abs(xb))
     if k0>0 or k0<nxb-1:
-      if k0>0 and abs(fb[k0])>warn*big:
+      if k0>0 and abs(fb[k0])>do_warn*big:
         warn('Non-zero value of fb detected at min(Xa) boundary')
-      if k1<nxb-1 and abs(fb[k1])>warn*big:
+      if k1<nxb-1 and abs(fb[k1])>do_warn*big:
         warn('Non-zero value of fb detected at max(Xa) boundary')
 
   return fb

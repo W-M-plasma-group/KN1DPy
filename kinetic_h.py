@@ -440,7 +440,7 @@ def kinetic_h(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,TH
 			print(prompt+'Number of elements in nHP and x do not agree!')
 			error=1
 			break
-		if fH==None:
+		if fH is None:
 			fH=np.zeros((nx,nvx,nvr)) # Set fH if not left as None in function call
 		if fH[0,0,:].size!=nvr:
 			print(prompt+'Number of elements in fH[0,0,:] and vr do not agree!')
