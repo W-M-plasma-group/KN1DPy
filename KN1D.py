@@ -417,7 +417,7 @@ def KN1D(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
                 Compute_H_Source=1
                 H2compute_errors=compute_errors and H2debrief # is this accurate, how can it be equal to both? - GG 2/15
                 fH2, nHP, THP, nH2, GammaxH2, VxH2, pH2, TH2, qxH2, qxH2_total, Sloss, \
-                    QH2, RxH2, QH2_total, AlbedoH2, WallH2, fSH, SH, SP, SHP, NuE, NuDis = Kinetic_H2(\
+                    QH2, RxH2, QH2_total, AlbedoH2, WallH2, fSH, SH, SP, SHP, NuE, NuDis, ESH, Eaxis, error = Kinetic_H2(\
                         vxM, vrM, xH2, TnormM, mu, TiM, TeM, nM, vxiM, fh2BC, GammaxH2BC, NuLoss, PipeDiaM, fHM, SH2, fH2, nH2, THP, \
                         truncate=truncate, Simple_CX=Simple_CX, Max_Gen=max_gen, Compute_H_Source=Compute_H_Source,\
                         H2_H2_EL=H2_H2_EL,H2_P_EL=H2_P_EL,H2_H_EL=H2_H_EL,H2_HP_CX=H2_HP_CX, ni_correct=ni_correct,\
@@ -451,15 +451,15 @@ def KN1D(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
 
                 # Compute fH using Kinetic_H
                 GammaxHBC = 0
-                fHBC = np.zeros((nvrA,nvxA,nxH)).T
+                fHBC = np.zeros((nvxA,nvrA)) # original used (nxH, nvxA, nvrA) but kinetic_h requires shape (nvxA,nvrA)
                 H2_H2_EL= H2_H_EL # fixed typo - GG 2/19
                 ni_correct = 1
                 Hcompute_errors = compute_errors and Hdebrief
                 fH,nH,GammaxH,VxH,pH,TH,qxH,qxH_total,NetHSource,Sion,QH,RxH,QH_total,AlbedoH,SideWallH,error = kinetic_h(
                     vxA,vrA,xH,TnormA,mu,TiA,TeA,nA,vxiA,fHBC,GammaxHBC,PipeDiaA,fH2A,fSHA,nHPA,THPA, fH=fH,\
-                        truncate=truncate, Simple_CX=Simple_CX, Max_Gen=max_gen, Compute_H_Source = Compute_H_Source, \
-                        H_H_EL=H_H_EL, H_P_EL=H2_P_EL, H_H2_EL= H2_H2_EL, H_P_CX=H_P_CX, ni_correct=ni_correct, \
-                        error=error, Compute_Errors=Hcompute_errors, plot=Hplot, debug=Hdebug, debrief=Hdebrief, pause=Hpause, g=g) # Not sure where some of the keywords are defined
+                        truncate=truncate, Simple_CX=Simple_CX, Max_Gen=max_gen, \
+                        H_H_EL=H_H_EL, H_P_EL=H2_P_EL, _H_H2_EL= H2_H2_EL, H_P_CX=H_P_CX, ni_correct=ni_correct, \
+                        Compute_Errors=Hcompute_errors, plot=Hplot, debug=Hdebug, debrief=Hdebrief, pause=Hpause, g=g) # Not sure where some of the keywords are defined
                 
                 # Kinetic_H_Output Common Block 
                 piH_xx = g.Kinetic_H_Output_piH_xx
