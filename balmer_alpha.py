@@ -2,7 +2,7 @@ import numpy as np
 from NHSaha import NHSaha
 from create_jh_bscoef import Create_JH_BSCoef
 from JHR_coef import JHR_Coef # fixed capotalization - GG
-
+import os.path
 #   Computes Balmer-alpha emissivity (watts m^-3) given the local
 # electron density, electron temperature, and ground-state
 # neutral density.
@@ -42,7 +42,7 @@ def Balmer_Alpha(Density, Te, N0, photons = 0, create = 0, no_null = 0, g=None):
     LogAlpha_BSCoef=g.JH_Coef_LogAlpha_BSCoef
     A_Lyman=g.JH_Coef_A_Lyman
     A_Balmer=g.JH_Coef_A_Balmer
-    if create:
+    if create or not os.path.exists('jh_bscoef.npz'):
         Create_JH_BSCoef()
     if LogR_BSCoef is None:
         # this is where old data is restored 

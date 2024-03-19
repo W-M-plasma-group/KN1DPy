@@ -1,7 +1,7 @@
 import numpy as np
 from scipy import interpolate
 from create_jh_bscoef import Create_JH_BSCoef
-
+import os.path
 # Evaluates the alpha coefficients 
 # - the comment on the original file seemed to be wrong so I will probaly have to expand on this later
 def JHAlpha_coef(Density, Te,  create = 0, no_null = 0, g=None):
@@ -14,7 +14,7 @@ def JHAlpha_coef(Density, Te,  create = 0, no_null = 0, g=None):
     LogAlpha_BSCoef=g.JH_Coef_LogAlpha_BSCoef
     A_Lyman=g.JH_Coef_A_Lyman
     A_Balmer=g.JH_Coef_A_Balmer
-    if create:
+    if create or not os.path.exists('jh_bscoef.npz'):
         Create_JH_BSCoef()
     if LogR_BSCoef is None:
         # this is where old data is restored 
