@@ -132,7 +132,7 @@ def interp_fvrvxx(fa,Vra,Vxa,Xa,Tnorma,Vrb,Vxb,Xb,Tnormb,do_warn=None, debug=0, 
     w2_active=0
     w2_match=0
 
-    if vra2!=None:
+    if not vra2 is None:
         w2_active=1
         test=0
 

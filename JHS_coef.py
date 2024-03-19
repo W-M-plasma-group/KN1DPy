@@ -1,6 +1,7 @@
 import numpy as np
 from create_jh_bscoef import Create_JH_BSCoef
 from scipy import interpolate
+import os.path
 # Evaluates the ionization rate coefficients, S (m^-3 s^-1), from  Johnson-Hinnov table 2 (MKS units).
 #; Input:
 #  	Density	- fltarr, electron density (=hydrogen ion density) (m^-3)
@@ -26,7 +27,7 @@ def JHS_coef(Density, Te, create = 0, no_null = 0, g=None):
     LogAlpha_BSCoef=g.JH_Coef_LogAlpha_BSCoef
     A_Lyman=g.JH_Coef_A_Lyman
     A_Balmer=g.JH_Coef_A_Balmer
-    if create:
+    if create or not os.path.exists('jh_bscoef.npz'):
         Create_JH_BSCoef()
     if LogR_BSCoef is None:
         # this is where old data is restored 
