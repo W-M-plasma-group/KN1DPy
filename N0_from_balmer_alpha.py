@@ -4,7 +4,7 @@ from JHR_Coef import JHR_Coef
 from NHSaha import NHSaha
 from JHS_coef import JHS_coef
 from JHAlpha_coef import JHAlpha_coef
-
+import os.path
 def N0_from_balmer_alpha(B_Alpha, Density, Te , Source = 0, Ionization = 0,Recombination = 0, create = 0, g=None):
     #________________________________________________________________________________
 # Input:
@@ -32,7 +32,7 @@ def N0_from_balmer_alpha(B_Alpha, Density, Te , Source = 0, Ionization = 0,Recom
     LogAlpha_BSCoef=g.JH_Coef_LogAlpha_BSCoef
     A_Lyman=g.JH_Coef_A_Lyman
     A_Balmer=g.JH_Coef_A_Balmer
-    if create:
+    if create or not os.path.exists('jh_bscoef.npz'):
         Create_JH_BSCoef()
     if LogR_BSCoef is None:
         # this is where old data is restored 

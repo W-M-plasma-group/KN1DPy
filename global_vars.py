@@ -147,7 +147,7 @@ class global_vars(object):
         self.Kinetic_H_internal_Alpha_H_H2=None
         self.Kinetic_H_internal_Alpha_H_P=None
         self.Kinetic_H_internal_MH_H_sum=None
-        self.Kinetic_H_internal_Delta_nHs=0.0
+        self.Kinetic_H_internal_Delta_nHs=0.0 
         self.Kinetic_H_internal_Sn=None
         self.Kinetic_H_internal_Rec=None
 

@@ -1914,7 +1914,7 @@ def Kinetic_H2(vx, vr, x, Tnorm, mu, Ti, Te, n, vxi, fH2BC, GammaxH2BC, NuLoss, 
         #   n=2   3    4    5    6
         R10rel = np.array([0.1, 0.45, 0.22, 0.12, 0.069])
         for k in range(7, 11): 
-            R10rel.append(10.0 / k**3)
+            R10rel = np.append(R10rel,10.0 / k**3)
         En = 13.58 / (2 + np.arange(9))**2 # Energy of Levels
         for k in range(0, nx):
             EHn = 0.5 * (Ee[:En.size] + En) * R10rel / np.sum(R10rel) # not sure about this
