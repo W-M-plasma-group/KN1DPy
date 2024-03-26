@@ -908,13 +908,13 @@ def kinetic_h(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,TH
 		#	Compute sigma_cx * v_v at all possible relative velocities
 
 		_Sig=np.zeros((ntheta,nvr*nvx*nvr*nvx))
-		_Sig[:]=v_v*sigma_cx_h0(v_v2*(.5*mH*Vth2/q))
+		_Sig[:]=(v_v*sigma_cx_h0(v_v2*(.5*mH*Vth2/q))).reshape(_Sig.shape) # Not sure if this is the correct way to fix the issues with projecting here but this is how it was handled in kinetic h2
 
 		#	Set SIG_CX = vr' x Integral{v_v*sigma_cx} 
 		#		over theta=0,2pi times differential velocity space element Vr'2pidVr'*dVx'
 
 		SIG_CX=np.zeros((nvr*nvx,nvr*nvx))
-		SIG_CX[:]=Vr2pidVrdVx*np.matmul(dTheta,_Sig)
+		SIG_CX[:]=(Vr2pidVrdVx*(np.matmul(dTheta,_Sig).reshape(Vr2pidVrdVx.shape))).reshape(SIG_CX.shape)
 
 		#	SIG_CX is now vr' * sigma_cx(v_v) * v_v (intergated over theta) for all possible ([vr,vx],[vr',vx'])
 
@@ -928,7 +928,7 @@ def kinetic_h(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,TH
 		#	Compute sigma_H_H * vr2_vx2 * v_v at all possible relative velocities
 
 		_Sig=np.zeros((ntheta,nvr*nvx*nvr*nvx))
-		_Sig[:]=vr2_vx2*v_v*Sigma_EL_H_H(v_v2*(.5*mH*mu*Vth2/q),vis=True)/8
+		_Sig[:]=(vr2_vx2*v_v*Sigma_EL_H_H(v_v2*(.5*mH*mu*Vth2/q),vis=True)/8).reshape(_Sig.shape)
 
 		#	Note: For viscosity, the cross section for D -> D is the same function of
 		#		center of mass energy as H -> H.
@@ -936,8 +936,8 @@ def kinetic_h(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,TH
 		#	Set SIG_H_H = vr' x Integral{vr2_vx2*v_v*sigma_H_H} 
 		#		over theta=0,2pi times differential velocity space element Vr'2pidVr'*dVx'
 
-		SSIG_H_H=np.zeros((nvr*nvx,nvr*nvx))
-		SIG_H_H[:]=Vr2pidVrdVx*np.matmul(dTheta,_Sig)
+		SIG_H_H=np.zeros((nvr*nvx,nvr*nvx))
+		SIG_H_H[:]=(Vr2pidVrdVx*np.matmul(dTheta,_Sig).reshape(Vr2pidVrdVx.shape)).reshape(SIG_H_H.shape)
 
 		#	SIG_H_H is now vr' * sigma_H_H(v_v) * vr2_vx2 * v_v (intergated over theta) 
 		#		for all possible ([vr,vx],[vr',vx'])
@@ -952,7 +952,7 @@ def kinetic_h(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,TH
 		#	Compute sigma_H_H2 * v_v at all possible relative velocities
 
 		_Sig=np.zeros((ntheta,nvr*nvx*nvr*nvx))
-		_Sig[:]=v_v*Sigma_El_H_HH(v_v2*(.5*mH*Vth2/q))
+		_Sig[:]=(v_v*Sigma_El_H_HH(v_v2*(.5*mH*Vth2/q))).reshape(_Sig.shape)
 
 		#	NOTE: using H energy here for cross-sections tabulated as H->H2
 
@@ -960,7 +960,7 @@ def kinetic_h(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,TH
 		#		2pi times differential velocity space element Vr'2pidVr'*dVx'
 
 		SIG_H_H2=np.zeros((nvr*nvx,nvr*nvx))
-		SIG_H_H2[:]=Vr2pidVrdVx*vx_vx*np.matmul(_Sig,dTheta)
+		SIG_H_H2[:]=(Vr2pidVrdVx*vx_vx*np.matmul(dTheta,_Sig).reshape(Vr2pidVrdVx.shape)).reshape(SIG_H_H2.shape)
 
 		#	SIG_H_H2 is now vr' *vx_vx * sigma_H_H2(v_v) * v_v 
 		#		(intergated over theta) for all possible ([vr,vx],[vr',vx'])
@@ -975,13 +975,13 @@ def kinetic_h(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,TH
 		#	Compute sigma_H_P * v_v at all possible relative velocities
 
 		_Sig=np.zeros((ntheta,nvr*nvx*nvr*nvx))
-		_Sig[:]=v_v*Sigma_EL_P_H(v_v2*(.5*mH*Vth2/q))
+		_Sig[:]=(v_v*Sigma_EL_P_H(v_v2*(.5*mH*Vth2/q))).reshape(_Sig.shape)
 
 		#	Set SIG_H_P = vr' x vx_vx x Integral{v_v*sigma_H_P} over theta=0,
 		#		2pi times differential velocity space element Vr'2pidVr'*dVx'
 
 		SIG_H_P=np.zeros((nvr*nvx,nvr*nvx))
-		SIG_H_P[:]=Vr2pidVrdVx*vx_vx*np.matmul(dTheta,_Sig)
+		SIG_H_P[:]=(Vr2pidVrdVx*vx_vx*np.matmul(dTheta,_Sig).reshape(Vr2pidVrdVx.shape)).reshape(SIG_H_P.shape)
 
 		#	SIG_H_P is now vr' *vx_vx * sigma_H_P(v_v) * v_v (intergated over theta) 
 		#		for all possible ([vr,vx],[vr',vx'])
@@ -1009,8 +1009,8 @@ def kinetic_h(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,TH
 
 			Alpha_CX=np.zeros((nx,nvx,nvr))
 			for k in range(nx):
-				Work[:]=fi_hat[k,:,:]*ni[k]
-				Alpha_CX[k,:,:]=np.matmul(Work,SIG_CX)
+				Work[:]=(fi_hat[k,:,:]*ni[k]).reshape(Work.shape)
+				Alpha_CX[k,:,:]=np.matmul(Work,SIG_CX).reshape(Alpha_CX[k].shape)
 			if Do_Alpha_CX_Test:
 				Alpha_CX_Test=sigmav_cx_h0(Ti_mu,ErelH_P)/Vth
 				for k in range(nx):
@@ -1025,8 +1025,8 @@ def kinetic_h(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,TH
 			print(prompt+'Computing Alpha_H_H2')
 		Alpha_H_H2=np.zeros((nx,nvx,nvr))
 		for k in range(nx):
-			Work[:]=fH2[k,:,:]
-			Alpha_H_H2[k,:,:]=np.matmul(Work,SIG_H_H2)
+			Work[:]=fH2[k,:,:].reshape(Work.shape)
+			Alpha_H_H2[k,:,:]=np.matmul(Work,SIG_H_H2).reshape(Alpha_H_H2[k].shape)
 
 	#	Compute Alpha_H_P for present Ti and ni 
 	#		if it is needed and has not already been computed with the present parameters
@@ -1036,8 +1036,8 @@ def kinetic_h(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,TH
 			print(prompt+'Computing Alpha_H_P')
 			Alpha_H_P=np.zeros((nx,nvx,nvr))
 			for k in range(nx):
-				Work[:]=fi_hat[k,:,:]*ni[k]
-				Alpha_H_P[k,:,:]=np.matmul(Work,SIG_H_P)
+				Work[:]=(fi_hat[k,:,:]*ni[k]).reshape(Work.shape)
+				Alpha_H_P[k,:,:]=np.matmul(Work,SIG_H_P).reshape(Alpha_H_P[k].shape)
 
 	#	Compute nH
 
@@ -1262,7 +1262,7 @@ def kinetic_h(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,TH
 
 					#	Sum charge exchange source over all generations
 
-					Beta_CX_Sum+=Beta_CX
+					Beta_CX_sum+=Beta_CX
 
 				#	Compute MH from previous generation
 
@@ -1288,7 +1288,7 @@ def kinetic_h(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,TH
 						vx_shift=VxHG
 						Tmaxwell=THG
 						mol=1
-						Maxwell=create_shifted_maxwellian_include(vx_shift,Tmaxwell,Shifted_Maxwellian_Debug,mol,
+						Maxwell=create_shifted_maxwellian_include(vr, vx, Tnorm, vx_shift,Tmaxwell,Shifted_Maxwellian_Debug,mu,mol,
                                     nx,nvx,nvr,Vth,Vth2,Maxwell,vr2vx2_ran2,
                                     Vr2pidVr,dVx,Vol,Vth_DVx,Vx_DVx,Vr_DVr,Vr2Vx2_2D,jpa,jpb,jna,jnb)
 						for k in range(nx):
@@ -1304,7 +1304,7 @@ def kinetic_h(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,TH
 						vx_shift=(VxHG+vxi)/2
 						Tmaxwell=THG+(2/4)*(Ti-THG+mu*mH*(vxi-VxHG)**2/(6*q))
 						mol=1
-						Maxwell=create_shifted_maxwellian_include(vx_shift,Tmaxwell,Shifted_Maxwellian_Debug,mol,
+						Maxwell=create_shifted_maxwellian_include(vr, vx, Tnorm,vx_shift,Tmaxwell,Shifted_Maxwellian_Debug,mu,mol,
                                     nx,nvx,nvr,Vth,Vth2,Maxwell,vr2vx2_ran2,
                                     Vr2pidVr,dVx,Vol,Vth_DVx,Vx_DVx,Vr_DVr,Vr2Vx2_2D,jpa,jpb,jna,jnb)
 						for k in range(nx):
@@ -1318,15 +1318,15 @@ def kinetic_h(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,TH
 						#	Compute MH_H2
 
 						vx_shift=(VxHG+2*vxH2)/3
-						Tmaxwell=THG+(4./9.)*(TH2-THG +2*mu*mH*(vxH2-VxHG)^2/(6*q))
+						Tmaxwell=THG+(4./9.)*(TH2-THG +2*mu*mH*(vxH2-VxHG)**2/(6*q))
 						mol=1
-						Maxwell=create_shifted_maxwellian_include(vx_shift,Tmaxwell,Shifted_Maxwellian_Debug,mol,
+						Maxwell=create_shifted_maxwellian_include(vr, vx, Tnorm,vx_shift,Tmaxwell,Shifted_Maxwellian_Debug,mu,mol,
                                     nx,nvx,nvr,Vth,Vth2,Maxwell,vr2vx2_ran2,
                                     Vr2pidVr,dVx,Vol,Vth_DVx,Vx_DVx,Vr_DVr,Vr2Vx2_2D,jpa,jpb,jna,jnb)
 						for k in range(nx):
 							MH_H2[k,:,:]=Maxwell[k,:,:]*NHG[igen-1,k]
 							OmegaM[k,:,:]=OmegaM[k,:,:]+Omega_H_H2[k]*MH_H2[k,:,:]
-						MH_H2_sum+=[MH_H2]
+						MH_H2_sum+=MH_H2
 
 				#	Compute next generation atomic distribution
 

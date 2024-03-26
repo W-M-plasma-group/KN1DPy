@@ -16,7 +16,7 @@ from poly import poly
 # Gwendolyn Galleher
 
 def Sigma_El_H_HH(E): 
-    E = np.array([])
+    E = np.array([E])
     _E = E.astype(float) 
     # ensures 3.03e0 < _E < 1.01e4
     _E = np.maximum(_E, 3.03e0)     
