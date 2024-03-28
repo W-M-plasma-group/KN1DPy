@@ -438,9 +438,9 @@ def KN1D(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
                 Epara_PerpH2_H2 = g.Kinetic_H2_Output_Epara_PerpH2_H2       
 
                 # kinetic_h2_moments common block - GG 2/15
-                nH2 = g.Kinetic_H2_H_moments_nH
-                VxH2 = g.Kinetic_H2_H_moments_VxH
-                TH2 = g.Kinetic_H2_H_moments_TH
+                nHM = g.Kinetic_H2_H_moments_nH
+                VxHM = g.Kinetic_H2_H_moments_VxH
+                THM = g.Kinetic_H2_H_moments_TH
 
                 # Interpolate H2 data onto H mesh: fH2 -> fH2A, fSH -> fSHA, nHP -> nHPA, THP -> THPA
                 do_warn = 5.0E-3
@@ -478,9 +478,9 @@ def KN1D(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
                 SRecomb = g.Kinetic_H_Output_SRecomb
 
                 # Kinetic_H_H2_Moments Common Block 
-                nH2 = g.Kinetic_H_H2_Moments_nH2
-                VxH2 = g.Kinetic_H_H2_Moments_VxH2
-                TH2 = g.Kinetic_H_H2_Moments_TH2
+                nH2A = g.Kinetic_H_H2_Moments_nH2
+                VxH2A = g.Kinetic_H_H2_Moments_VxH2
+                TH2A = g.Kinetic_H_H2_Moments_TH2
 
                 # Interpolate SideWallH data onto H2 mesh: SideWallH -> SideWallHM
                 SideWallHM= interp_scalarx(SideWallH, xH, xH2, do_warn=do_warn, debug=interp_debug)
@@ -513,8 +513,8 @@ def KN1D(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
 
                 # Rescale SpH2 to have new integral value, SI
                 SpH2=SI*SpH2_hat
-                EH_hist=np.array([EH_hist,EH])
-                SI_hist=np.array([SI_hist,SI])
+                EH_hist=np.append(EH_hist,EH)
+                SI_hist=np.append(SI_hist,SI)
 
                 # Set total H2 source
                 SH2=SpH2+0.5*SideWallHM
