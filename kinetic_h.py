@@ -658,7 +658,7 @@ def kinetic_h(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,TH
 	#	Set flags to make use of previously computed local parameters 
 
 	New_Grid=1
-	if vx_s!=None:
+	if not vx_s is None:
 		test=vx_s[vx_s!=vx].size
 		test+=vr_s[vr_s != vr].size
 		test+=x_s[x_s!=x].size
@@ -667,52 +667,52 @@ def kinetic_h(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,TH
 		if test == 0:
 			New_Grid=0
 	New_Protons=1
-	if Ti_s!=None:
+	if not Ti_s is None:
 		test=Ti_s[Ti_s!=Ti].size
 		test+=n_s[n_s!=n].size
 		test+=vxi_s[vxi_s!=vxi].size
 		if test==0:
 			New_Protons=0
 	New_Molecular_Ions=1
-	if nHP_s!=None:
+	if not nHP_s is None:
 		test=nHP_s[nHP_s!=nHP].size
 		test+=THP_s[THP_s!=THP].size
 		if test==0:
 			New_Molecular_Ions=0
 	New_Electrons=1
-	if Te_s!=None:
+	if not Te_s is None:
 		test=Te_s[Te_s!=Te].size
 		test+=n_s[n_s!=n].size
 		if test==0:
 			New_Electrons=0
 	New_fH2=1
-	if fH2_s!=None:
+	if not fH2_s is None:
 		if fH2_s[fH2_s!=fH2].size==0:
 			New_fH2=0
 	New_fSH=1
-	if fSH_s!=None:
+	if not fSH_s is None:
 		if fSH_s[fSH_s!=fSH].size==0:
 			New_fSH=0
 	New_Simple_CX=1
-	if Simple_CX_s!=None:
-		if Simple_CX_s[Simple_CX_s!=Simple_CX].size==0:
+	if not Simple_CX_s is None:
+		if Simple_CX_s!=Simple_CX:
 			New_Simple_CX=0
 	New_H_Seed=1
-	if fH_s!=None:
+	if not fH_s is None:
 		if fH_s[fH_s!=fH].size==0:
 			New_H_Seed=0
 
 	Do_sigv = New_Grid or New_Electrons
 	Do_ni = New_Grid or New_Electrons or New_Protons or New_Molecular_Ions
 	Do_fH2_moments=(New_Grid or New_fH2) and np.sum(fH2) > 0.0
-	Do_Alpha_CX = (New_Grid or (Alpha_CX != None) or Do_ni or New_Simple_CX) and H_P_CX
-	Do_SIG_CX = (New_Grid or (SIG_CX != None) or New_Simple_CX) and (Simple_CX == 0) and Do_Alpha_CX
-	Do_Alpha_H_H2 = (New_Grid or (Alpha_H_H2 != None) or New_fH2) and H_H2_EL
-	Do_SIG_H_H2 = (New_Grid or (SIG_H_H2 != None)) and Do_Alpha_H_H2
-	Do_SIG_H_H = (New_Grid or (SIG_H_H != None)) and H_H_EL
-	Do_Alpha_H_P = (New_Grid or (Alpha_H_P != None) or Do_ni) and H_P_EL
-	Do_SIG_H_P = (New_Grid or (SIG_H_P != None)) and Do_Alpha_H_P
-	Do_v_v2 = (New_Grid or (v_v2 != None)) and (CI_Test or Do_SIG_CX or Do_SIG_H_H2 or Do_SIG_H_H or Do_SIG_H_P)
+	Do_Alpha_CX = (New_Grid or (Alpha_CX is None) or Do_ni or New_Simple_CX) and H_P_CX
+	Do_SIG_CX = (New_Grid or (SIG_CX is None) or New_Simple_CX) and (Simple_CX == 0) and Do_Alpha_CX
+	Do_Alpha_H_H2 = (New_Grid or (Alpha_H_H2 is None) or New_fH2) and H_H2_EL
+	Do_SIG_H_H2 = (New_Grid or (SIG_H_H2 is None)) and Do_Alpha_H_H2
+	Do_SIG_H_H = (New_Grid or (SIG_H_H is None)) and H_H_EL
+	Do_Alpha_H_P = (New_Grid or (Alpha_H_P is None) or Do_ni) and H_P_EL
+	Do_SIG_H_P = (New_Grid or (SIG_H_P is None)) and Do_Alpha_H_P
+	Do_v_v2 = (New_Grid or (v_v2 is None)) and (CI_Test or Do_SIG_CX or Do_SIG_H_H2 or Do_SIG_H_H or Do_SIG_H_P)
 
 	nH2=np.zeros(nx)
 	vxH2=np.zeros(nx)
@@ -1084,7 +1084,7 @@ def kinetic_h(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,TH
 					print(prompt+'Computing Omega_H_P')
 				for k in range(nx):
 					DeltaVx=(VxH[k]-vxi[k])/Vth
-					MagDeltaVx=np.mmaximum(abs(DeltaVx),DeltaVx_tol)
+					MagDeltaVx=np.maximum(abs(DeltaVx),DeltaVx_tol)
 					DeltaVx=sign(DeltaVx)*MagDeltaVx
 					Omega_H_P[k]=np.sum(Vr2pidVr*np.matmul(dVx,Alpha_H_P[k,:,:]*fH[k,:,:]))/(nH[k]*DeltaVx)
 				Omega_H_P=np.maximum(Omega_H_P,0)
@@ -1334,8 +1334,7 @@ def kinetic_h(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,TH
 				for k in range(nx-1):
 					fHG[k+1,i_p,:]=Ak[k,i_p,:]*fHG[k,i_p,:]+Bk[k,i_p,:]*(Beta_CX[k+1,i_p,:]+OmegaM[k+1,i_p,:]+Beta_CX[k,i_p,:]+OmegaM[k,i_p,:])
 				for k in range(nx-1,0,-1):
-					fHG[k-1,i_n,:]=Ak[k,i_n,:]*fHG[k,i_n,:]+Ck[k,i_n,:]*(Beta_CX[k+1,i_n,:]+OmegaM[k+1,i_n,:]+Beta_CX[k,i_n,:]+OmegaM[k,i_n,:])
-
+					fHG[k-1,i_n,:]=Ck[k,i_n,:]*fHG[k,i_n,:]+Dk[k,i_n,:]*(Beta_CX[k-1,i_n,:]+OmegaM[k-1,i_n,:]+Beta_CX[k,i_n,:]+OmegaM[k,i_n,:])
 				for k in range(nx):
 					NHG[igen,k]=np.sum(Vr2pidVr*np.matmul(dVx,fHG[k,:,:]))
 
@@ -1423,7 +1422,7 @@ def kinetic_h(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,TH
 			vx_shift=VxHG
 			Tmaxwell=THG
 			mol=1
-			Maxwell=create_shifted_maxwellian_include(vx_shift,Tmaxwell,Shifted_Maxwellian_Debug,mol,
+			Maxwell=create_shifted_maxwellian_include(vr,vx,Tnorm,vx_shift,Tmaxwell,Shifted_Maxwellian_Debug,mu,mol,
                                     nx,nvx,nvr,Vth,Vth2,Maxwell,vr2vx2_ran2,
                                     Vr2pidVr,dVx,Vol,Vth_DVx,Vx_DVx,Vr_DVr,Vr2Vx2_2D,jpa,jpb,jna,jnb)
 			for k in range(nx):
@@ -1439,7 +1438,7 @@ def kinetic_h(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,TH
 			vx_shift=(VxHG+vxi)/2
 			Tmaxwell=THG+(2./4.)*(Ti-THG +mu*mH*(vxi-VxHG)**2/(6*q))
 			mol=1
-			Maxwell=create_shifted_maxwellian_include(vx_shift,Tmaxwell,Shifted_Maxwellian_Debug,mol,
+			Maxwell=create_shifted_maxwellian_include(vr,vx,Tnorm,vx_shift,Tmaxwell,Shifted_Maxwellian_Debug,mu,mol,
                                     nx,nvx,nvr,Vth,Vth2,Maxwell,vr2vx2_ran2,
                                     Vr2pidVr,dVx,Vol,Vth_DVx,Vx_DVx,Vr_DVr,Vr2Vx2_2D,jpa,jpb,jna,jnb)
 			for k in range(nx):
@@ -1455,7 +1454,7 @@ def kinetic_h(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,TH
 			vx_shift=(VxHG+2*VxH2)/3
 			Tmaxwell=THG+(4./9.)*(TH2-THG +2*mu*mH*(vxH2-VxHG)**2/(6*q))
 			mol=1
-			Maxwell=create_shifted_maxwellian_include(vx_shift,Tmaxwell,Shifted_Maxwellian_Debug,mol,
+			Maxwell=create_shifted_maxwellian_include(vr,vx,Tnorm,vx_shift,Tmaxwell,Shifted_Maxwellian_Debug,mu,mol,
                                     nx,nvx,nvr,Vth,Vth2,Maxwell,vr2vx2_ran2,
                                     Vr2pidVr,dVx,Vol,Vth_DVx,Vx_DVx,Vr_DVr,Vr2Vx2_2D,jpa,jpb,jna,jnb)
 			for k in range(nx):
@@ -1526,14 +1525,14 @@ def kinetic_h(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,TH
 			SRecomb[k]=0
 		if H_P_CX:
 			CCX=Vth*(Beta_CX_sum[k,:,:]-Alpha_CX[k,:,:]*fH[k,:,:])
-			RxHCX[k]=mu*mH*Vth*np.sum(Vr2pidVr*np.matmul(dVx*(vx-_VxH),CCX))
+			RxHCX[k]=mu*mH*Vth*np.sum(Vr2pidVr*np.matmul(dVx*(vx-_VxH[k]),CCX))
 			EHCX[k]=.5*mu*mH*Vth2*np.sum(Vr2pidVr*np.matmul(dVx,vr2vx2*CCX))
 		if H_H2_EL:
 			CH_H2=Vth*Omega_H_H2[k]*(MH_H2_sum[k,:,:]-fH[k,:,:])
 			RxH2_H[k]=mu*mH*Vth*np.sum(Vr2pidVr*np.matmul(dVx*(vx-_VxH[k]),CH_H2))
 			EH2_H[k]=.5*mu*mH*Vth2*np.sum(Vr2pidVr*np.matmul(dVx,vr2vx2[k,:,:]*CH_H2))
 		if H_P_EL:
-			CH_P=Vth*Omega_H_P*(MH_P_sum[k,:,:]-fH[k,:,:])
+			CH_P=Vth*Omega_H_P[k]*(MH_P_sum[k,:,:]-fH[k,:,:])
 			RxP_H[k]=mu*mH*Vth*np.sum(Vr2pidVr*np.matmul(dVx*(vx-_VxH[k]),CH_P))
 			EP_H[k]=.5*mu*mH*Vth2*np.sum(Vr2pidVr*np.matmul(dVx,vr2vx2[k,:,:]*CH_P))
 		CW_H=-Vth*(gamma_wall[k,:,:]*fH[k,:,:])
