@@ -1117,7 +1117,7 @@ def kinetic_h(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,TH
 						Wperp_paraH[k]=-np.sum(Vr2pidVr*np.matmul(dVx,vr2_2vx2_2D*M_fH))/nH[k]
 				for k in range(nx):
 					Work[:]=fH[k,:,:].reshape(Work.shape)
-					Alpha_H_H[:]=np.matmul(Work,SIG_H_H).reshape(Alpah_H_H.shape)
+					Alpha_H_H[:]=np.matmul(Work,SIG_H_H).reshape(Alpha_H_H.shape)
 					Wpp=Wperp_paraH[k]
 					MagWpp=np.maximum(Wpp,Wpp_tol)
 					Wpp=sign(Wpp)*MagWpp
