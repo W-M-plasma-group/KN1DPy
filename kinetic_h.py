@@ -1034,10 +1034,10 @@ def kinetic_h(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,TH
 	if Do_Alpha_H_P==1:
 		if debrief>1:
 			print(prompt+'Computing Alpha_H_P')
-			Alpha_H_P=np.zeros((nx,nvx,nvr))
-			for k in range(nx):
-				Work[:]=(fi_hat[k,:,:]*ni[k]).reshape(Work.shape)
-				Alpha_H_P[k,:,:]=np.matmul(Work,SIG_H_P).reshape(Alpha_H_P[k].shape)
+		Alpha_H_P=np.zeros((nx,nvx,nvr))
+		for k in range(nx):
+			Work[:]=(fi_hat[k,:,:]*ni[k]).reshape(Work.shape)
+			Alpha_H_P[k,:,:]=np.matmul(Work,SIG_H_P).reshape(Alpha_H_P[k].shape)
 
 	#	Compute nH
 
@@ -1096,7 +1096,7 @@ def kinetic_h(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,TH
 					print(prompt+'Computing Omega_H_H2')
 				for k in range(nx):
 					DeltaVx=(VxH[k]-vxH2[k])/Vth
-					MagDeltaVx=np.maximum(abs(DeltaVx,DeltaVx_tol))
+					MagDeltaVx=np.maximum(abs(DeltaVx),DeltaVx_tol)
 					DeltaVx=sign(DeltaVx)*MagDeltaVx
 					Omega_H_H2[k]=np.sum(Vr2pidVr*np.matmul(dVx,Alpha_H_H2[k,:,:]*fH[k,:,:]))/(nH[k]*DeltaVx)
 				Omega_H_H2=np.maximum(Omega_H_H2,0)
@@ -1116,12 +1116,12 @@ def kinetic_h(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,TH
 						M_fH=MH_H_sum[k,:,:]-fH[k,:,:]
 						Wperp_paraH[k]=-np.sum(Vr2pidVr*np.matmul(dVx,vr2_2vx2_2D*M_fH))/nH[k]
 				for k in range(nx):
-					Work[:]=fH[k,:,:]
-					Alpha_H_H[:]=np.matmul(Work,SIG_H_H)
+					Work[:]=fH[k,:,:].reshape(Work.shape)
+					Alpha_H_H[:]=np.matmul(Work,SIG_H_H).reshape(Alpah_H_H.shape)
 					Wpp=Wperp_paraH[k]
 					MagWpp=np.maximum(Wpp,Wpp_tol)
 					Wpp=sign(Wpp)*MagWpp
-					Omega_H_H[k]=np.sum(Vr2pidVr*np.matmul(dVx,Alpha_H_H*Work))/(nH[k]*Wpp)
+					Omega_H_H[k]=np.sum(Vr2pidVr*np.matmul(dVx,Alpha_H_H*Work.reshape(Alpha_H_H.shape)))/(nH[k]*Wpp)
 				Omega_H_H=np.maximum(Omega_H_H,0)
 
 		#	Total Elastic scattering frequency

@@ -18,7 +18,7 @@ def create_kinetic_h_mesh(nv, mu, x, Ti, Te, n, PipeDia, E0 = 0, ixE0 = 0 ,irE0 
     nx = np.size(x)
 
     # estimate Interaction rate with side walls
-    gamma_wall = np.zeros(nv) # fixed typo - GG
+    gamma_wall = np.zeros(nx) # fixed typo - GG
     # for k in range( 0, nx):
     #   if PipeDia[k] > 0:
     #        gamma_wall[k] = 2*sqrt(2*Ti(k)*q/(2*mH))/PipeDia(k)
@@ -102,7 +102,7 @@ def create_kinetic_h_mesh(nv, mu, x, Ti, Te, n, PipeDia, E0 = 0, ixE0 = 0 ,irE0 
         dxh_max = 0.0005 # JWH: 0.0015 should be sufficient for D3D because scale lengths are 2.5x larger
         dxpt = min([dxpt1, dxpt2, dxh_max])
         xpt = xpt - dxpt 
-    xH = np.concatenate([np.array([xminH]), xH[0:np.size(xH) - 2]]) # put xminH in array to fix concatenation error
+    xH = np.concatenate([np.array([xminH]), xH[0:np.size(xH) - 1]]) # put xminH in array to fix concatenation error
     # if xH[1] - xH[0] > 0.5 * big_dx:
     #   xH = np.concatenate(xH[0], xH[2:])
 
