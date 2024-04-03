@@ -539,19 +539,19 @@ def KN1D(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
         # Compute positive and negative particle flux contributions
         gammaxH_plus = np.zeros(nxH)
         gammaxH_minus = np.zeros(nxH)
-        i_p = np.argwhere(vxA > 0).T 
-        i_n = np.argwhere(vxA < 0).T # changed formatting to avoid confusion with python function in
+        i_p = np.argwhere(vxA > 0).T[0]
+        i_n = np.argwhere(vxA < 0).T[0] # changed formatting to avoid confusion with python function in
         for k in range(0, nxH):
-            gammaxH_plus[k] = vthA * np.sum(Vr2pidVrA, np.dot(fH[k][i_p][:], vxA[i_p] * dVxA[i_p]))
-            gammaxH_minus[k] = vthA * np.sum(Vr2pidVrA, np.dot(fH[k][i_n][:], vxA[i_n] * dVxA[i_n]))
+            gammaxH_plus[k] = vthA * np.sum(Vr2pidVrA* np.dot(fH[k][i_p][:], vxA[i_p] * dVxA[i_p]))
+            gammaxH_minus[k] = vthA * np.sum(Vr2pidVrA* np.dot(fH[k][i_n][:], vxA[i_n] * dVxA[i_n]))
         
         gammaxH2_plus = np.zeros(nxH2)
         gammaxH2_minus = np.zeros(nxH2)
-        i_p = np.argwhere(vxM > 0).T 
-        i_n = np.argwhere(vxM < 0).T
+        i_p = np.argwhere(vxM > 0).T[0]
+        i_n = np.argwhere(vxM < 0).T[0]
         for k in range(0, nxH2):
-            gammaxH_plus[k] = vthM * np.sum(Vr2pidVrM, np.dot(fH2[k][i_p][:], vxM[i_p] * dVxM[i_p]))
-            gammaxH_minus[k] = vthM * np.sum(Vr2pidVrM, np.dot(fH2[k][i_n][:], vxM[i_n] * dVxM[i_n]))
+            gammaxH_plus[k] = vthM * np.sum(Vr2pidVrM* np.dot(fH2[k][i_p][:], vxM[i_p] * dVxM[i_p]))
+            gammaxH_minus[k] = vthM * np.sum(Vr2pidVrM* np.dot(fH2[k][i_n][:], vxM[i_n] * dVxM[i_n]))
         
         # Compute Lyman and Balmer
         Lyman = Lyman_Alpha(nA, TeA, nH, no_null = 1, g=g)
@@ -590,8 +590,8 @@ def KN1D(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
         vxA_s=vxA
         vrA_s=vrA
         TnormA_s=TnormA
-        EH_hist=EH_hist[0:,:] # double check this indexing 
-        SI_hist=SI_hist[0:, :] # double check this indexing 
+        EH_hist=EH_hist[1:] # double check this indexing 
+        SI_hist=SI_hist[1:] # double check this indexing 
 
         # The rest of the code for KN1D is for saving files and plotting which we can implement at a later date 
         return xH2, nH2, GammaxH2, TH2, qxH2_total, nHP, THP, SH, SP, \

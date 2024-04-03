@@ -336,7 +336,7 @@ def kinetic_h(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,TH
 	#	Kinetic_H_Moments
 	
 	nH2=g.Kinetic_H_H2_Moments_nH2
-	VxH2=g.Kinetic_H_H2_Moments_VxH2
+	vxH2=g.Kinetic_H_H2_Moments_VxH2
 	TH2=g.Kinetic_H_H2_Moments_TH2 # changed to fit current global_vars structure
 
 	#	Internal Debug switches
@@ -1034,10 +1034,10 @@ def kinetic_h(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,TH
 	if Do_Alpha_H_P==1:
 		if debrief>1:
 			print(prompt+'Computing Alpha_H_P')
-			Alpha_H_P=np.zeros((nx,nvx,nvr))
-			for k in range(nx):
-				Work[:]=(fi_hat[k,:,:]*ni[k]).reshape(Work.shape)
-				Alpha_H_P[k,:,:]=np.matmul(Work,SIG_H_P).reshape(Alpha_H_P[k].shape)
+		Alpha_H_P=np.zeros((nx,nvx,nvr))
+		for k in range(nx):
+			Work[:]=(fi_hat[k,:,:]*ni[k]).reshape(Work.shape)
+			Alpha_H_P[k,:,:]=np.matmul(Work,SIG_H_P).reshape(Alpha_H_P[k].shape)
 
 	#	Compute nH
 
@@ -1096,7 +1096,7 @@ def kinetic_h(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,TH
 					print(prompt+'Computing Omega_H_H2')
 				for k in range(nx):
 					DeltaVx=(VxH[k]-vxH2[k])/Vth
-					MagDeltaVx=np.maximum(abs(DeltaVx,DeltaVx_tol))
+					MagDeltaVx=np.maximum(abs(DeltaVx),DeltaVx_tol)
 					DeltaVx=sign(DeltaVx)*MagDeltaVx
 					Omega_H_H2[k]=np.sum(Vr2pidVr*np.matmul(dVx,Alpha_H_H2[k,:,:]*fH[k,:,:]))/(nH[k]*DeltaVx)
 				Omega_H_H2=np.maximum(Omega_H_H2,0)
@@ -1116,12 +1116,12 @@ def kinetic_h(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,TH
 						M_fH=MH_H_sum[k,:,:]-fH[k,:,:]
 						Wperp_paraH[k]=-np.sum(Vr2pidVr*np.matmul(dVx,vr2_2vx2_2D*M_fH))/nH[k]
 				for k in range(nx):
-					Work[:]=fH[k,:,:]
-					Alpha_H_H[:]=np.matmul(Work,SIG_H_H)
+					Work[:]=fH[k,:,:].reshape(Work.shape)
+					Alpha_H_H[:]=np.matmul(Work,SIG_H_H).reshape(Alpha_H_H.shape)
 					Wpp=Wperp_paraH[k]
 					MagWpp=np.maximum(Wpp,Wpp_tol)
 					Wpp=sign(Wpp)*MagWpp
-					Omega_H_H[k]=np.sum(Vr2pidVr*np.matmul(dVx,Alpha_H_H*Work))/(nH[k]*Wpp)
+					Omega_H_H[k]=np.sum(Vr2pidVr*np.matmul(dVx,Alpha_H_H*Work.reshape(Alpha_H_H.shape)))/(nH[k]*Wpp)
 				Omega_H_H=np.maximum(Omega_H_H,0)
 
 		#	Total Elastic scattering frequency
@@ -1451,7 +1451,7 @@ def kinetic_h(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,TH
 
 			#	Compute MH_H2
 
-			vx_shift=(VxHG+2*VxH2)/3
+			vx_shift=(VxHG+2*vxH2)/3
 			Tmaxwell=THG+(4./9.)*(TH2-THG +2*mu*mH*(vxH2-VxHG)**2/(6*q))
 			mol=1
 			Maxwell=create_shifted_maxwellian_include(vr,vx,Tnorm,vx_shift,Tmaxwell,Shifted_Maxwellian_Debug,mu,mol,
@@ -1816,7 +1816,7 @@ def kinetic_h(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,TH
 	#	Save input parameters in kinetic_H_Moments common block
 
 	g.Kinetic_H_H2_Moments_nH2=nH2
-	g.Kinetic_H_H2_Moments_VxH2=VxH2
+	g.Kinetic_H_H2_Moments_VxH2=vxH2
 	g.Kinetic_H_H2_Moments_TH2=TH2
 
 	return fH,nH,GammaxH,VxH,pH,TH,qxH,qxH_total,NetHSource,Sion,QH,RxH,QH_total,AlbedoH,WallH,error

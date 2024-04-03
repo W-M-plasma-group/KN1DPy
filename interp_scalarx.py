@@ -34,7 +34,7 @@ def interp_scalarx(fa,xa,xb,do_warn=0,debug=0):
   # for warnings, a message is shown but the code continues
   # Need to check the IDL output to see if a full exception is better
   if do_warn!=0: 
-    big=max(abs(xb))
+    big=max(abs(fb))
     if k0>0 or k0<nxb-1:
       if k0>0 and abs(fb[k0])>do_warn*big:
         warn('Non-zero value of fb detected at min(Xa) boundary')

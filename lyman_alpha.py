@@ -70,17 +70,17 @@ def Lyman_Alpha(Density, Te, N0, photons = 0, create = 0, no_null = 0, g=None):
         raise Exception('Number of elements of Density and Te are different!')
     if np.size(Density) != np.size(N0):
         raise Exception(' Number of elements of Density and N0 are different! ')
-    result = Density ; result[:] = 1.0e32
-    photon = result 
+    result = np.full(Density.shape,1.0e32)
+    photons = np.full(Density.shape,1.0e32)
     r02 = JHR_Coef(Density, Te, 0, 2, no_null = no_null, g=g)
     r12 = JHR_Coef(Density, Te, 1, 2, no_null = no_null, g=g)
     NHSaha1 = NHSaha(Density, Te, 1)
     NHSaha2 = NHSaha(Density, Te, 2)
+    ok=np.array([])
     for i in range(0, np.size(Density)):
         if 0 < N0[i] < 1e32 and r02[i] < 1.0e32 and r12[i] < 1.0e32 and NHSaha1[i] < 1.0e32 and NHSaha2[i] < 1.0e32:
             ok = np.append(ok, i)
     count = np.size(ok)
-    ok = np.astype(int)
     if count > 0:
         for i in range(0, np.size(ok)):
             photons[i] = A_Balmer[0] * ( r02[i] + r12[i] * N0[i] / NHSaha1[i] ) * NHSaha2[i]

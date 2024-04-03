@@ -276,17 +276,18 @@ def interp_fvrvxx(fa,Vra,Vxa,Xa,Tnorma,Vrb,Vxb,Xb,Tnormb,do_warn=None, debug=0, 
                     AN[0,:,:]=_AN[1:nvxb+1,1:nvrb+1]
                     _AN=-np.roll(Nij*Vth_DVx,-1,0)
                     AN[1,:,:]=_AN[1:nvxb+1,1:nvrb+1]
-                    BN[0,jpa+1,jpb+1,:]=Nijm1_vx_Dvx[jpa+3:jpb+2,1:nvrb+1]-Nij_vx_Dvx[jpa+3:jpb+2,1:nvrb+1]
+
+                    BN[0,jpa+1:jpb+1,:]=Nijm1_vx_Dvx[jpa+2:jpb+2,1:nvrb+1]-Nij_vx_Dvx[jpa+2:jpb+2,1:nvrb+1]
                     BN[0,jpa,:]=-Nij_vx_Dvx[jpa+1,1:nvrb+1]
                     BN[0,jnb,:]=Nij_vx_Dvx[jnb+1,1:nvrb+1]
                     BN[0,jna:jnb,:]=-Nijp1_vx_Dvx[jna+1:jnb+1,1:nvrb+1]+Nij_vx_Dvx[jna+1:jnb+1,1:nvrb+1]
                     BN[0,:,:]=BN[0,:,:]+Nim1j_vr_Dvr[1:nvxb+1,1:nvrb+1]-Nij_vr_Dvr[1:nvxb+1,1:nvrb+1]
 
-                    BN[1,jpa+1,jpb+1,:]=-Nijp1_vx_Dvx[jpa+2:jpb+2,1:nvrb+1]+Nij_vx_Dvx[jpa+2:jpb+2,1:nvrb+1]
+                    BN[1,jpa+1:jpb+1,:]=-Nijp1_vx_Dvx[jpa+2:jpb+2,1:nvrb+1]+Nij_vx_Dvx[jpa+2:jpb+2,1:nvrb+1]
                     BN[1,jpa,:]=-Nijp1_vx_Dvx[jpa+1,1:nvrb+1]
                     BN[1,jnb,:]=Nijm1_vx_Dvx[jnb+1,1:nvrb+1]
                     BN[1,jna:jnb,:]=Nijm1_vx_Dvx[jna+1:jnb+1,1:nvrb+1]-Nij_vx_Dvx[jna+1:jnb+1,1:nvrb+1]
-                    BN[1,:,1:nvrb]=BN[1,:,1:nvrb]-Nip1j_vr_Dvr[1:nvxb+1,2:nvrb+1]+Nij_vr_Dvr[1:nvxb+1,2:nvrb]
+                    BN[1,:,1:nvrb]=BN[1,:,1:nvrb]-Nip1j_vr_Dvr[1:nvxb+1,2:nvrb+1]+Nij_vr_Dvr[1:nvxb+1,2:nvrb+1]
                     BN[1,:,0]=BN[1,:,0]-Nip1j_vr_Dvr[1:nvxb+1,1]
 
                     #   If negative values for Nij must be allowed, then add postive particles to i=0 and negative particles to i=1 (beta is negative here)
@@ -314,7 +315,7 @@ def interp_fvrvxx(fa,Vra,Vxa,Xa,Tnorma,Vrb,Vxb,Xb,Tnormb,do_warn=None, debug=0, 
                             #   Compute TB1, TB2
 
                             if TB1[ib]==0:
-                                TB1[ib]=np.sqrt[Tnormb]*np.sum(np.matmul(Vxb,BN[ib,:,:]))
+                                TB1[ib]=np.sqrt(Tnormb)*np.sum(np.matmul(Vxb,BN[ib,:,:]))
                             if TB2[ib]==0:
                                 TB2[ib]=Tnormb*np.sum(Vrb2Vxb2*BN[ib,:,:])
 
@@ -339,11 +340,11 @@ def interp_fvrvxx(fa,Vra,Vxa,Xa,Tnorma,Vrb,Vxb,Xb,Tnormb,do_warn=None, debug=0, 
                     #   Are there locations where Nij = 0.0 and RHS is negative?
                     #   ii=where(Nij eq 0.0 and RHS lt 0.0,count) was in the original code, I don't think it does anything
 
-                    s=0
+                    s=1
                     if not allow_neg:
-                        ii=np.argwhere(Nij!=0)
-                        if ii.size>0:
-                            s=np.min(1/np.max(-RHS[ii]/Nij[ii]),1)
+                        ii=np.nonzero(Nij)
+                        if np.size(ii)>0:
+                            s=min(1/np.max(-RHS[ii]/Nij[ii]),1)
                     fb[k,:,:]=nb*(Nij+s*RHS)/Vol # fixed capitalization
 
                     goto_correct=s<1
