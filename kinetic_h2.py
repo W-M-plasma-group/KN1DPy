@@ -818,7 +818,7 @@ def Kinetic_H2(vx, vr, x, Tnorm, mu, Ti, Te, n, vxi, fH2BC, GammaxH2BC, NuLoss, 
     vr2vx2 = np.zeros((nvr,nvx,nx)).T
     for i in range(0, nvr):
         for k in range(0, nx):
-            vr2vx2[k][:,i] = vr[i] ** 2 + vx ** 2
+            vr2vx2[:,i] = vr[i] ** 2 + vx ** 2
 
     # Magnitude of total normalized (v-vxi)^2 at each mesh point
     vr2vx_vxi2 = np.zeros((nvr,nvx,nx)).T
