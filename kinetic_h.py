@@ -336,7 +336,7 @@ def kinetic_h(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,TH
 	#	Kinetic_H_Moments
 	
 	nH2=g.Kinetic_H_H2_Moments_nH2
-	VxH2=g.Kinetic_H_H2_Moments_VxH2
+	vxH2=g.Kinetic_H_H2_Moments_VxH2
 	TH2=g.Kinetic_H_H2_Moments_TH2 # changed to fit current global_vars structure
 
 	#	Internal Debug switches
@@ -1451,7 +1451,7 @@ def kinetic_h(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,TH
 
 			#	Compute MH_H2
 
-			vx_shift=(VxHG+2*VxH2)/3
+			vx_shift=(VxHG+2*vxH2)/3
 			Tmaxwell=THG+(4./9.)*(TH2-THG +2*mu*mH*(vxH2-VxHG)**2/(6*q))
 			mol=1
 			Maxwell=create_shifted_maxwellian_include(vr,vx,Tnorm,vx_shift,Tmaxwell,Shifted_Maxwellian_Debug,mu,mol,
@@ -1816,7 +1816,7 @@ def kinetic_h(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,TH
 	#	Save input parameters in kinetic_H_Moments common block
 
 	g.Kinetic_H_H2_Moments_nH2=nH2
-	g.Kinetic_H_H2_Moments_VxH2=VxH2
+	g.Kinetic_H_H2_Moments_VxH2=vxH2
 	g.Kinetic_H_H2_Moments_TH2=TH2
 
 	return fH,nH,GammaxH,VxH,pH,TH,qxH,qxH_total,NetHSource,Sion,QH,RxH,QH_total,AlbedoH,WallH,error

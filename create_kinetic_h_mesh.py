@@ -99,7 +99,8 @@ def create_kinetic_h_mesh(nv, mu, x, Ti, Te, n, PipeDia, E0 = 0, ixE0 = 0 ,irE0 
             dxpt2 = interpfunc(xpt_test)
         # dxpt = min([dxpt1, dxpt2]) * 0.5 ; FS: reduce spacing 
         # FS: force a preset maximum grid spacing 
-        dxh_max = 0.0005 # JWH: 0.0015 should be sufficient for D3D because scale lengths are 2.5x larger
+        dxh_max = 0.0004 # JWH: 0.0015 should be sufficient for D3D because scale lengths are 2.5x larger
+        # lowered dxh_max from 5e-4 to 4e-4; original was giving mesh size errors in kinetic_h - nh
         dxpt = min([dxpt1, dxpt2, dxh_max])
         xpt = xpt - dxpt 
     xH = np.concatenate([np.array([xminH]), xH[0:np.size(xH) - 1]]) # put xminH in array to fix concatenation error

@@ -342,9 +342,9 @@ def interp_fvrvxx(fa,Vra,Vxa,Xa,Tnorma,Vrb,Vxb,Xb,Tnormb,do_warn=None, debug=0, 
 
                     s=1
                     if not allow_neg:
-                        ii=np.argwhere(Nij!=0)
-                        if ii.size>0:
-                            s=np.min(1/np.max(-RHS[ii]/Nij[ii]),1)
+                        ii=np.nonzero(Nij)
+                        if np.size(ii)>0:
+                            s=min(1/np.max(-RHS[ii]/Nij[ii]),1)
                     fb[k,:,:]=nb*(Nij+s*RHS)/Vol # fixed capitalization
 
                     goto_correct=s<1

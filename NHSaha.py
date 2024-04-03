@@ -24,7 +24,7 @@ import numpy as np
 def NHSaha(Density, Te, p):
     if len(Density) != len(Te):
         raise Exception('Number of Elements of Density and Te are different!')
-    if len(p) != 1:
+    if hasattr(p, "__len__"):
         raise Exception('‘p’ must be a scalar')
     if p<0:
         raise Exception('“p” must greater than 0')

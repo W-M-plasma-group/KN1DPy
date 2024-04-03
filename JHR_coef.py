@@ -72,7 +72,7 @@ def JHR_Coef(Density, Te, Ion, p, create = 0, no_null = 0, g=None):
         LDensity = np.maximum( LDensity, min(Dknot))
         LDensity = np.minimum( LDensity, max(Dknot))
         LTe = np.maximum( LTe, min(Tknot))
-        LTe = np.minimum( LTe, Tknot)
+        LTe = np.minimum( LTe, max(Tknot))
         count = np.size(LDensity)
         ok = np.arange(count)
     else:
