@@ -1917,7 +1917,10 @@ def Kinetic_H2(vx, vr, x, Tnorm, mu, Ti, Te, n, vxi, fH2BC, GammaxH2BC, NuLoss, 
             R10rel = np.append(R10rel,10.0 / k**3)
         En = 13.58 / (2 + np.arange(9))**2 # Energy of Levels
         for k in range(0, nx):
-            EHn = 0.5 * (Ee[:En.size] + En) * R10rel / np.sum(R10rel) # not sure about this
+            if Ee.size >= 9: # This constricts Ee to have length 9 so that the operations involving R10rel and En work, Not sure if this is correct though
+                EHn = 0.5 * (Ee[:En.size] - En) * R10rel / np.sum(R10rel)
+            if Ee.size < 9:
+                EHn = 0.5 * (np.concatenate((Ee, np.zeros(9-Ee.size))) - En) * R10rel / np.sum(R10rel)
             EHn = np.maximum(EHn, 0)
             Eave[ii, k] = np.sum(EHn)
             Eave[ii, k] = np.maximum(Eave[ii, k],0.25)
