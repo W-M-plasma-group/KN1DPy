@@ -410,7 +410,7 @@ def KN1D(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
 
                 # interpolate fH data onto H2 mesh: fH -> fHM
                 do_warn=5e-3
-                fHM=interp_fvrvxx(fH,vrA,vxA,xH,TnormA,vrM,vxM,xH2,TnormM,do_warn=do_warn, debug=interp_debug, g=g) 
+                fHM=np.maximum(interp_fvrvxx(fH,vrA,vxA,xH,TnormA,vrM,vxM,xH2,TnormM,do_warn=do_warn, debug=interp_debug, g=g) ,0)
 
                 # Compute fH2 using Kinetic_H2
                 ni_correct=1
@@ -444,8 +444,8 @@ def KN1D(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
 
                 # Interpolate H2 data onto H mesh: fH2 -> fH2A, fSH -> fSHA, nHP -> nHPA, THP -> THPA
                 do_warn = 5.0E-3
-                fH2A = interp_fvrvxx(fH2,vrM,vxM,xH2,TnormM,vrA,vxA,xH,TnormA, do_warn=do_warn, debug=interp_debug, g=g) 
-                fSHA = interp_fvrvxx(fSH,vrM,vxM,xH2,TnormM,vrA,vxA,xH,TnormA, do_warn=do_warn, debug=interp_debug, g=g) 
+                fH2A = np.maximum(interp_fvrvxx(fH2,vrM,vxM,xH2,TnormM,vrA,vxA,xH,TnormA, do_warn=do_warn, debug=interp_debug, g=g),0 )
+                fSHA = np.maximum(interp_fvrvxx(fSH,vrM,vxM,xH2,TnormM,vrA,vxA,xH,TnormA, do_warn=do_warn, debug=interp_debug, g=g) ,0)
                 nHPA = interp_scalarx(nHP,xH2,xH, do_warn=do_warn, debug=interp_debug) 
                 THPA = interp_scalarx(THP,xH2,xH, do_warn=do_warn, debug=interp_debug)     
 

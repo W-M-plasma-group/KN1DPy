@@ -1104,7 +1104,7 @@ def Kinetic_H2(vx, vr, x, Tnorm, mu, Ti, Te, n, vxi, fH2BC, GammaxH2BC, NuLoss, 
             if debrief > 1:
                 print(prompt, 'Computing Alpha_H2_P')
             Alpha_H2_P = np.zeros((nvr, nvx, nx)).T
-            ni = n
+            ni = copy.deepcopy(n)
             if ni_correct:
                 ni = np.maximum(n - nHP,0)
             for k in range(0, nx):
@@ -2116,7 +2116,12 @@ def Kinetic_H2(vx, vr, x, Tnorm, mu, Ti, Te, n, vxi, fH2BC, GammaxH2BC, NuLoss, 
                              sigv[8, k] * SFCn[nFC[8], k] + \
                              2 * sigv[10, k] * SFCn[nFC[10], k])
         # Compute total H and H(+) sources
-        # edit indents 
+
+        for k in range(nx):
+            SH[k]=np.sum(Vr2pidVr*np.matmul(dVx,fSH[k]))
+            SP[k]=n[k]*nH2[k]*sigv[4,k]+n[k]*nHP[k]*(sigv[7,k]+sigv[8,k]+2*sigv[9,k])
+
+        # Compute total HP source 
         SHP = n * nH2 * sigv[1]
         # Compute energy distrobution of H source 
         for k in range(0, nx):

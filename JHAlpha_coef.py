@@ -40,7 +40,7 @@ def JHAlpha_coef(Density, Te,  create = 0, no_null = 0, g=None):
     # Evaluate Alpha coefficients 
     if np.size(Density) != np.size(Te):
         raise Exception('Number of elements of Density and Te are different!')
-    result = Density ; result[:] = 1.0e32
+    result = np.full(Density.shape, 1.0e32)
     LDensity = np.log(Density)
     LTe = np.log(Te)
     if no_null:
@@ -59,5 +59,5 @@ def JHAlpha_coef(Density, Te,  create = 0, no_null = 0, g=None):
     if count > 0: 
         for i in ok:
             #result[ok] = np.exp( ) # currently missing the python equivalent to bs2dr will come back to this later 
-            result[i]=np.exp(interpolate.bisplev(LDensity[i],LTe[i],(Dknot,Tknot,LogS_BSCoef,3,3),0,0)) # updated
+            result[i]=np.exp(interpolate.bisplev(LDensity[i],LTe[i],(Dknot,Tknot,LogAlpha_BSCoef,3,3),0,0)) # updated
     return result

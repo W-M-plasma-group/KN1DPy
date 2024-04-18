@@ -13,11 +13,13 @@ from sigma_el_h_h import Sigma_EL_H_H
 from sigma_el_h_hh import Sigma_El_H_HH
 from sigma_el_p_h import Sigma_EL_P_H
 from sigmav_cx_h0 import sigmav_cx_h0
+from scipy.ndimage import shift
 
 from sign import sign
 from sval import sval
 
 from global_vars import mH, q, k_boltz, Twall
+import copy
 
 # This subroutine is part of the "KN1D" atomic and molecular neutral transport code.
 
@@ -807,7 +809,7 @@ def kinetic_h(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,TH
 	if Do_ni:
 		if debrief>1:
 			print(prompt+'Computing ni profile')
-		ni=n
+		ni=copy.deepcopy(n)
 		if ni_correct:
 			ni=n-nHP
 		ni=np.maximum(ni,.01*n)
@@ -1063,8 +1065,8 @@ def kinetic_h(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,TH
 
 	while do_fH_Iterate:
 		do_fH_Iterate=False
-		fHs=fH
-		nHs=nH
+		fHs=copy.deepcopy(fH)
+		nHs=copy.deepcopy(nH)
 
 		#	Compute Omega values if nH is non-zero
 
@@ -1078,7 +1080,7 @@ def kinetic_h(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,TH
 					VxH[k]=Vth*np.sum(Vr2pidVr*np.matmul(vx*dVx,fH[k,:,:]))/nH[k]
 
 			#	Compute Omega_H_P for present fH and Alpha_H_P if H_P elastic collisions are included
-
+			H_P_EL=False # routinely overestimated - disabled for now
 			if H_P_EL:
 				if debrief>1:
 					print(prompt+'Computing Omega_H_P')
@@ -1146,7 +1148,7 @@ def kinetic_h(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,TH
 		for k in range(nx):
 			for j in range(i_p[0],nvx): # changed ip to i_p
 				Max_dx[k]=np.minimum(Max_dx[k],min(2*vx[j]/alpha_c[k,j,:]))
-		dx=np.roll(x,-1)-x
+		dx=shift(x,-1)-x
 		Max_dxL=Max_dx[0:nx-1]
 		Max_dxR=Max_dx[1:nx]
 		Max_dx=np.minimum(Max_dxL,Max_dxR)
@@ -1220,20 +1222,20 @@ def kinetic_h(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,TH
 
 		#	Set total atomic neutral distribution function to first flight generation
 
-		fH=fHG
-		nH=NHG[0,:]
+		fH=copy.deepcopy(fHG)
+		nH=copy.deepcopy(NHG[0,:])
 
 		do_fH_done = fH_generations==0
 
 		if not do_fH_done:
 			do_next_generation=True
 			while do_next_generation:
-				print('check next_generation')
+				print(prompt+' check next_generation '+str(igen))
 				if igen+1> Max_Gen:
 					if debrief>0:
 						print(prompt+'Completed '+sval(Max_Gen)+' generations. Returning present solution...')
-						do_fH_done=True
-						break
+					do_fH_done=True
+					break
 				igen+=1
 				if debrief>0:
 					print(prompt+'Computing atomic neutral generation#'+sval(igen))
@@ -1356,7 +1358,11 @@ def kinetic_h(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,TH
 					#		is less than 0.003 times the 'seed error' or is less than TRUNCATE
 
 					do_fH_done= (Delta_nHG<.003*Delta_nHs) or (Delta_nHG<truncate)
-					break
+					if do_fH_done:
+						break
+				if Delta_nHG<truncate:
+					do_next_generation=False
+				
 		if plot>0:
 			pass	#	May add later
 
