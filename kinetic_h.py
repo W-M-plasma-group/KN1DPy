@@ -20,6 +20,7 @@ from sval import sval
 
 from global_vars import mH, q, k_boltz, Twall
 import copy
+from read_adas import interp_sig
 
 # This subroutine is part of the "KN1D" atomic and molecular neutral transport code.
 
@@ -56,7 +57,8 @@ import copy
 def kinetic_h(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,THP,fH=None,
 			  truncate=1e-4,Compute_Errors=0,plot=0,debug=0,pause=0,debrief=0,
 			  Simple_CX=1,Max_Gen=50,No_Johnson_Hinnov=0,Use_Collrad_Ionization=0,
-			  No_Recomb=0,H_H_EL=0,H_P_EL=0,_H_H2_EL=0,H_P_CX=0,ni_correct=0, g=None): # changed fH default to None and Use_Collrad_Ionization capitalization
+			  No_Recomb=0,H_H_EL=0,H_P_EL=0,_H_H2_EL=0,H_P_CX=0,ni_correct=0, g=None,
+			  adas_rec_h1s=None, adas_ion_h0=None, adas_qcx_h0=None): # changed fH default to None and Use_Collrad_Ionization capitalization
 
     #	Input:
     #		vx(*)	- fltarr(nvx), normalized x velocity coordinate 
@@ -277,7 +279,12 @@ def kinetic_h(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,TH
 	#	History:
 	#		22-Dec-2000 - B. LaBombard - first coding.
 	#		11-Feb-2001 - B. LaBombard - added elastic collisions 
-
+	
+	# following three variables used for testing individual reaction rates
+	# set as False to disable rates
+	test_rec=True
+	test_ion=True
+	test_qcx=True
 	prompt='Kinetic_H => '
 
 	#	Set Kinetic_H_input common block variables 
@@ -824,20 +831,34 @@ def kinetic_h(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,TH
 		sigv=np.zeros((3,nx))
 
 		#	Reaction R1:  e + H -> e + H(+) + e   (ionization)
-
-		if Use_Collrad_Ionization:
+		JH=False
+		if Use_Collrad_Ionization and JH:
 			sigv[1,:]=collrad_sigmav_ion_h0(n,Te) # from COLLRAD code (DEGAS-2)
 		else:
 			if JH:
 				sigv[1,:]=JHS_coef(n,Te,no_null=True, g=g) # Johnson-Hinnov, limited Te range; fixed JHS_coef capitalization
-			else:
+			elif not adas_ion_h0 is None:
+				#print('adas_ion')
+				sigv[1,:]=interp_sig(Te,adas_ion_h0,'ion_h0')*1e-6
+			elif test_ion:
+				#print('check ion')
 				sigv[1,:]=sigmav_ion_h0(Te) # from Janev et al., up to 20keV
 
 		#	Reaction R2:  e + H(+) -> H(1s) + hv  (radiative recombination)
 
 		if JH:
 			sigv[2,:]=JHAlpha_coef(n,Te,no_null=True, g=g) # fixed JHAlpha_coef capitalization
-		else:
+		elif not adas_rec_h1s is None:
+			#print('adas_rec')
+			sigv[2,:]=interp_sig(Te*11606,adas_rec_h1s,'rec_h1s')*1e-6
+			#import matplotlib.pyplot as plt
+			#plt.plot(sigv[2,:],'.')
+			#plt.plot(sigmav_rec_h1s(Te),'.')
+			#plt.yscale('log')
+			#plt.legend(['adas','idl'])
+			#plt.show()
+		elif test_rec:
+			#print('check rec')
 			sigv[2,:]=sigmav_rec_h1s(Te)
 
 		#	H ionization rate (normalized by vth) = reaction 1
@@ -899,7 +920,7 @@ def kinetic_h(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,TH
 		for l in range(nvx):
 			Vr2pidVrdVx[l,:,:,:]=Vr2pidVrdVx[l,:,:,:]*dVx[l] # fixed assignment
 
-	if Simple_CX==0 and Do_SIG_CX==1:
+	if Simple_CX==0 and Do_SIG_CX==1 or not adas_qcx_h0 is None:
 		if debrief>1:
 			print(prompt+'Computing SIG_CX')
 
@@ -910,8 +931,12 @@ def kinetic_h(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,TH
 		#	Compute sigma_cx * v_v at all possible relative velocities
 
 		_Sig=np.zeros((ntheta,nvr*nvx*nvr*nvx))
-		_Sig[:]=(v_v*sigma_cx_h0(v_v2*(.5*mH*Vth2/q))).reshape(_Sig.shape) # Not sure if this is the correct way to fix the issues with projecting here but this is how it was handled in kinetic h2
-
+		if adas_qcx_h0 is None and test_qcx:
+			#print('check qcx')
+			_Sig[:]=(v_v*sigma_cx_h0(v_v2*(.5*mH*Vth2/q))).reshape(_Sig.shape) # Not sure if this is the correct way to fix the issues with projecting here but this is how it was handled in kinetic h2
+		elif not adas_qcx_h0 is None:
+			#print('adas qcx')
+			_Sig[:]=(v_v*interp_sig(v_v2*(.5*mH*Vth2/q)*1e-3,adas_qcx_h0,'qcx_h0')).reshape(_Sig.shape)
 		#	Set SIG_CX = vr' x Integral{v_v*sigma_cx} 
 		#		over theta=0,2pi times differential velocity space element Vr'2pidVr'*dVx'
 
@@ -1080,7 +1105,7 @@ def kinetic_h(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,TH
 					VxH[k]=Vth*np.sum(Vr2pidVr*np.matmul(vx*dVx,fH[k,:,:]))/nH[k]
 
 			#	Compute Omega_H_P for present fH and Alpha_H_P if H_P elastic collisions are included
-			H_P_EL=False # routinely overestimated - disabled for now
+			H_P_EL=False
 			if H_P_EL:
 				if debrief>1:
 					print(prompt+'Computing Omega_H_P')
@@ -1259,8 +1284,8 @@ def kinetic_h(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,TH
 						#		each velocity mesh point
 
 						for k in range(nx):
-							Work[:]=fHG[k,:,:]
-							Beta_CX[k,:,:]=ni[k]*fi_hat[k,:,:]*np.matmul(Work,SIG_CX)
+							Work[:]=fHG[k,:,:].reshape(Work.shape)
+							Beta_CX[k,:,:]=ni[k]*fi_hat[k,:,:]*np.matmul(Work,SIG_CX).reshape(fi_hat[k].shape)
 
 					#	Sum charge exchange source over all generations
 
@@ -1360,7 +1385,7 @@ def kinetic_h(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,TH
 					do_fH_done= (Delta_nHG<.003*Delta_nHs) or (Delta_nHG<truncate)
 					if do_fH_done:
 						break
-				if Delta_nHG<truncate:
+				elif Delta_nHG<truncate:
 					do_next_generation=False
 				
 		if plot>0:
@@ -1397,8 +1422,8 @@ def kinetic_h(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,TH
 			#	Option (A): Compute charge exchange source using fH and vr x sigma x v_v at each velocity mesh point
 
 			for k in range(nx):
-				Work[:]=fHG[k,:,:]
-				Beta_CX[k,:,:]=ni[k]*fi_hat[k,:,:]*np.matmul(Work,SIG_CX)
+				Work[:]=fHG[k,:,:].reshape(Work.shape)
+				Beta_CX[k,:,:]=ni[k]*fi_hat[k,:,:]*np.matmul(Work,SIG_CX).reshape(fi_hat[k].shape)
 
 		#	Sum charge exchange source over all generations
 

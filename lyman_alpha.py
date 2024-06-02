@@ -83,6 +83,6 @@ def Lyman_Alpha(Density, Te, N0, photons = 0, create = 0, no_null = 0, g=None):
     count = np.size(ok)
     if count > 0:
         for i in range(0, np.size(ok)):
-            photons[i] = A_Balmer[0] * ( r02[i] + r12[i] * N0[i] / NHSaha1[i] ) * NHSaha2[i]
-            result[i] = 13.6057 * ( 0.25 - 1.0 / 9.0 ) * photons[i] * 1.6e-19
+            photons[i] = A_Lyman[0] * ( r02[i] + r12[i] * N0[i] / NHSaha1[i] ) * NHSaha2[i]
+            result[i] = 13.6057 * ( .75 ) * photons[i] * 1.6e-19
     return result
