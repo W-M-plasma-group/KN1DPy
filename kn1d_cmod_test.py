@@ -10,7 +10,7 @@ def read_sav(file_name):
 #   file name - the name of the .sav file
 # Outputs:
 #   sav_data - a dictionary containing all of the data
-    path = '//Users/Gwen/Desktop/Plasma_Physics/kn1d/' + file_name
+    path = 'C:\Users\julio\projects_git\kn1d_gl2\kn1d_python\sav_files_2' + file_name
     sav_data = readsav(path)
     return sav_data
 
