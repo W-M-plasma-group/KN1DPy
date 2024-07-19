@@ -13,11 +13,14 @@ from sigma_el_h_h import Sigma_EL_H_H
 from sigma_el_h_hh import Sigma_El_H_HH
 from sigma_el_p_h import Sigma_EL_P_H
 from sigmav_cx_h0 import sigmav_cx_h0
-import matplotlib.pyplot as plt 
+from scipy.ndimage import shift
+
 from sign import sign
 from sval import sval
 
 from global_vars import mH, q, k_boltz, Twall
+import copy
+from read_adas import interp_sig
 
 # This subroutine is part of the "KN1D" atomic and molecular neutral transport code.
 
@@ -54,7 +57,8 @@ from global_vars import mH, q, k_boltz, Twall
 def kinetic_h(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,THP,fH=None,
 			  truncate=1e-4,Compute_Errors=0,plot=0,debug=0,pause=0,debrief=0,
 			  Simple_CX=1,Max_Gen=50,No_Johnson_Hinnov=0,Use_Collrad_Ionization=0,
-			  No_Recomb=0,H_H_EL=0,H_P_EL=0,_H_H2_EL=0,H_P_CX=0,ni_correct=0, g=None): # changed fH default to None and Use_Collrad_Ionization capitalization
+			  No_Recomb=0,H_H_EL=0,H_P_EL=0,_H_H2_EL=0,H_P_CX=0,ni_correct=0, g=None,
+			  adas_rec_h1s=None, adas_ion_h0=None, adas_qcx_h0=None): # changed fH default to None and Use_Collrad_Ionization capitalization
 
     #	Input:
     #		vx(*)	- fltarr(nvx), normalized x velocity coordinate 
@@ -275,7 +279,12 @@ def kinetic_h(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,TH
 	#	History:
 	#		22-Dec-2000 - B. LaBombard - first coding.
 	#		11-Feb-2001 - B. LaBombard - added elastic collisions 
-
+	
+	# following three variables used for testing individual reaction rates
+	# set as False to disable rates
+	test_rec=True
+	test_ion=True
+	test_qcx=True
 	prompt='Kinetic_H => '
 
 	#	Set Kinetic_H_input common block variables 
@@ -807,7 +816,7 @@ def kinetic_h(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,TH
 	if Do_ni:
 		if debrief>1:
 			print(prompt+'Computing ni profile')
-		ni=n
+		ni=copy.deepcopy(n)
 		if ni_correct:
 			ni=n-nHP
 		ni=np.maximum(ni,.01*n)
@@ -822,20 +831,34 @@ def kinetic_h(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,TH
 		sigv=np.zeros((3,nx))
 
 		#	Reaction R1:  e + H -> e + H(+) + e   (ionization)
-
-		if Use_Collrad_Ionization:
+		JH=False
+		if Use_Collrad_Ionization and JH:
 			sigv[1,:]=collrad_sigmav_ion_h0(n,Te) # from COLLRAD code (DEGAS-2)
 		else:
 			if JH:
 				sigv[1,:]=JHS_coef(n,Te,no_null=True, g=g) # Johnson-Hinnov, limited Te range; fixed JHS_coef capitalization
-			else:
+			elif not adas_ion_h0 is None:
+				#print('adas_ion')
+				sigv[1,:]=interp_sig(Te,adas_ion_h0,'ion_h0')*1e-6
+			elif test_ion:
+				#print('check ion')
 				sigv[1,:]=sigmav_ion_h0(Te) # from Janev et al., up to 20keV
 
 		#	Reaction R2:  e + H(+) -> H(1s) + hv  (radiative recombination)
 
 		if JH:
 			sigv[2,:]=JHAlpha_coef(n,Te,no_null=True, g=g) # fixed JHAlpha_coef capitalization
-		else:
+		elif not adas_rec_h1s is None:
+			#print('adas_rec')
+			sigv[2,:]=interp_sig(Te*11606,adas_rec_h1s,'rec_h1s')*1e-6
+			#import matplotlib.pyplot as plt
+			#plt.plot(sigv[2,:],'.')
+			#plt.plot(sigmav_rec_h1s(Te),'.')
+			#plt.yscale('log')
+			#plt.legend(['adas','idl'])
+			#plt.show()
+		elif test_rec:
+			#print('check rec')
 			sigv[2,:]=sigmav_rec_h1s(Te)
 
 		#	H ionization rate (normalized by vth) = reaction 1
@@ -897,7 +920,7 @@ def kinetic_h(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,TH
 		for l in range(nvx):
 			Vr2pidVrdVx[l,:,:,:]=Vr2pidVrdVx[l,:,:,:]*dVx[l] # fixed assignment
 
-	if Simple_CX==0 and Do_SIG_CX==1:
+	if Simple_CX==0 and Do_SIG_CX==1 or not adas_qcx_h0 is None:
 		if debrief>1:
 			print(prompt+'Computing SIG_CX')
 
@@ -908,8 +931,12 @@ def kinetic_h(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,TH
 		#	Compute sigma_cx * v_v at all possible relative velocities
 
 		_Sig=np.zeros((ntheta,nvr*nvx*nvr*nvx))
-		_Sig[:]=(v_v*sigma_cx_h0(v_v2*(.5*mH*Vth2/q))).reshape(_Sig.shape) # Not sure if this is the correct way to fix the issues with projecting here but this is how it was handled in kinetic h2
-
+		if adas_qcx_h0 is None and test_qcx:
+			#print('check qcx')
+			_Sig[:]=(v_v*sigma_cx_h0(v_v2*(.5*mH*Vth2/q))).reshape(_Sig.shape) # Not sure if this is the correct way to fix the issues with projecting here but this is how it was handled in kinetic h2
+		elif not adas_qcx_h0 is None:
+			#print('adas qcx')
+			_Sig[:]=(v_v*interp_sig(v_v2*(.5*mH*Vth2/q)*1e-3,adas_qcx_h0,'qcx_h0')).reshape(_Sig.shape)
 		#	Set SIG_CX = vr' x Integral{v_v*sigma_cx} 
 		#		over theta=0,2pi times differential velocity space element Vr'2pidVr'*dVx'
 
@@ -1063,8 +1090,8 @@ def kinetic_h(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,TH
 
 	while do_fH_Iterate:
 		do_fH_Iterate=False
-		fHs=fH
-		nHs=nH
+		fHs=copy.deepcopy(fH)
+		nHs=copy.deepcopy(nH)
 
 		#	Compute Omega values if nH is non-zero
 
@@ -1078,7 +1105,7 @@ def kinetic_h(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,TH
 					VxH[k]=Vth*np.sum(Vr2pidVr*np.matmul(vx*dVx,fH[k,:,:]))/nH[k]
 
 			#	Compute Omega_H_P for present fH and Alpha_H_P if H_P elastic collisions are included
-
+			H_P_EL=False
 			if H_P_EL:
 				if debrief>1:
 					print(prompt+'Computing Omega_H_P')
@@ -1146,7 +1173,7 @@ def kinetic_h(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,TH
 		for k in range(nx):
 			for j in range(i_p[0],nvx): # changed ip to i_p
 				Max_dx[k]=np.minimum(Max_dx[k],min(2*vx[j]/alpha_c[k,j,:]))
-		dx=np.roll(x,-1)-x
+		dx=shift(x,-1)-x
 		Max_dxL=Max_dx[0:nx-1]
 		Max_dxR=Max_dx[1:nx]
 		Max_dx=np.minimum(Max_dxL,Max_dxR)
@@ -1220,176 +1247,20 @@ def kinetic_h(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,TH
 
 		#	Set total atomic neutral distribution function to first flight generation
 
-		fH=fHG
-		nH=NHG[0,:]
-		plt.figure(constrained_layout=True)
-		plt.plot(x, nH, label = '0th gen')
-
-
-
-
-		do_fH_done = fH_generations==0
-		'''def next_generation(igen, Beta_CX_sum, MH_P_sum, MH_H_sum, MH_H2_sum, fH, nH, Maxwell = Maxwell):
-			#print(igen, igen > Max_Gen)
-			Max_Gen = 10
-			if igen + 1 > Max_Gen or fH_generations == 0:
-				print('test1')
-				if debrief>0:
-					print(prompt+'Completed '+sval(Max_Gen)+' generations. Returning present solution...')
-					do_fH_done=True
-				return igen, Beta_CX_sum, MH_P_sum, MH_H_sum, MH_H2_sum, fH, nH
-			igen+=1
-			if debrief>0:
-				print(prompt+'Computing atomic neutral generation#'+sval(igen))
-
-			#	Compute Beta_CX from previous generation
-			Beta_CX=np.zeros((nx,nvx,nvr))
-			H_P_CX = 1
-			if H_P_CX:
-				if debrief>1:
-					print(prompt+'Computing Beta_CX')
-				if Simple_CX:
-					#	Option (B): Compute charge exchange source with assumption that CX source 
-					#		neutrals have ion distribution function
-					for k in range(nx):
-						Beta_CX[k,:,:]=fi_hat[k,:,:]*np.sum(Vr2pidVr*np.matmul(dVx,Alpha_CX[k,:,:]*fHG[k,:,:]))
-				else:
-					#	Option (A): Compute charge exchange source using fH and vr x sigma x v_v at 
-					#		each velocity mesh point
-					for k in range(nx):
-						Work[:]=fHG[k,:,:]
-						Beta_CX[k,:,:]=ni[k]*fi_hat[k,:,:]*np.matmul(Work,SIG_CX)
-				#	Sum charge exchange source over all generations
-				Beta_CX_sum+=Beta_CX
-
-			#	Compute MH from previous generation
-			MH_H=np.zeros((nx,nvx,nvr))
-			MH_P=np.zeros((nx,nvx,nvr))
-			MH_H2=np.zeros((nx,nvx,nvr))
-			OmegaM=np.zeros((nx,nvx,nvr))
-			
-			if H_H_EL or H_P_EL or H_H2_EL:
-				#	Compute VxHG, THG
-				for k in range(nx):
-					VxHG[k]=Vth*np.sum(Vr2pidVr*np.matmul(vx*dVx,fHG[k,:,:]))/NHG[igen-1,k]
-					for i in range(nvr):
-						vr2vx2_ran2[:,i]=vr[i]**2+(vx-VxHG[k]/Vth)**2
-					THG[k]=mu*mH*Vth2*np.sum(Vr2pidVr*np.matmul(dVx,vr2vx2_ran2*fHG[k,:,:]))/(3*q*NHG[igen-1,k])
-				if H_H_EL:
-					if debrief>1:
-						print(prompt+'Computing MH_H')
-					#	Compute MH_H 
-					vx_shift=VxHG
-					Tmaxwell=THG
-					mol=1
-					Maxwell=create_shifted_maxwellian_include(vr, vx, Tnorm, vx_shift,Tmaxwell,Shifted_Maxwellian_Debug,mu,mol,
-								nx,nvx,nvr,Vth,Vth2,Maxwell,vr2vx2_ran2,
-								Vr2pidVr,dVx,Vol,Vth_DVx,Vx_DVx,Vr_DVr,Vr2Vx2_2D,jpa,jpb,jna,jnb)
-					for k in range(nx):
-						MH_H[k,:,:]=Maxwell[k,:,:]*NHG[igen-1,k]
-						OmegaM[k,:,:]=OmegaM[k,:,:]+Omega_H_H[k]*MH_H[k,:,:]
-					MH_H_sum+=MH_H
-				if H_P_EL:
-					if debrief>1:
-						print(prompt+'Computing MH_P')
-					#	Compute MH_P 
-					vx_shift=(VxHG+vxi)/2
-					Tmaxwell=THG+(2/4)*(Ti-THG+mu*mH*(vxi-VxHG)**2/(6*q))
-					mol=1
-					Maxwell=create_shifted_maxwellian_include(vr, vx, Tnorm,vx_shift,Tmaxwell,Shifted_Maxwellian_Debug,mu,mol,
-								nx,nvx,nvr,Vth,Vth2,Maxwell,vr2vx2_ran2,
-								Vr2pidVr,dVx,Vol,Vth_DVx,Vx_DVx,Vr_DVr,Vr2Vx2_2D,jpa,jpb,jna,jnb)
-					for k in range(nx):
-						MH_P[k,:,:]=Maxwell[k,:,:]*NHG[igen-1,k]
-						OmegaM[k,:,:]=OmegaM[k,:,:]+Omega_H_P[k]*MH_P[k,:,:]
-					MH_P_sum+=MH_P
-				if H_H2_EL:
-					if debrief>1:
-						print(prompt+'Computing MH_H2')
-					#	Compute MH_H2
-					vx_shift=(VxHG+2*vxH2)/3
-					Tmaxwell=THG+(4./9.)*(TH2-THG +2*mu*mH*(vxH2-VxHG)**2/(6*q))
-					mol=1
-					Maxwell=create_shifted_maxwellian_include(vr, vx, Tnorm,vx_shift,Tmaxwell,Shifted_Maxwellian_Debug,mu,mol,
-								nx,nvx,nvr,Vth,Vth2,Maxwell,vr2vx2_ran2,
-								Vr2pidVr,dVx,Vol,Vth_DVx,Vx_DVx,Vr_DVr,Vr2Vx2_2D,jpa,jpb,jna,jnb)
-					for k in range(nx):
-						MH_H2[k,:,:]=Maxwell[k,:,:]*NHG[igen-1,k]
-						OmegaM[k,:,:]=OmegaM[k,:,:]+Omega_H_H2[k]*MH_H2[k,:,:]
-					MH_H2_sum+=MH_H2
-
-			# compute next generation atomic distribution 
-			#print(igen)
-			#print(NHG.shape)
-			fHG[:]=0
-			for k in range(nx - 1):
-				fHG[k+1,i_p,:]=Ak[k,i_p,:]*fHG[k,i_p,:]+Bk[k,i_p,:]*(Beta_CX[k+1,i_p,:]+OmegaM[k+1,i_p,:]+Beta_CX[k,i_p,:]+OmegaM[k,i_p,:])
-			for k in range(nx-1,0,-1):
-				fHG[k-1,i_n,:]=Ck[k,i_n,:]*fHG[k,i_n,:]+Dk[k,i_n,:]*(Beta_CX[k-1,i_n,:]+OmegaM[k-1,i_n,:]+Beta_CX[k,i_n,:]+OmegaM[k,i_n,:])
-			for k in range(nx):
-				NHG[igen,k]=np.sum(Vr2pidVr*np.matmul(dVx,fHG[k,:,:]))
-
-			if plot>1:
-				pass	#	May add later
-
-			#	Add result to total neutral distribution function
-
-			fH+=fHG
-			nH+=NHG[igen,:]
-
-			plt.figure(constrained_layout=True)
-			plt.plot(x, nH, linestyle = 'solid', color = 'blue', label = 'nH')
-			plt.plot(np.full(10, 0.03), np.linspace(np.min(nH), np.max(nH), 10), linestyle = ':', color = 'orange', label = 'sep')
-			plt.xlabel('Distance from Wall (m)')
-			plt.ylabel('Density (m$^{-3}$)')
-			plt.yscale("log")
-			plt.title('CMOD Density Profile for H w/ High Temp')
-			plt.legend()
-			#plt.ylim(10**9, 10**15)
-			plt.savefig('nH_htemp.png', dpi = 1000)
-			plt.show()
-
-			plt.plot(x, nH, linestyle = 'solid', color = 'blue')
-			plt.xlabel('Distance from Wall (m)')
-			plt.ylabel('Density (m$^{-3}$)')
-			plt.yscale("log")
-			plt.title('Density Profile for H')
-			plt.show()
-			
-
-			#	Compute 'generation error': Delta_nHG=max(NHG(*,igen)/max(nH))
-			#		and decide if another generation should be computed
-
-			Delta_nHG=max(NHG[igen,:]/max(nH))
-			if fH_iterate:
-				print('test2')
-				#	If fH 'seed' is being iterated, then do another generation until the 'generation error'
-				#		is less than 0.003 times the 'seed error' or is less than TRUNCATE
-				if (Delta_nHG < 0.003 * Delta_nHs) or (Delta_nHG < truncate):
-					print('test3')
-					return igen, Beta_CX_sum, MH_P_sum, MH_H_sum, MH_H2_sum , fH, nH
-			elif Delta_nHG < truncate:
-				return igen, Beta_CX_sum, MH_P_sum, MH_H_sum, MH_H2_sum, fH, nH
-			return next_generation(igen, Beta_CX_sum, MH_P_sum, MH_H_sum, MH_H2_sum, fH, nH)
-		igen, Beta_CX_sum, MH_P_sum, MH_H_sum, MH_H2_sum, fH, nH=next_generation(igen, Beta_CX_sum, MH_P_sum, MH_H_sum, MH_H2_sum, fH, nH) # Come back and double check this function later
-		# plt.show()
-		exit()'''
-
-
-
-
-
+		fH=copy.deepcopy(fHG)
+		nH=copy.deepcopy(NHG[0,:])
 
 		do_fH_done = fH_generations==0
 
 		if not do_fH_done:
 			do_next_generation=True
 			while do_next_generation:
+				print(prompt+' check next_generation '+str(igen))
 				if igen+1> Max_Gen:
 					if debrief>0:
 						print(prompt+'Completed '+sval(Max_Gen)+' generations. Returning present solution...')
-						do_fH_done=True
-						break
+					do_fH_done=True
+					break
 				igen+=1
 				if debrief>0:
 					print(prompt+'Computing atomic neutral generation#'+sval(igen))
@@ -1397,7 +1268,6 @@ def kinetic_h(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,TH
 				#	Compute Beta_CX from previous generation
 
 				Beta_CX=np.zeros((nx,nvx,nvr))
-				H_P_CX = 1
 				if H_P_CX:
 					if debrief>1:
 						print(prompt+'Computing Beta_CX')
@@ -1414,12 +1284,13 @@ def kinetic_h(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,TH
 						#		each velocity mesh point
 
 						for k in range(nx):
-							Work[:]=fHG[k,:,:]
-							Beta_CX[k,:,:]=ni[k]*fi_hat[k,:,:]*np.matmul(Work,SIG_CX)
+							Work[:]=fHG[k,:,:].reshape(Work.shape)
+							Beta_CX[k,:,:]=ni[k]*fi_hat[k,:,:]*np.matmul(Work,SIG_CX).reshape(fi_hat[k].shape)
 
 					#	Sum charge exchange source over all generations
 
 					Beta_CX_sum+=Beta_CX
+
 				#	Compute MH from previous generation
 
 				MH_H=np.zeros((nx,nvx,nvr))
@@ -1501,30 +1372,7 @@ def kinetic_h(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,TH
 
 				fH+=fHG
 				nH+=NHG[igen,:]
-				plt.plot(x, nH, label = '1st gen')
-				plt.plot(np.full(10, 0.01), np.linspace(np.min(nH), np.max(nH), 10), linestyle = ':', color = 'orange', label = 'sep')
-				plt.xlabel('Distance from Wall (m)')
-				plt.ylabel('Density (m$^{-3}$)')
-				plt.yscale("log")
-				plt.ylim(np.min(nH), np.max(nH))
-				plt.xlim(np.min(x), np.max(x))
-				plt.title(f'Python SPARC Charge Exchange Comparison for H')
-				plt.legend()
-				plt.savefig(f'nH_sparc_cx_py_HR.png', dpi = 800)
-				plt.show() 
 
-				'''plt.figure(constrained_layout=True)
-				plt.plot(x, nH, linestyle = 'solid', color = 'blue', label = 'nH')
-				plt.plot(np.full(10, 0.1713959), np.linspace(np.min(nH), np.max(nH), 10), linestyle = ':', color = 'orange', label = 'sep')
-				plt.xlabel('Distance from Wall (m)')
-				plt.ylabel('Density (m$^{-3}$)')
-				plt.yscale("log")
-				plt.title('CMOD Density Profile for H w/ High Temp')
-				plt.legend()
-				#plt.ylim(10**9, 10**15)
-				plt.savefig('nH_htemp.png', dpi = 1000)
-				plt.show()'''
-				
 				#	Compute 'generation error': Delta_nHG=max(NHG(*,igen)/max(nH))
 				#		and decide if another generation should be computed
 
@@ -1535,10 +1383,11 @@ def kinetic_h(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,TH
 					#		is less than 0.003 times the 'seed error' or is less than TRUNCATE
 
 					do_fH_done= (Delta_nHG<.003*Delta_nHs) or (Delta_nHG<truncate)
-					break
-		break
-		
-
+					if do_fH_done:
+						break
+				elif Delta_nHG<truncate:
+					do_next_generation=False
+				
 		if plot>0:
 			pass	#	May add later
 
@@ -1573,8 +1422,8 @@ def kinetic_h(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,TH
 			#	Option (A): Compute charge exchange source using fH and vr x sigma x v_v at each velocity mesh point
 
 			for k in range(nx):
-				Work[:]=fHG[k,:,:]
-				Beta_CX[k,:,:]=ni[k]*fi_hat[k,:,:]*np.matmul(Work,SIG_CX)
+				Work[:]=fHG[k,:,:].reshape(Work.shape)
+				Beta_CX[k,:,:]=ni[k]*fi_hat[k,:,:]*np.matmul(Work,SIG_CX).reshape(fi_hat[k].shape)
 
 		#	Sum charge exchange source over all generations
 

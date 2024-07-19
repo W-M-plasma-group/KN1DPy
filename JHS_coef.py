@@ -53,7 +53,7 @@ def JHS_coef(Density, Te, create = 0, no_null = 0, g=None):
     # Evaluate S coefficients 
     if np.size(Density) != np.size(Te):
         raise Exception('Number of elements of Density and Te are different!')
-    result = Density ; result[:] = 1.0e32
+    result = np.full(Density.shape, 1.0e32)
     LDensity = np.log(Density)
     LTe = np.log(Te)
     if no_null:

@@ -65,7 +65,7 @@ def JHR_Coef(Density, Te, Ion, p, create = 0, no_null = 0, g=None):
         raise Exception('"p" must in range 1 < p < 7')
     if Ion < 0 or Ion > 1:
         raise Exception('"Ion" must 0 or 1')
-    result = Density ; result[:] = 1.0e32
+    result = np.full(Density.shape, 1.0e32)
     LDensity = np.log(Density)
     LTe = np.log(Te)
     if no_null:
@@ -84,5 +84,5 @@ def JHR_Coef(Density, Te, Ion, p, create = 0, no_null = 0, g=None):
     if count > 0: 
         for i in ok: # fixed how result is defined not completely confident in this - GG
             # result[i] = np.exp( ) # currently missing the python equivalent to bs2dr will come back to this later 
-            result[i]=np.exp(interpolate.bisplev(LDensity[i],LTe[i],(Dknot,Tknot,LogS_BSCoef,3,3),0,0)) # updated
+            result[i]=np.exp(interpolate.bisplev(LDensity[i],LTe[i],(Dknot,Tknot,LogR_BSCoef[p-2,Ion,:],3,3),0,0)) # updated
     return result 
