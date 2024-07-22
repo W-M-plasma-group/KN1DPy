@@ -117,14 +117,14 @@ def interp_fvrvxx(fa,Vra,Vxa,Xa,Tnorma,Vrb,Vxb,Xb,Tnormb,do_warn=None, debug=0, 
         w1_active=1
         test=0
 
-        test+=vra1[vra1!=Vra].size
-        test+=vxa1[vxa1!=Vxa].size
+        test+=vra1[~np.isin(vra1, Vra)].size#[vra1!=Vra].size
+        test+=vxa1[~np.isin(vxa1, Vxa)].size#[vxa1!=Vxa].size
 
         test+=Tnorma1[Tnorma1!=Tnorma].size
         test+=Tnormb1[Tnormb1!=Tnormb].size
 
-        test+=vxb1[vxb1!=Vxb].size
-        test+=vrb1[vrb1!=Vrb].size
+        test+=vxb1[~np.isin(vxb1, Vxb)].size#[vxb1!=Vxb].size
+        test+=vrb1[~np.isin(vrb1, Vrb)].size#[vrb1!=Vrb].size
 
         if test==0:
             w1_match=1
@@ -136,14 +136,14 @@ def interp_fvrvxx(fa,Vra,Vxa,Xa,Tnorma,Vrb,Vxb,Xb,Tnormb,do_warn=None, debug=0, 
         w2_active=1
         test=0
 
-        test+=vra2[vra2!=Vra].size
-        test+=vxa2[vxa2!=Vxa].size
+        test+=vra2[~np.isin(vra2, Vra)].size#[vra2!=Vra].size
+        test+=vxa2[~np.isin(vxa2, Vxa)].size#[vxa2!=Vxa].size
 
         test+=Tnorma2[Tnorma1!=Tnorma].size
         test+=Tnormb2[Tnormb1!=Tnormb].size
 
-        test+=vxb2[vxb2!=Vxb].size
-        test+=vrb2[vrb2!=Vrb].size
+        test+=vxb2[~np.isin(vxb2, Vxb)].size#[vxb2!=Vxb].size
+        test+=vrb2[~np.isin(vrb2, Vrb)].size#[vrb2!=Vrb].size
 
         if test==0:
             w2_match=1

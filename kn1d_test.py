@@ -97,7 +97,7 @@ if testidl:
     plt.xlabel('x (m)')
     plt.ylabel(r'Density (m$^{-3}$)')
     #plt.savefig(fileloc + fname+'_nH2_testplotb')
-    #plt.show()
+    plt.show()
     plt.clf()
 
     plt.plot(xH,nH)
@@ -108,7 +108,7 @@ if testidl:
     plt.xlabel('x (m)')
     plt.ylabel(r'Density (m$^{-3}$)')
     #plt.savefig(fileloc + fname+'_nH_testplotb')
-    #plt.show()
+    plt.show()
     #raise Exception('check')
 
     #np.savez(fileloc + fname+'b',
