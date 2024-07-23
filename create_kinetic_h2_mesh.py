@@ -25,7 +25,8 @@ def create_kinetic_h2_mesh(nv, mu, x, Ti, Te, n, PipeDia, E0 = 0, ixE0 = 0, irE0
 
     #Find x location where Y = -10, i.e., where nH2 should be down by exp(-10)
     interpfunc = interpolate.interp1d(Y, x) # fixed error with interpolation - GG
-    xmaxH2=np.minimum(interpfunc(-10), max(x))
+    xmaxH2=np.minimum(interpfunc(-10.0), max(x))
+
     xminH2=x[0]
 
     #Interpolate Ti and Te onto a fine mesh between xminH2 and xmaxH2
@@ -69,7 +70,7 @@ def create_kinetic_h2_mesh(nv, mu, x, Ti, Te, n, PipeDia, E0 = 0, ixE0 = 0, irE0
     xH2 = xpt # changed how its define to fix error 
     while xpt > xminH2:
         xH2=np.concatenate([xpt,xH2]) # I am not entirely sure this is what the IDL code wants 
-        interpfunc = interpolate.interp1d(xfine, dx_max, fill_value = 'extrapolate')
+        interpfunc = interpolate.interp1d(xfine, dx_max)
         dxpt1=interpfunc(xpt)
         dxpt2=dxpt1
         xpt_test=xpt-dxpt1

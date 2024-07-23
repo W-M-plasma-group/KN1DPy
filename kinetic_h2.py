@@ -502,6 +502,8 @@ def Kinetic_H2(vx, vr, x, Tnorm, mu, Ti, Te, n, vxi, fH2BC, GammaxH2BC, NuLoss, 
         print(prompt, 'Number of elements in nHP and x do not agree!')
     if THP is None:
         THP = np.zeros(nx) + 3.0
+    elif min(THP)==max(THP)==0:
+        THP = np.zeros(nx) + 3.0
     if np.size(THP) != nx:
         print(prompt, 'Number of elements in THP and x do not agree!')
         error = 1 
@@ -583,7 +585,6 @@ def Kinetic_H2(vx, vr, x, Tnorm, mu, Ti, Te, n, vxi, fH2BC, GammaxH2BC, NuLoss, 
     _R14 = _HH + plus + _Hp + arrow + _Hp + plus + _HH
     _Rn=[' ',_R1,_R2,_R3,_R4,_R5,_R6,_R7,_R8,_R9,_R10,_R11,_R12,_R13,_R14]
 
-    
     i_n = np.argwhere(vx < 0 ) # fixed typo - GG
     count = np.size(i_n)
     if count < 1:
@@ -1035,7 +1036,7 @@ def Kinetic_H2(vx, vr, x, Tnorm, mu, Ti, Te, n, vxi, fH2BC, GammaxH2BC, NuLoss, 
         Alpha_H2_H = np.zeros((nvr, nvx, nx)).T
         for k in range(0, nx):
             Work[:] = fH[k,:,:].reshape(Work.shape)
-            Alpha_H2_H[k,:,:] = np.dot(SIG_H2_H, Work).reshape(Alpha_H2_H[k,:,:].shape)
+            Alpha_H2_H[k,:,:] = np.matmul(Work,SIG_H2_H).reshape(Alpha_H2_H[k,:,:].shape)
         
     # Compute nH2
     for k in range(0, nx):
@@ -1057,11 +1058,11 @@ def Kinetic_H2(vx, vr, x, Tnorm, mu, Ti, Te, n, vxi, fH2BC, GammaxH2BC, NuLoss, 
     do_fH2_iterate=True
     while do_fH2_iterate:
         do_fH2_iterate=False
-        fH2s = fH2
-        nH2s = nH2
-        THPs = THP
-        nHPs = nHP
-
+        fH2s = copy.deepcopy(fH2)
+        nH2s = copy.deepcopy(nH2)
+        THPs = copy.deepcopy(THP)
+        nHPs = copy.deepcopy(nHP)
+        #raise Exception('check')
         # Compute Alpha_CX for present THP and nHP, if it is needed and has not
         # already been computed with the present parameters
         if Do_Alpha_CX == 1:
@@ -1105,23 +1106,22 @@ def Kinetic_H2(vx, vr, x, Tnorm, mu, Ti, Te, n, vxi, fH2BC, GammaxH2BC, NuLoss, 
             if debrief > 1:
                 print(prompt, 'Computing Alpha_H2_P')
             Alpha_H2_P = np.zeros((nvr, nvx, nx)).T
-            ni = n
+            ni = copy.deepcopy(n)
             if ni_correct:
                 ni = np.maximum(n - nHP,0)
             for k in range(0, nx):
                 Work[:] = (fi_hat[k] * ni[k]).reshape(Work.shape)
-                Alpha_H2_P[k] = np.dot(SIG_H2_P, Work).reshape(Alpha_H2_P[k].shape)
+                Alpha_H2_P[k] = np.matmul(Work,SIG_H2_P).reshape(Alpha_H2_P[k].shape)
         
         # Compute Omega values if nH2 is non-zero 
 
         ii = np.argwhere(nH2 <= 0) # come back to because I dont remember how I am supposed to call np.argwhere
-        if ii.shape[1] <= 0:
+        if ii.size <= 0:
             # compute VxH2
             if H2_P_EL or H2_H_EL or H2_H2_EL:
                 for k in range(0, nx):
                     VxH2[k] = Vth * np.sum(Vr2pidVr * np.dot((vx * dVx),fH2[k])) / nH2[k]
             # compute Omega_H2_P for present fH2 and Alpha_H2_P if H2_P elastic collisions are included
-            raise Exception('check')
             if H2_P_EL:
                 if debrief > 1:
                     print(prompt, 'Computing Omega_H2_P')
@@ -1134,7 +1134,7 @@ def Kinetic_H2(vx, vr, x, Tnorm, mu, Ti, Te, n, vxi, fH2BC, GammaxH2BC, NuLoss, 
             # Compute Omega_H2_H for present fH2 and Alpha_H2_H if H2_H elastic collisions are included
             if H2_H_EL:
                 if debrief>1:
-                    print(pprompt+'Computing Omega_H2_H')
+                    print(prompt+'Computing Omega_H2_H')
                 for k in range(nx):
                     DeltaVx=(VxH2[k]-VxH[k])/ Vth
                     MagDeltaVx=np.maximum(np.abs(DeltaVx),DeltaVx_tol)
@@ -1258,8 +1258,9 @@ def Kinetic_H2(vx, vr, x, Tnorm, mu, Ti, Te, n, vxi, fH2BC, GammaxH2BC, NuLoss, 
         nH2 = NH2G[0]
         
         fH2_done = 0 # I am not sure if this is correct because fH2_done is a function, but I'm not sure what the intention of the original IDL code was so I don't know how to change it - GG
-        
-        def next_generation(igen, Swall_sum, Beta_CX_sum, MH2_P_sum, MH2_H_sum, MH2_H2_sum, fH2, nH2, Maxwell=Maxwell):
+
+        def next_generation(igen, Swall_sum, Beta_CX_sum, MH2_P_sum, MH2_H_sum, MH2_H2_sum, fH2, nH2, fH2G, Maxwell=Maxwell):
+            #print(prompt+' check next_generation '+str(igen))
             if igen+1 > Max_Gen or fH2_generations==0: 
                 if debrief > 1:
                     print(prompt,'Completed ', sval(Max_Gen), ' generations. Returning present solution...')
@@ -1286,13 +1287,13 @@ def Kinetic_H2(vx, vr, x, Tnorm, mu, Ti, Te, n, vxi, fH2BC, GammaxH2BC, NuLoss, 
                 if Simple_CX:
                     # Option (B): Compute charge exchange source with assumption that CX source neutrals have 
                     # molecular ion distribution function
-                    for k in range(0, nx-1): 
-                        Beta_CX[k] = fHp_hat[k] * np.sum(Vr2pidVr * np.dot(dVx, alpha_cx[k]*fH2G[k]))
+                    for k in range(0, nx): 
+                        Beta_CX[k] = fHp_hat[k] * np.sum(Vr2pidVr * np.matmul(dVx, alpha_cx[k]*fH2G[k]))
                 else: 
                     # Option (A): Compute charge exchange source using fH2 and vr x sigma x v_v at each velocity mesh point
-                    for k in range(0, nx -1):
+                    for k in range(0, nx ):
                         Work[:] = fH2G[k]
-                        Beta_CX[k] = nHP[k] * fHp_hat[k] * np.dot(SIG_CX, Work)
+                        Beta_CX[k] = nHP[k] * fHp_hat[k] * np.matmul(Work,SIG_CX)
                 #Sum 
                 Beta_CX_sum = Beta_CX_sum + Beta_CX
 
@@ -1340,7 +1341,7 @@ def Kinetic_H2(vx, vr, x, Tnorm, mu, Ti, Te, n, vxi, fH2BC, GammaxH2BC, NuLoss, 
                     if debrief > 1:
                         print(prompt, 'Computing MH2_H')
                     #Compute MH2_H
-                    vx_shift = (2 * VxH2G * VxH)/3
+                    vx_shift = (2 * VxH2G + VxH)/3
                     Tmaxwell = TH2G + (4/9) * (TH - TH2G + mu * mH * (VxH - VxH2G)**2 / (6*q))
                     mol = 2
                     Maxwell=create_shifted_maxwellian_include(vr,vx,Tnorm,vx_shift,Tmaxwell,shifted_Maxwellian_debug,mu,mol,
@@ -1352,7 +1353,7 @@ def Kinetic_H2(vx, vr, x, Tnorm, mu, Ti, Te, n, vxi, fH2BC, GammaxH2BC, NuLoss, 
                     MH2_H_sum = MH2_H_sum + MH2_H
 
             # Compute next generation molecular distribution
-            fH2G[:] = 0.0
+            fH2G = np.zeros(fH2G.shape)
             for k in range(0, nx - 1):
                 fH2G[k + 1, i_p] = Ak[k, i_p] * fH2G[k, i_p] \
                 + Bk[k, i_p] * (Swall[k + 1, i_p] + Beta_CX[k + 1, i_p] + OmegaM[k + 1, i_p] + Swall[k, i_p] + Beta_CX[k, i_p] + OmegaM[k, i_p])
@@ -1388,20 +1389,20 @@ def Kinetic_H2(vx, vr, x, Tnorm, mu, Ti, Te, n, vxi, fH2BC, GammaxH2BC, NuLoss, 
             # Compute 'generation error': Delta_nH2G=max(NH2G(*,igen)/max(nH2))
             # and decide if another generation should be computed
             Delta_nH2G = np.max(NH2G[igen, :] / np.max(nH2))
-            if fH2_iterate:
+            if fH2_iterate and not fH2_iterate:
                 # If fH2 'seed' is being iterated, then do another generation until the 'generation error'
                 # is less than 0.003 times the 'seed error' or is less than TRUNCATE
-                if (Delta_nH2G < 0.003 * Delta_nH2s) or (Delta_nH2G < truncate): 
+                if (Delta_nH2G < truncate * Delta_nH2s) or (Delta_nH2G < truncate): 
                     return igen, Swall_sum, Beta_CX_sum, MH2_P_sum, MH2_H_sum, MH2_H2_sum, fH2, nH2
                 
             # If fH2 'seed' is NOT being iterated, then do another generation unitl the 'generation error'
             # is less than parameter TRUNCATE
             elif Delta_nH2G < truncate:
                 return igen, Swall_sum, Beta_CX_sum, MH2_P_sum, MH2_H_sum, MH2_H2_sum, fH2, nH2
-            
-            return next_generation(igen, Swall_sum, Beta_CX_sum, MH2_P_sum, MH2_H_sum, MH2_H2_sum, fH2, nH2)
 
-        igen, Swall_sum, Beta_CX_sum, MH2_P_sum, MH2_H_sum, MH2_H2_sum, fH2, nH2=next_generation(igen, Swall_sum, Beta_CX_sum, MH2_P_sum, MH2_H_sum, MH2_H2_sum, fH2, nH2) # Come back and double check this function later 
+            return next_generation(igen, Swall_sum, Beta_CX_sum, MH2_P_sum, MH2_H_sum, MH2_H2_sum, fH2, nH2, fH2G)
+
+        igen, Swall_sum, Beta_CX_sum, MH2_P_sum, MH2_H_sum, MH2_H2_sum, fH2, nH2=next_generation(igen, Swall_sum, Beta_CX_sum, MH2_P_sum, MH2_H_sum, MH2_H2_sum, fH2, nH2, fH2G) # Come back and double check this function later 
 
         if plot > 0: 
             plt.figure()
@@ -2120,7 +2121,12 @@ def Kinetic_H2(vx, vr, x, Tnorm, mu, Ti, Te, n, vxi, fH2BC, GammaxH2BC, NuLoss, 
                              sigv[8, k] * SFCn[nFC[8], k] + \
                              2 * sigv[10, k] * SFCn[nFC[10], k])
         # Compute total H and H(+) sources
-        # edit indents 
+
+        for k in range(nx):
+            SH[k]=np.sum(Vr2pidVr*np.matmul(dVx,fSH[k]))
+            SP[k]=n[k]*nH2[k]*sigv[4,k]+n[k]*nHP[k]*(sigv[7,k]+sigv[8,k]+2*sigv[9,k])
+
+        # Compute total HP source 
         SHP = n * nH2 * sigv[1]
         # Compute energy distrobution of H source 
         for k in range(0, nx):

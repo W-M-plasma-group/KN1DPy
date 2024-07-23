@@ -2,7 +2,7 @@ import numpy as np
 import os
 from scipy import interpolate
 
-# from read import sav_read, nc_read
+from read import sav_read, nc_read
 from edit_keys import edit_keys
 from create_kinetic_h2_mesh import create_kinetic_h2_mesh
 from create_shifted_maxwellian import create_shifted_maxwellian # fixed function name - nh
@@ -20,6 +20,8 @@ from balmer_alpha import Balmer_Alpha
 from global_vars import mH, q, k_boltz, Twall
 from global_vars import global_vars
 
+import copy
+
 #   Computes the molecular and atomic neutral profiles for inputted profiles
 # of Ti(x), Te(x), n(x), and molecular neutral pressure, GaugeH2, at the boundary using
 # IDL routines Kinetic_H and Kinetic_H2. Molecular densities, ionization profiles,
@@ -36,7 +38,7 @@ def KN1D(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
          truncate = 1.0e-3, refine = 0, File = '', NewFile = 0, ReadInput = 0, \
          error = 0, compute_errors = 0, plot = 0, debug = 0, debrief = 0, pause = 0, \
          Hplot = 0, Hdebug = 0, Hdebrief = 0, Hpause = 0, \
-         H2plot = 0, H2debug = 0, H2debrief = 0, H2pause = 0):  # deleted what i added before dont know what I was thinking?? - GG 2/19, corrected typos
+         H2plot = 0, H2debug = 0, H2debrief = 0, H2pause = 0, adas_rec_h1s=None, adas_ion_h0=None, adas_qcx_h0=None):  # deleted what i added before dont know what I was thinking?? - GG 2/19, corrected typos
 
         # Input: 
         #	x	- fltarr(nx), cross-field coordinate (meters)
@@ -311,7 +313,7 @@ def KN1D(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
         
         nCs_LC=n*Cs_LC
 
-        interpfunc = interpolate.interp1d(x,nCs_LC,fill_value="extrapolate") # fixed the way interpolation was called - GG
+        interpfunc = interpolate.interp1d(x,nCs_LC,fill_value="extrapolate",bounds_error=False) # fixed the way interpolation was called - GG
         SpH2_hat=interpfunc(xH2)
 
         SpH2_hat=SpH2_hat/integ_bl(xH2,SpH2_hat,value_only=1) # not sure if this line is correct
@@ -323,7 +325,7 @@ def KN1D(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
                 SpH2=beta*SpH2_hat
         else:
             SpH2=beta*SpH2_hat
-        SH2=SpH2
+        SH2=copy.deepcopy(SpH2)
 
         #   Interpolate for vxiM and vxiA
 
@@ -406,11 +408,11 @@ def KN1D(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
                 # iter+=1 I dont think this line is necessary 
                 if debrief:
                     print(prompt+'fH/fH2 Iteration: '+sval(iter))
-                nH2s = nH2
+                nH2s = copy.deepcopy(nH2)
 
                 # interpolate fH data onto H2 mesh: fH -> fHM
                 do_warn=5e-3
-                fHM=interp_fvrvxx(fH,vrA,vxA,xH,TnormA,vrM,vxM,xH2,TnormM,do_warn=do_warn, debug=interp_debug, g=g) 
+                fHM=np.maximum(interp_fvrvxx(fH,vrA,vxA,xH,TnormA,vrM,vxM,xH2,TnormM,do_warn=do_warn, debug=interp_debug, g=g) ,0)
 
                 # Compute fH2 using Kinetic_H2
                 ni_correct=1
@@ -444,8 +446,8 @@ def KN1D(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
 
                 # Interpolate H2 data onto H mesh: fH2 -> fH2A, fSH -> fSHA, nHP -> nHPA, THP -> THPA
                 do_warn = 5.0E-3
-                fH2A = interp_fvrvxx(fH2,vrM,vxM,xH2,TnormM,vrA,vxA,xH,TnormA, do_warn=do_warn, debug=interp_debug, g=g) 
-                fSHA = interp_fvrvxx(fSH,vrM,vxM,xH2,TnormM,vrA,vxA,xH,TnormA, do_warn=do_warn, debug=interp_debug, g=g) 
+                fH2A = np.maximum(interp_fvrvxx(fH2,vrM,vxM,xH2,TnormM,vrA,vxA,xH,TnormA, do_warn=do_warn, debug=interp_debug, g=g),0 )
+                fSHA = np.maximum(interp_fvrvxx(fSH,vrM,vxM,xH2,TnormM,vrA,vxA,xH,TnormA, do_warn=do_warn, debug=interp_debug, g=g) ,0)
                 nHPA = interp_scalarx(nHP,xH2,xH, do_warn=do_warn, debug=interp_debug) 
                 THPA = interp_scalarx(THP,xH2,xH, do_warn=do_warn, debug=interp_debug)     
 
@@ -459,7 +461,8 @@ def KN1D(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
                     vxA,vrA,xH,TnormA,mu,TiA,TeA,nA,vxiA,fHBC,GammaxHBC,PipeDiaA,fH2A,fSHA,nHPA,THPA, fH=fH,\
                         truncate=truncate, Simple_CX=Simple_CX, Max_Gen=max_gen, \
                         H_H_EL=H_H_EL, H_P_EL=H2_P_EL, _H_H2_EL= H2_H2_EL, H_P_CX=H_P_CX, ni_correct=ni_correct, \
-                        Compute_Errors=Hcompute_errors, plot=Hplot, debug=Hdebug, debrief=Hdebrief, pause=Hpause, g=g) # Not sure where some of the keywords are defined
+                        Compute_Errors=Hcompute_errors, plot=Hplot, debug=Hdebug, debrief=Hdebrief, pause=Hpause, g=g,\
+                        adas_rec_h1s=adas_rec_h1s, adas_ion_h0=adas_ion_h0, adas_qcx_h0=adas_qcx_h0) # Not sure where some of the keywords are defined
                 
                 # Kinetic_H_Output Common Block 
                 piH_xx = g.Kinetic_H_Output_piH_xx
@@ -517,7 +520,7 @@ def KN1D(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
                 SI_hist=np.append(SI_hist,SI)
 
                 # Set total H2 source
-                #SH2=SpH2+0.5*SideWallHM
+                SH2=SpH2+0.5*SideWallHM
 
                 if compute_errors:
                     _RxH_H2 = interp_scalarx(RxH_H2,xH2, xH, do_warn=do_warn, debug=interp_debug)
@@ -527,7 +530,6 @@ def KN1D(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
                         print(prompt, 'Normalized H2 <-> H Momentum Transfer Error: ', sval(nDRx))
                 Delta_nH2 = np.abs(nH2-nH2s)
                 nDelta_nH2=np.max(Delta_nH2/np.max(nH2))
-                break
         
         # fH_fH2_done code section  
         error = 0
