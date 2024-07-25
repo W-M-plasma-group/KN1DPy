@@ -1,0 +1,136 @@
+H + 1     H + 0 (1)  / receiver, donor (donor state index)    / LPARMS /
+    7                / number of energies
+    1                / nmin
+    6                / nmax
+              10.00    50.00   100.00   200.00   300.00   500.00  1000.00                   / energies         (keV/amu)
+               4.16     3.03     2.85     2.86     2.90     2.93     2.83                   / alpha
+                  7        7        7        7        7        7        7                   / lforma
+           1.00D+00 1.00D+00 1.00D+00 1.00D+00 1.00D+00 1.00D+00 1.00D+00                   / xlcuta
+           1.41D-01-2.72D-01-5.29D-01-9.57D-01-1.25D+00-1.63D+00-2.28D+00                   / pl2a
+           1.05D+00 2.21D+00 2.61D+00 3.12D+00 3.45D+00 3.88D+00 2.89D+00                   / pl3a
+           7.95D-16 9.61D-17 1.54D-17 1.29D-18 2.35D-19 2.20D-20 6.45D-22                   / total xsects.    (cm2)
+  n  l  m                                                                                   / partial xsects.  (cm2)
+  1        7.70D-16 6.13D-17 9.25D-18 8.44D-19 1.63D-19 1.63D-20 5.03D-22
+  1  0     7.70D-16 6.13D-17 9.25D-18 8.44D-19 1.63D-19 1.63D-20 5.03D-22
+  2        2.31D-17 2.08D-17 3.37D-18 2.51D-19 4.12D-20 3.36D-21 8.38D-23
+  2  0     1.07D-17 1.19D-17 2.16D-18 1.86D-19 3.29D-20 2.88D-21 7.75D-23
+  2  1     1.24D-17 8.86D-18 1.21D-18 6.50D-20 8.33D-21 4.80D-22 6.33D-24
+  3        1.41D-18 6.77D-18 1.25D-18 8.95D-20 1.41D-20 1.10D-21 2.65D-23
+  3  0     5.47D-19 3.71D-18 7.81D-19 6.56D-20 1.12D-20 9.40D-22 2.44D-23
+  3  1     6.39D-19 2.75D-18 4.37D-19 2.29D-20 2.83D-21 1.57D-22 1.99D-24
+  3  2     2.24D-19 3.02D-19 3.21D-20 1.01D-21 8.99D-23 3.24D-24 1.11D-25
+  4        3.34D-19 2.87D-18 5.67D-19 4.03D-20 6.26D-21 4.79D-22 1.15D-23
+  4  0     1.23D-19 1.57D-18 3.54D-19 2.95D-20 4.96D-21 4.09D-22 1.06D-23
+  4  1     1.43D-19 1.16D-18 1.98D-19 1.03D-20 1.26D-21 6.83D-23 8.65D-25
+  4  2     5.02D-20 1.27D-19 1.45D-20 4.55D-22 3.99D-23 1.41D-24 4.81D-26
+  4  3     1.76D-20 1.40D-20 1.07D-21 2.01D-23 1.27D-24 2.91D-26 2.67D-27
+  5        1.32D-19 1.46D-18 3.00D-19 2.13D-20 3.28D-21 2.49D-22 6.11D-24
+  5  0     4.77D-20 7.97D-19 1.87D-19 1.56D-20 2.60D-21 2.13D-22 5.62D-24
+  5  1     5.57D-20 5.91D-19 1.05D-19 5.45D-21 6.59D-22 3.55D-23 4.59D-25
+  5  2     1.95D-20 6.48D-20 7.69D-21 2.41D-22 2.09D-23 7.33D-25 2.55D-26
+  5  3     6.82D-21 7.11D-21 5.66D-22 1.06D-23 6.64D-25 1.51D-26 1.42D-27
+  5  4     2.38D-21 7.80D-22 4.16D-23 4.69D-25 2.11D-26 3.13D-28 7.89D-29
+  6        6.18D-20 8.40D-19 1.78D-19 1.27D-20 1.93D-21 1.46D-22 3.64D-24
+  6  0     2.22D-20 4.58D-19 1.11D-19 9.30D-21 1.53D-21 1.25D-22 3.35D-24
+  6  1     2.59D-20 3.40D-19 6.21D-20 3.25D-21 3.87D-22 2.08D-23 2.74D-25
+  6  2     9.06D-21 3.73D-20 4.56D-21 1.44D-22 1.23D-23 4.30D-25 1.52D-26
+  6  3     3.17D-21 4.09D-21 3.36D-22 6.34D-24 3.90D-25 8.88D-27 8.45D-28
+  6  4     1.11D-21 4.49D-22 2.47D-23 2.80D-25 1.24D-26 1.83D-28 4.70D-29
+  6  5     3.88D-22 4.92D-23 1.82D-24 1.24D-26 3.94D-28 3.79D-30 2.61D-30
+   -1   -1
+C-------------------------------------------------------------------------------------------
+C
+C DATA REFORMATTED TO NEW ADF01 FORMAT.
+C
+C INPUT DATA FILE : JETSHP.CHEXDATA.DATA(H1NEW1)
+C SUB-BLOCK USED  : 1
+C SUB-BLOCK TITLE :  UDWA    H. RYUFUKU      10.0KEV/AMU - 1000.0KEV/AMU  H + 1
+C
+C COMMENT RECORDS FROM INPUT DATA FILE ARE APPENDED BELOW.
+C
+C-------------------------------------------------------------------------------------------
+C =====================================================================
+C                       H(1S) +  H(+)  --> H(+) +  H(N)
+C                       --------------------------------
+C
+C      INFORMATION                              #1989 RESTRUCTURED DATA
+C      -----------
+C      THE FOLLOWING OPTIONS ARE AVAILABLE SELECTED BY IBLOCK
+C
+C      IBLOCK=1
+C      ________
+C
+C      ENERGY    = 10.0KEV/AMU - 1000.0KEV/AMU
+C      N         =           1 - 5
+C      APPROX    = UDWA
+C      REFERENCE = H. RYUFUKU
+C                  JAERI-M-82-031
+C                  1982
+C      REMARKS
+C             ONLY THE SIGMA(TOTAL) AND SIGMA(N)'S OF RYUFUKU ARE
+C      USED.  THE ASYMPTOTIC PROJECTION SLOPE'S ALPHA ARE INFERRED
+C      FROM THE LAST TWO SIGMA(N) VALUES.
+C      NO TAIL CORRECTION IS REQUIRED HERE SO ITAIL=0.
+C
+C      LFORMA ,XLCUTA, PL2A AND PL3A
+C            THESE ARE DERIVED BY INSPECTION OF THE PRINCIPAL QUANTA
+C      CLOSEST OR EQUAL TO N=3 FOR SIGMA(N,L) AT
+C      ALL ENERGIES -------- RYUFUKU (1982) ......... UDW   (N=5)
+C
+C                                          H.P.SUMMERS   12 JAN 1990
+C
+C=======================================================================
+C   L-SPLITTING IS RECONSTITUTED FROM THE JET N-SHELL RESOLUTION DATA 
+C   BLOCK USING  ITS L-SHELL FORM PARAMETERS.  THE DATA SET THUS EXACTLY
+C   MATCHES THE JET DATA SET IN APPLICATION.  NOTE THE L-SHELL FORM
+C   PARAMETERS ARE OPTIMIMISED AROUND THE N-SHELLS RESPONSIBLE FOR 
+C   VISIBLE LINE CHARGE EXCHANGE SPECTROSCOPY EMISSION.
+C
+C                                             H.P. SUMMERS  28 JULY 1995
+C-----------------------------------------------------------------------
+ 
+C---------------------------------------------------------------------------------
+C ADAS ADF01 DATA - SCCS info: @(#)$Header: /home/adascvs/adas/adf01/qcx#h0/qcx#h0_ory#h1.dat,v 2.1 2004/07/06 21:16:01 whitefor Exp $ Date $Date: 2004/07/06 21:16:01 $
+C---------------------------------------------------------------------------------
+
+C-----------------------------------------------------------------------
+C                               OPEN-ADAS
+C                               +++++++++
+C
+C This file has been downloaded from OPEN-ADAS (http://open.adas.ac.uk)
+C on 10-Oct-2023.
+C
+C TERMS AND CONDITIONS
+C --------------------
+C
+C The user of the OPEN-ADAS system and data (hereinafter "the User")
+C accepts the following terms and conditions:
+C
+C   1. The University of Strathclyde uses all reasonable endeavours to
+C      ensure the accuracy of the data provided and any information
+C      given, but the University makes no warranty, expressed or implied
+C      as to its accuracy, integrity, fitness for purpose and shall not
+C      be responsible for the use to which the data is put by the User
+C      and/or any consequences arising out of any inaccuracies or
+C      omissions.
+C
+C   2. Any downloaded OPEN-ADAS file is made available for the
+C      personal use of the User only.  It must not be used for any
+C      commercial application, incorporated into any web site or in
+C      any form re-distributed without express prior written permission
+C      from the ADAS Project. In particular, but not by way of
+C      limitation, it must not be:
+C        *  inserted into a managed database structure,
+C        *  redistributed along with a modelling or analysis code,
+C        *  made available on a public website.
+C
+C Permission for OPEN-ADAS data incorporation in non-commercial
+C code/system development for scientific advance will not be
+C unreasonably withheld, but will be subject to written agreement
+C on a case by case basis.
+C
+C The User will indemnify the University of Strathclyde and keep it
+C fully and effectively indemnified against each and every claim made
+C against the University as a result of the User's use of the data.
+C
+C-----------------------------------------------------------------------
