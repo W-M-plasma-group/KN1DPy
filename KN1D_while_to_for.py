@@ -1,7 +1,7 @@
 import numpy as np 
 import os
 from scipy import interpolate
-
+from tqdm import tqdm
 from read import sav_read, nc_read
 from edit_keys import edit_keys
 from create_kinetic_h2_mesh import create_kinetic_h2_mesh
@@ -398,16 +398,25 @@ def KN1D(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
         else:
             #   Entry point for fH_fH2 iteration : iterates through solving fh and fh2 until they satisfy boltzmans equation
             nDelta_nH2 = truncate + 1
-            while nDelta_nH2 > truncate: # Used goto statements in IDL; changed here to while loop
-                if debrief: 
+            print("debrief:", debrief) # Until this moment, 24/07/2024, we're getting debrief=0
+            print("pause:", pause) # Until this moment, 24/07/2024, we're getting debrief=0
+            # while nDelta_nH2 > truncate: # Used goto statements in IDL; changed here to while loop
+                # Using while, this take around 35 iterations and 250 seconds to solve the loop
+                # We're gonna try to use for, and see if this time is reduced, I think that it's gonna be the same, but, let's check it out
+            for i in tqdm(range(0,35,1)):    
+                if debrief: # "Given that debrief is CERO, this conditional does not execute"
                     print(prompt, 'Maximum Normalized change in nH2: ', sval(nDelta_nH2))
+
                 if debrief and pause: 
+                    print('Hi')
                     # press_return
                     pass
 
-                # iter+=1 I dont think this line is necessary 
+                iter+=1 # Ok, I think that this line could give us some information about which iteration we're on, so I'm going to uncomment it
+                print("# iteration: ",iter)
                 if debrief:
                     print(prompt+'fH/fH2 Iteration: '+sval(iter))
+                # Here, we're saving the value of nH2 from the last iteration
                 nH2s = copy.deepcopy(nH2)
 
                 # interpolate fH data onto H2 mesh: fH -> fHM
@@ -417,14 +426,29 @@ def KN1D(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
                 # Compute fH2 using Kinetic_H2
                 ni_correct=1
                 Compute_H_Source=1
+                print('H2debrief: ',H2debrief)
                 H2compute_errors=compute_errors and H2debrief # is this accurate, how can it be equal to both? - GG 2/15
-                fH2, nHP, THP, nH2, GammaxH2, VxH2, pH2, TH2, qxH2, qxH2_total, Sloss, \
-                    QH2, RxH2, QH2_total, AlbedoH2, WallH2, fSH, SH, SP, SHP, NuE, NuDis, ESH, Eaxis, error = Kinetic_H2(\
-                        vxM, vrM, xH2, TnormM, mu, TiM, TeM, nM, vxiM, fh2BC, GammaxH2BC, NuLoss, PipeDiaM, fHM, SH2, fH2, nH2, THP, \
-                        truncate=truncate, Simple_CX=Simple_CX, Max_Gen=max_gen, Compute_H_Source=Compute_H_Source,\
-                        H2_H2_EL=H2_H2_EL,H2_P_EL=H2_P_EL,H2_H_EL=H2_H_EL,H2_HP_CX=H2_HP_CX, ni_correct=ni_correct,\
-                        Compute_Errors=H2compute_errors, plot=H2plot,debug=H2debug,debrief=H2debrief,pause=H2pause, g=g) # fixed inputs - GG 2/26
-
+                print('H2compute_errors: ',H2compute_errors)
+                fH2, nHP, THP, nH2, GammaxH2, VxH2, pH2, TH2, qxH2, qxH2_total, Sloss, QH2, RxH2, QH2_total, AlbedoH2, WallH2, fSH, SH, SP, SHP, NuE, NuDis, ESH, Eaxis, error = Kinetic_H2(vxM,    vrM,    xH2,    TnormM, 
+                            mu,    TiM,    TeM,        nM, 
+                            vxiM,fh2BC,GammaxH2BC, NuLoss, 
+                            PipeDiaM, fHM, SH2,       fH2, 
+                            nH2, THP, 
+                            truncate=truncate, 
+                            Simple_CX=Simple_CX, 
+                            Max_Gen=max_gen, 
+                            Compute_H_Source=Compute_H_Source,
+                            H2_H2_EL=H2_H2_EL,
+                            H2_P_EL=H2_P_EL,
+                            H2_H_EL=H2_H_EL,
+                            H2_HP_CX=H2_HP_CX, 
+                            ni_correct=ni_correct,
+                            Compute_Errors=H2compute_errors, 
+                            plot=H2plot,
+                            debug=H2debug,
+                            debrief=H2debrief,
+                            pause=H2pause, 
+                            g=g) # fixed inputs - GG 2/26
                 # Kinetic_H2_Ouput common block- GG 2/15
                 piH2_xx = g.Kinetic_H2_Output_piH2_xx
                 piH2_yy = g.Kinetic_H2_Output_piH2_yy
@@ -458,11 +482,28 @@ def KN1D(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
                 ni_correct = 1
                 Hcompute_errors = compute_errors and Hdebrief
                 fH,nH,GammaxH,VxH,pH,TH,qxH,qxH_total,NetHSource,Sion,QH,RxH,QH_total,AlbedoH,SideWallH,error = kinetic_h(
-                    vxA,vrA,xH,TnormA,mu,TiA,TeA,nA,vxiA,fHBC,GammaxHBC,PipeDiaA,fH2A,fSHA,nHPA,THPA, fH=fH,\
-                        truncate=truncate, Simple_CX=Simple_CX, Max_Gen=max_gen, \
-                        H_H_EL=H_H_EL, H_P_EL=H2_P_EL, _H_H2_EL= H2_H2_EL, H_P_CX=H_P_CX, ni_correct=ni_correct, \
-                        Compute_Errors=Hcompute_errors, plot=Hplot, debug=Hdebug, debrief=Hdebrief, pause=Hpause, g=g,\
-                        adas_rec_h1s=adas_rec_h1s, adas_ion_h0=adas_ion_h0, adas_qcx_h0=adas_qcx_h0) # Not sure where some of the keywords are defined
+                vxA,vrA,xH,TnormA,
+                mu,TiA,TeA,nA,
+                vxiA,fHBC,GammaxHBC,PipeDiaA,
+                fH2A,fSHA,nHPA,THPA, 
+                fH=fH,
+                truncate=truncate, 
+                Simple_CX=Simple_CX, 
+                Max_Gen=max_gen,
+                H_H_EL=H_H_EL, 
+                H_P_EL=H2_P_EL, 
+                _H_H2_EL= H2_H2_EL, 
+                H_P_CX=H_P_CX, 
+                ni_correct=ni_correct,
+                Compute_Errors=Hcompute_errors, 
+                plot=Hplot, 
+                debug=Hdebug, 
+                debrief=Hdebrief, 
+                pause=Hpause, 
+                g=g,
+                adas_rec_h1s=adas_rec_h1s, 
+                adas_ion_h0=adas_ion_h0, 
+                adas_qcx_h0=adas_qcx_h0) # Not sure where some of the keywords are defined
                 
                 # Kinetic_H_Output Common Block 
                 piH_xx = g.Kinetic_H_Output_piH_xx
@@ -521,7 +562,7 @@ def KN1D(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
 
                 # Set total H2 source
                 SH2=SpH2+0.5*SideWallHM
-
+                print("compute_errors:",compute_errors)
                 if compute_errors:
                     _RxH_H2 = interp_scalarx(RxH_H2,xH2, xH, do_warn=do_warn, debug=interp_debug)
                     DRx=_RxH_H2+RxH2_H
@@ -531,7 +572,10 @@ def KN1D(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
                 Delta_nH2 = np.abs(nH2-nH2s)
                 nDelta_nH2=np.max(Delta_nH2/np.max(nH2))
                 print("nDelta_nH2: ",nDelta_nH2)
-        
+                if nDelta_nH2 < truncate:
+                    print('nDelta_nH2 es menor que truncate, se rompe el loop')
+                    break
+                print('Salimos del loop')
         # fH_fH2_done code section  
         error = 0
         # Compute total H flux through crossing limiter radius
