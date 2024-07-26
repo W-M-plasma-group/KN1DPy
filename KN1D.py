@@ -186,7 +186,7 @@ def KN1D(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
             # i think in the end we will have to use the dictionary to manually define the variables
         else:
             # determine optimized vr, vx, grid for kinetc_h2 (molecules, M)
-            nv = 6
+            nv = 40#6
             Eneut = np.array([0.003,0.01,0.03,0.1,0.3,1.0,3.0])
             fctr = 0.3
             if GaugeH2 > 15.0:
@@ -194,7 +194,7 @@ def KN1D(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
             xH2,TiM,TeM,nM,PipeDiaM,vxM,vrM,TnormM = create_kinetic_h2_mesh(nv, mu, x, Ti, Te, n, PipeDia, E0 = Eneut, ixE0 = 0 ,irE0 = 0,fctr = fctr) # replaced function inputs, split output list into variables - nh // fixed keyword inputs - GG
             
             # determine optimized vr, vx grid for kinetic_h (atoms, A)
-            nv = 10
+            nv = 40#10
             fctr = 0.3
             if GaugeH2 > 30.0 :
                 fctr = fctr * 30 / GaugeH2
