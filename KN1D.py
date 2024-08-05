@@ -34,7 +34,7 @@ import copy
 # History: First coding 5/1/2001  -  B. LaBombard
  
 
-def KN1D(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
+def KN1D(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, nv_h2, nv_h, \
          truncate = 1.0e-3, refine = 0, File = '', NewFile = 0, ReadInput = 0, \
          error = 0, compute_errors = 0, plot = 0, debug = 0, debrief = 0, pause = 0, \
          Hplot = 0, Hdebug = 0, Hdebrief = 0, Hpause = 0, \
@@ -56,6 +56,9 @@ def KN1D(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
         #		  This variable allows collisions with the 'side-walls' to be simulated.
         #		  If this variable is undefined, then PipeDia set set to zero. Zero values
         #		  of PipeDia are ignored (i.e., treated as an infinite diameter).
+        #   new vars : 
+        #               nv_h2 : nodes for vertical axis for velocities on kinetic_H2 
+        #               nv_h  : nodes for vertical axis for velocities on kinetic_H
         #
         #   Keyword Input:
         #      truncate	- float, this parameter is also passed to Kinetic_H and Kinetic_H2.
@@ -186,7 +189,7 @@ def KN1D(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
             # i think in the end we will have to use the dictionary to manually define the variables
         else:
             # determine optimized vr, vx, grid for kinetc_h2 (molecules, M)
-            nv = 40#6
+            nv = copy.copy(nv_h2) #40#6
             Eneut = np.array([0.003,0.01,0.03,0.1,0.3,1.0,3.0])
             fctr = 0.3
             if GaugeH2 > 15.0:
@@ -194,7 +197,7 @@ def KN1D(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
             xH2,TiM,TeM,nM,PipeDiaM,vxM,vrM,TnormM = create_kinetic_h2_mesh(nv, mu, x, Ti, Te, n, PipeDia, E0 = Eneut, ixE0 = 0 ,irE0 = 0,fctr = fctr) # replaced function inputs, split output list into variables - nh // fixed keyword inputs - GG
             
             # determine optimized vr, vx grid for kinetic_h (atoms, A)
-            nv = 40#10
+            nv = copy.copy(nv_h) #40#10
             fctr = 0.3
             if GaugeH2 > 30.0 :
                 fctr = fctr * 30 / GaugeH2

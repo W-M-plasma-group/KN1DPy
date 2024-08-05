@@ -80,10 +80,14 @@ if testidl:
 
     xH2, nH2, GammaxH2, TH2, qxH2_total, nHP, THP, SH, SP, \
                 xH, nH, GammaxH, TH, qxH_total, NetHSource, Sion, QH_total, SideWallH, Lyman, Balmer=\
-                KN1D( data_file['x'], data_file['x_lim'], data_file['x_sep'], data_file['p_wall'], data_file['mu'], data_file['t_i'], data_file['t_e'], \
-                data_file['n_e'], data_file['vx'], data_file['lc'], data_file['d_pipe'])
+                KN1D( data_file['x'], data_file['x_lim'], data_file['x_sep'], \
+                      data_file['p_wall'], data_file['mu'], data_file['t_i'], data_file['t_e'], \
+                      data_file['n_e'], data_file['vx'], data_file['lc'], data_file['d_pipe'],\
+                      nv_h2 = 20, nv_h = 20)
 
     tf=time.time()
+
+    
 
     t=tf-t0
 
