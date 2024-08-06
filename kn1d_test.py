@@ -121,7 +121,13 @@ if testidl:
     t=tf-t0
 
     print('Completed in '+str(t)+' seconds')
-    #'''
+
+    print('xH2',len(xH2))
+    print('nH2',len(nH2))
+    print('data_file[xH2]',len(data_file['xH2']))
+    print('data_file[nH2]',len(data_file['nH2']))
+
+>>>>>>> 3eb783f10f3438a6c93bd5028a73ddc89a4dd232
     plt.plot(xH2,nH2)
     plt.plot(data_file['xH2'],data_file['nH2'])
     plt.title(r'n$_{H_2}$ Comparison: Shot '+fname[:10])
@@ -132,7 +138,10 @@ if testidl:
     #plt.savefig(fileloc + fname+'_nH2_testplotb')
     plt.show()
     plt.clf()
-
+    print('xH',len(xH))
+    print('nH',len(nH))
+    print('data_file[xH]',len(data_file['xH']))
+    print('data_file[nH]',len(data_file['nH']))
     plt.plot(xH,nH)
     plt.plot(data_file['xH'],data_file['nH'])
     plt.yscale('log')
