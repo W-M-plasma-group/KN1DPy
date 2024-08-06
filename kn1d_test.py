@@ -92,6 +92,10 @@ if testidl:
     t=tf-t0
 
     print('Completed in '+str(t)+' seconds')
+    print('xH2',len(xH2))
+    print('nH2',len(nH2))
+    print('data_file[xH2]',len(data_file['xH2']))
+    print('data_file[nH2]',len(data_file['nH2']))
 
     plt.plot(xH2,nH2)
     plt.plot(data_file['xH2'],data_file['nH2'])
@@ -103,7 +107,10 @@ if testidl:
     #plt.savefig(fileloc + fname+'_nH2_testplotb')
     plt.show()
     plt.clf()
-
+    print('xH',len(xH))
+    print('nH',len(nH))
+    print('data_file[xH]',len(data_file['xH']))
+    print('data_file[nH]',len(data_file['nH']))
     plt.plot(xH,nH)
     plt.plot(data_file['xH'],data_file['nH'])
     plt.yscale('log')
