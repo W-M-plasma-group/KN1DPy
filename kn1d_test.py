@@ -127,7 +127,7 @@ if testidl:
     print('data_file[xH2]',len(data_file['xH2']))
     print('data_file[nH2]',len(data_file['nH2']))
 
->>>>>>> 3eb783f10f3438a6c93bd5028a73ddc89a4dd232
+
     plt.plot(xH2,nH2)
     plt.plot(data_file['xH2'],data_file['nH2'])
     plt.title(r'n$_{H_2}$ Comparison: Shot '+fname[:10])
