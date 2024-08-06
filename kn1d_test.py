@@ -6,7 +6,7 @@ print('test','\n')
 import matplotlib.pyplot as plt
 from scipy import interpolate
 import time
-
+import copy
 #fileloc="C:\\Users\\nholl\\OneDrive\\Documents\\School Work\\Research Info\\ADAS Outputs\\"
 
 testidl=True
@@ -75,16 +75,45 @@ if testidl:
     #print(data_file['vx1'])
     #print(data_file['vx2'])
     #print(data_file['vx1']-data_file['vx2'])
-
+    ####
+    times_nh = 2
+    x_rd = np.linspace(data_file['x'][0],data_file['x'][-1],times_nh*len(data_file['x']))
+    ####
+    func_ti = interpolate.interp1d(data_file['x'],data_file['t_i'],fill_value='extrapolate')
+    func_te = interpolate.interp1d(data_file['x'],data_file['t_e'],fill_value='extrapolate')
+    func_ne = interpolate.interp1d(data_file['x'],data_file['n_e'],fill_value='extrapolate')
+    func_d_pipe = interpolate.interp1d(data_file['x'],data_file['d_pipe'],fill_value='extrapolate')
+    func_lc = interpolate.interp1d(data_file['x'],data_file['lc'],fill_value='extrapolate')
+    func_vx = interpolate.interp1d(data_file['x'],data_file['vx'],fill_value='extrapolate')
+    ####
+    ti_rd = copy.copy(func_ti(x_rd))
+    te_rd = copy.copy(func_te(x_rd))
+    ne_rd = copy.copy(func_ne(x_rd))
+    d_pipe_rd = copy.copy(func_d_pipe(x_rd))
+    lc_rd = copy.copy(func_lc(x_rd))
+    vx_rd = copy.copy(func_vx(x_rd))
+    ####
+    print(len(x_rd),len(ti_rd),len(te_rd),len(ne_rd),len(d_pipe_rd))
+    ####
+    #plt.plot(data_file['x'],data_file['t_i'],marker = 'x', markersize = 6**2)
+    #plt.plot(x_rd,ti_rd)
+    #plt.show()
+    ####
     t0=time.time()
-
+    xH2, nH2, GammaxH2, TH2, qxH2_total, nHP, THP, SH, SP, \
+                xH, nH, GammaxH, TH, qxH_total, NetHSource, Sion, QH_total, SideWallH, Lyman, Balmer=\
+                KN1D( x_rd, data_file['x_lim'], data_file['x_sep'], \
+                      data_file['p_wall'], data_file['mu'], ti_rd, te_rd, \
+                      ne_rd, vx_rd, lc_rd, d_pipe_rd,\
+                      nv_h2 = 40, nv_h = 40)
+    '''
     xH2, nH2, GammaxH2, TH2, qxH2_total, nHP, THP, SH, SP, \
                 xH, nH, GammaxH, TH, qxH_total, NetHSource, Sion, QH_total, SideWallH, Lyman, Balmer=\
                 KN1D( data_file['x'], data_file['x_lim'], data_file['x_sep'], \
                       data_file['p_wall'], data_file['mu'], data_file['t_i'], data_file['t_e'], \
                       data_file['n_e'], data_file['vx'], data_file['lc'], data_file['d_pipe'],\
                       nv_h2 = 20, nv_h = 20)
-
+    '''
     tf=time.time()
 
     
@@ -92,7 +121,7 @@ if testidl:
     t=tf-t0
 
     print('Completed in '+str(t)+' seconds')
-
+    #'''
     plt.plot(xH2,nH2)
     plt.plot(data_file['xH2'],data_file['nH2'])
     plt.title(r'n$_{H_2}$ Comparison: Shot '+fname[:10])
@@ -114,7 +143,7 @@ if testidl:
     #plt.savefig(fileloc + fname+'_nH_testplotb')
     plt.show()
     #raise Exception('check')
-
+    #'''
     #np.savez(fileloc + fname+'b',
     #xH2=xH2, nH2=nH2, GammaxH2=GammaxH2, TH2=TH2, qxH2_total=qxH2_total, nHP=nHP, THP=THP, SH=SH, SP=SP, \
     #        xH=xH, nH=nH, GammaxH=GammaxH, TH=TH, qxH_total=qxH_total, NetHSource=NetHSource, Sion=Sion, QH_total=QH_total, \
