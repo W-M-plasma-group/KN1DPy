@@ -5,6 +5,7 @@ from sigmav_h1s_h2s_hh import sigmav_h1s_h2s_hh
 from sigmav_cx_hh import sigmav_cx_hh
 from create_vrvxmesh import create_VrVxMesh # fixed capitalization
 from scipy import interpolate
+import copy
 
 from global_vars import mH, q, k_boltz, Twall
 
@@ -14,23 +15,23 @@ def create_kinetic_h2_mesh(nv, mu, x, Ti, Te, n, PipeDia, E0 = 0, ixE0 = 0, irE0
 
     nx=np.size(x)
 
-    gamma_wall = [0] * nx
+    gamma_wall = np.zeros(nx, dtype=np.float64) #gamma_wall = [0] * nx
 
     #Estimate total reaction rate for destruction of molecules and for interation with side walls
     RR=n*sigmav_ion_hh(Te)+n*sigmav_h1s_h1s_hh(Te)+n*sigmav_h1s_h2s_hh(Te)
 
-    Y = np.zeros(nx) # changed to make more concise  - GG
+    Y = np.zeros(nx, dtype=np.float64) # changed to make more concise  - GG
     for k in range(1, nx-1):
         Y[k]=Y[k-1]-(x[k]-x[k-1])*0.5*(RR[k]+RR[k-1])/v0_bar
 
     #Find x location where Y = -10, i.e., where nH2 should be down by exp(-10)
     interpfunc = interpolate.interp1d(Y, x) # fixed error with interpolation - GG
-    xmaxH2=np.minimum(interpfunc(-10.0), max(x))
+    xmaxH2 = np.minimum(interpfunc(-10.0), max(x))
 
-    xminH2=x[0]
+    xminH2 = copy.copy(x[0])
 
     #Interpolate Ti and Te onto a fine mesh between xminH2 and xmaxH2
-    xfine=xminH2+(xmaxH2-xminH2)*np.arange(1001)/1000 # fixed error with findgen - GG
+    xfine=xminH2+((xmaxH2-xminH2)*np.arange(1001, dtype=np.float64)/1000.0) # fixed error with findgen - GG
 
     interpfunc = interpolate.interp1d(x, Ti, kind = 'linear') # fixed errors with interpolation
     Tifine=interpfunc(xfine)
@@ -52,8 +53,8 @@ def create_kinetic_h2_mesh(nv, mu, x, Ti, Te, n, PipeDia, E0 = 0, ixE0 = 0, irE0
 
     #Estimate interaction rate with side walls
     nxfine=np.size(xfine)
-    gamma_wall = [0] * nxfine
-    for k in range(nxfine-1):
+    gamma_wall = np.zeros(nxfine, dtype=np.float64)#[0] * nxfine
+    for k in range(nxfine):#range(nxfine-1):
         if PipeDiafine[k] > 0: # fixed brackets - GG
             gamma_wall[k]=2*max(vr)*vth/PipeDiafine[k]
 
