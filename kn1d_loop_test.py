@@ -41,6 +41,7 @@ def save_results(filename, results):
     with open(filename, 'w') as file:
         for name, value in results.items():
             file.write(f"{name}: {value}\n")
+            
 for nv_h2 in nv_values:
     for nv_h in nv_values:
         params.update({'nv_h2': nv_h2, 'nv_h': nv_h})
