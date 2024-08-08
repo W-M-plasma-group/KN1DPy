@@ -298,7 +298,7 @@ def KN1D(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, nv_h2, nv_
         for ii in range(LC.size):
             if LC[ii]>0:
                 Cs_LC[ii]=np.sqrt(q*(Ti[ii]+Te[ii])/(mu*mH))/LC[ii] # fixed notation of indexing arrays - GG
-        interpfunc = interpolate.interp1d(x,Cs_LC) # fixed the way interpolation was called - GG
+        interpfunc = interpolate.interp1d(x,Cs_LC, kind='linear', fill_value="extrapolate") # fixed the way interpolation was called - GG
         NuLoss = interpfunc(xH2)
         
         #  Compute first guess SpH2
