@@ -10,7 +10,7 @@ from integ_bl import integ_bl
 from Make_dVr_dVx import Make_dVr_dVx
 from sval import sval
 # from interp_fvrvxx import interp_fvrvxx
-from interp_fvrvxx_v6 import interp_fvrvxx
+from interp_fvrvxx import interp_fvrvxx
 from create_kinetic_h_mesh import create_kinetic_h_mesh
 from kinetic_h import kinetic_h 
 from kinetic_h2 import Kinetic_H2 
@@ -20,7 +20,7 @@ from balmer_alpha import Balmer_Alpha
 
 from global_vars import mH, q, k_boltz, Twall
 from global_vars import global_vars
-
+from loguru import logger
 import copy
 
 #   Computes the molecular and atomic neutral profiles for inputted profiles
@@ -40,6 +40,26 @@ def KN1D(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, nv_h2, nv_
          error = 0, compute_errors = 0, plot = 0, debug = 0, debrief = 0, pause = 0, \
          Hplot = 0, Hdebug = 0, Hdebrief = 0, Hpause = 0, \
          H2plot = 0, H2debug = 0, H2debrief = 0, H2pause = 0, adas_rec_h1s=None, adas_ion_h0=None, adas_qcx_h0=None):  # deleted what i added before dont know what I was thinking?? - GG 2/19, corrected typos
+
+        variables = {
+            'x': x, 'xlimiter': xlimiter, 'xsep': xsep, 'GaugeH2': GaugeH2, 'mu': mu, 
+            'Ti': Ti, 'Te': Te, 'n': n, 'vxi': vxi, 'LC': LC, 'PipeDia': PipeDia, 
+            'nv_h2': nv_h2, 'nv_h': nv_h, 'truncate': truncate, 'refine': refine, 
+            'File': File, 'NewFile': NewFile, 'ReadInput': ReadInput, 'error': error, 
+            'compute_errors': compute_errors, 'plot': plot, 'debug': debug, 'debrief': debrief, 
+            'pause': pause, 'Hplot': Hplot, 'Hdebug': Hdebug, 'Hdebrief': Hdebrief, 
+            'Hpause': Hpause, 'H2plot': H2plot, 'H2debug': H2debug, 'H2debrief': H2debrief, 
+            'H2pause': H2pause, 'adas_rec_h1s': adas_rec_h1s, 'adas_ion_h0': adas_ion_h0, 
+            'adas_qcx_h0': adas_qcx_h0
+        }
+
+        # Abrir el archivo en modo de escritura
+        with open('variables_KN1D.txt', 'w') as file:
+            for name, value in variables.items():
+                if hasattr(value, '__len__'):
+                    file.write(f'{name}: {value}, tipo: {type(value)}, len({name}): {len(value)}\n')
+                else:
+                    file.write(f'{name}: {value}, tipo: {type(value)}\n')
 
         # Input: 
         #	x	- fltarr(nx), cross-field coordinate (meters)
