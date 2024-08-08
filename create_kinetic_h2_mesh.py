@@ -75,34 +75,73 @@ def create_kinetic_h2_mesh(nv, mu, x, Ti, Te, n, PipeDia, E0 = 0, ixE0 = 0, irE0
     else:
         dx_max = np.minimum(calculated_dx_max, big_dx)
 
+    print("big_dx--h2:", big_dx)
+    print("dx_max--h2:", dx_max)
 
-    #Construct xH2 axis
+    ####
+    ##Construct xH2 axis
+    ##
+    ## Interpolation function between mesh points and size steps
+    interp_func = interpolate.interp1d(xfine, dx_max, fill_value="extrapolate")
+    ##
+    # Inicializar xH2 y xpt
     xpt = copy.copy(xmaxH2)
-    xpt = np.array([xpt]) # made it np array to fix error - GG
+    xH2 = copy.copy([xpt])
+
+    while xpt > xminH2:
+        xH2.insert(0, xpt)  # This is important at the beginning of while bc after the loop just will keep one last value using xH2[:-1]
+        dxpt1 = interp_func(xpt)
+        dxpt2 = dxpt1
+        xpt_test = xpt - dxpt1
+        if xpt_test > xminH2:
+            dxpt2 = interp_func(xpt_test)
+        dxpt = min(dxpt1, dxpt2)
+        xpt -= dxpt
+        
+    
+    # Asegurarse de que xminH2 esté incluido en xH2 al inicio y excluir el último valor
+    xH2 = np.array([xminH2] + xH2[:-1])
+    
+    ####Original --> Gwen and Nick
+    '''
+    xpt = copy.copy(xmaxH2)
+    xpt = copy.copy(np.array([xpt])) # made it np array to fix error - GG
     xH2 = copy.copy(xpt) # changed how its define to fix error 
     while xpt > xminH2:
-        xH2=np.concatenate([xpt,xH2]) # I am not entirely sure this is what the IDL code wants 
+        print('xmaxH2 \n',xmaxH2)
+        print('xpt \n',xpt)
+        print('xH2 prev concatenate \n',xH2)
+        xH2=np.concatenate([xpt,xH2]) # I am not entirely sure this is what the IDL code wants np.stack or no.append
+        print('xH2 after concatenate \n',xH2)
         interpfunc = interpolate.interp1d(xfine, dx_max)
-        dxpt1=interpfunc(xpt)
-        dxpt2=dxpt1
-        xpt_test=xpt-dxpt1
+        dxpt1 = interpfunc(xpt)
+        dxpt2 = dxpt1
+        xpt_test = xpt-dxpt1
         if xpt_test > xminH2:
             interpfunc = interpolate.interp1d(xfine, dx_max)
             dxpt2=interpfunc(xpt_test)
         dxpt=min([dxpt1,dxpt2])
         xpt=xpt-dxpt
-    xH2=np.concatenate([np.array([xminH2]), xH2[0:np.size(xH2) - 2]]) # added missing brackets - GG 
+    xH2=np.concatenate([np.array([xminH2]), xH2[0:np.size(xH2) - 1]]) # added missing brackets - GG
+    '''
+    ####
+    ##
+    ##
 
-    interpfunc = interpolate.interp1d(xfine, Tifine)
+    ####
+    ##
+    ##  
+
+    interpfunc = interpolate.interp1d(xfine, Tifine, kind='linear', fill_value="extrapolate")
     TiH2=interpfunc(xH2)
 
-    interpfunc = interpolate.interp1d(xfine, Tefine)
+    interpfunc = interpolate.interp1d(xfine, Tefine, kind='linear', fill_value="extrapolate")
     TeH2=interpfunc(xH2)
 
-    interpfunc = interpolate.interp1d(xfine, nfine)
+    interpfunc = interpolate.interp1d(xfine, nfine, kind='linear', fill_value="extrapolate")
     neH2=interpfunc(xH2)
 
-    interpfunc = interpolate.interp1d(xfine, PipeDiafine)
+    interpfunc = interpolate.interp1d(xfine, PipeDiafine, kind='linear', fill_value="extrapolate")
     PipeDiaH2=interpfunc(xH2)
 
     vx, vr, Tnorm, ixE0, irE0 = create_VrVxMesh(nv,TiH2) # changed how we pulled the variables - GG
