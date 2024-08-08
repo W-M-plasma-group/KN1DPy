@@ -61,14 +61,25 @@ def create_kinetic_h2_mesh(nv, mu, x, Ti, Te, n, PipeDia, E0 = 0, ixE0 = 0, irE0
     #Estimate total reaction rate, including charge exchange, elastic scattering, and interaction with side walls
     RR=nfine*sigmav_ion_hh(Tefine)+nfine*sigmav_h1s_h1s_hh(Tefine)+nfine*sigmav_h1s_h2s_hh(Tefine)+0.1*nfine*sigmav_cx_hh(Tifine,Tifine) + gamma_wall
 
-    #Compute local maximum grid spacing from dx_max = 2 min(vr) / RR
-    big_dx=0.02*fctr
-    dx_max=np.minimum(fctr*0.8*(2*vth*min(vr)/RR), big_dx) # fixed typo - GG
+    ##Compute local maximum grid spacing from dx_max = 2 min(vr) / RR
+    ##big_dx=0.02*fctr
+    #dx_max=np.minimum(fctr*0.8*(2*vth*min(vr)/RR), big_dx) # fixed typo - GG
+
+    ####
+    ## Changing the above dx_max calculation by an exactly equivalent of IDL version
+    ##
+    big_dx = 0.02 * fctr
+    calculated_dx_max = fctr*0.8*(2*vth*np.min(vr)/RR)
+    if calculated_dx_max == big_dx:
+        dx_max = big_dx - np.finfo(np.float64).eps
+    else:
+        dx_max = np.minimum(calculated_dx_max, big_dx)
+
 
     #Construct xH2 axis
-    xpt = xmaxH2
+    xpt = copy.copy(xmaxH2)
     xpt = np.array([xpt]) # made it np array to fix error - GG
-    xH2 = xpt # changed how its define to fix error 
+    xH2 = copy.copy(xpt) # changed how its define to fix error 
     while xpt > xminH2:
         xH2=np.concatenate([xpt,xH2]) # I am not entirely sure this is what the IDL code wants 
         interpfunc = interpolate.interp1d(xfine, dx_max)
