@@ -70,28 +70,60 @@ def create_kinetic_h2_mesh(nv, mu, x, Ti, Te, n, PipeDia, E0 = 0, ixE0 = 0, irE0
     ##
     big_dx = 0.02 * fctr
     calculated_dx_max = fctr*0.8*(2*vth*np.min(vr)/RR)
-    if calculated_dx_max == big_dx:
+    if np.all(calculated_dx_max == big_dx):
         dx_max = big_dx - np.finfo(np.float64).eps
     else:
         dx_max = np.minimum(calculated_dx_max, big_dx)
 
+    print("big_dx--h2:", big_dx)
+    print("dx_max--h2:", dx_max)
 
-    #Construct xH2 axis
+    ####
+    ##Construct xH2 axis
+    ##
+    ## Interpolation function between mesh points and size steps
+    interp_func = interpolate.interp1d(xfine, dx_max, fill_value="extrapolate")
+    ##
+    # Inicializar xH2 y xpt
     xpt = copy.copy(xmaxH2)
-    xpt = np.array([xpt]) # made it np array to fix error - GG
-    xH2 = copy.copy(xpt) # changed how its define to fix error 
+    xH2 = copy.copy([xpt])
+
     while xpt > xminH2:
-        xH2=np.concatenate([xpt,xH2]) # I am not entirely sure this is what the IDL code wants 
-        interpfunc = interpolate.interp1d(xfine, dx_max)
-        dxpt1=interpfunc(xpt)
-        dxpt2=dxpt1
-        xpt_test=xpt-dxpt1
+        dxpt1 = interp_func(xpt)
+        dxpt2 = dxpt1
+        xpt_test = xpt - dxpt1
         if xpt_test > xminH2:
-            interpfunc = interpolate.interp1d(xfine, dx_max)
-            dxpt2=interpfunc(xpt_test)
-        dxpt=min([dxpt1,dxpt2])
-        xpt=xpt-dxpt
-    xH2=np.concatenate([np.array([xminH2]), xH2[0:np.size(xH2) - 2]]) # added missing brackets - GG 
+            dxpt2 = interp_func(xpt_test)
+        dxpt = min(dxpt1, dxpt2)
+        xpt -= dxpt
+        xH2.insert(0, xpt)  # Insertar al inicio de la lista
+    
+    # Asegurarse de que xminH2 esté incluido en xH2 al inicio y excluir el último valor
+    xH2 = np.array([xminH2] + xH2[:-1])
+    
+    ####Original --> Gwen and Nick
+    #xpt = copy.copy(xmaxH2)
+    #xpt = copy.copy(np.array([xpt])) # made it np array to fix error - GG
+    #xH2 = copy.copy(xpt) # changed how its define to fix error 
+    #while xpt > xminH2:
+    #    xH2=np.concatenate([xpt,xH2]) # I am not entirely sure this is what the IDL code wants np.stack or no.append
+    #    interpfunc = interpolate.interp1d(xfine, dx_max)
+    #    dxpt1 = interpfunc(xpt)
+    #    dxpt2 = dxpt1
+    #    xpt_test = xpt-dxpt1
+    #    if xpt_test > xminH2:
+    #        interpfunc = interpolate.interp1d(xfine, dx_max)
+    #        dxpt2=interpfunc(xpt_test)
+    #    dxpt=min([dxpt1,dxpt2])
+    #    xpt=xpt-dxpt
+    #xH2=np.concatenate([np.array([xminH2]), xH2[0:np.size(xH2) - 2]]) # added missing brackets - GG
+    ####
+    ##
+    ##
+
+    ####
+    ##
+    ##  
 
     interpfunc = interpolate.interp1d(xfine, Tifine)
     TiH2=interpfunc(xH2)
