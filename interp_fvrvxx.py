@@ -101,7 +101,7 @@ def interp_fvrvxx(fa,Vra,Vxa,Xa,Tnorma,Vrb,Vxb,Xb,Tnormb,do_warn=None, debug=0, 
     nvxb=Vxb.size
     nxb=Xb.size
 
-    fb=np.zeros((nxb,nvxb,nvrb)) # added parenthesis - GG
+    fb=np.zeros((nxb,nvxb,nvrb), dtype=np.float64) # added parenthesis - GG
 
     make_dvr_dvx_out=Make_dVr_dVx(Vra,Vxa)
     Vr2pidVra,VrVr4pidVra,dVxa,vraL,vraR,vxaL,vxaR=make_dvr_dvx_out[:7]
@@ -172,8 +172,8 @@ def interp_fvrvxx(fa,Vra,Vxa,Xa,Tnorma,Vrb,Vxb,Xb,Tnormb,do_warn=None, debug=0, 
 
         #   Set area contributions to Weight array
 
-        _weight=np.zeros((nvxa,nvra,nvxb,nvrb))
-        weight=np.zeros((nvra*nvxa,nvrb*nvxb))
+        _weight=np.zeros((nvxa,nvra,nvxb,nvrb), dtype=np.float64)
+        weight=np.zeros((nvra*nvxa,nvrb*nvxb), dtype=np.float64)
 
         for ib in range(nvrb):
             for jb in range(nvxb):
@@ -188,19 +188,19 @@ def interp_fvrvxx(fa,Vra,Vxa,Xa,Tnorma,Vrb,Vxb,Xb,Tnormb,do_warn=None, debug=0, 
 
         weight=np.reshape(_weight,weight.shape) # previous version caused error 
 
-    fb_xa=np.zeros((nxa,nvrb*nvxb)) 
+    fb_xa=np.zeros((nxa,nvrb*nvxb), dtype=np.float64) 
 
     #   Determine fb_xa from weight array
 
-    _fa=np.zeros((nxa,nvra*nvxa))
+    _fa=np.zeros((nxa,nvra*nvxa), dtype=np.float64)
     _fa=np.reshape(fa,_fa.shape) # previous version caused error
     fb_xa=np.matmul(_fa,weight)
 
     #   Compute _Wxa and _Ea - these are the desired moments of fb, but on the xa grid
 
-    na=np.zeros(nxa) # fixed capitalization
-    _Wxa=np.zeros(nxa)
-    _Ea=np.zeros(nxa)
+    na=np.zeros(nxa, dtype=np.float64) # fixed capitalization
+    _Wxa=np.zeros(nxa, dtype=np.float64)
+    _Ea=np.zeros(nxa, dtype=np.float64)
 
     for k in range(nxa):
         na[k]=np.sum(Vr2pidVra*np.matmul(dVxa,fa[k,:,:])) # fixed typo - GG
@@ -208,8 +208,8 @@ def interp_fvrvxx(fa,Vra,Vxa,Xa,Tnorma,Vrb,Vxb,Xb,Tnormb,do_warn=None, debug=0, 
             _Wxa[k]=np.sqrt(Tnorma)*np.sum(Vr2pidVra*np.matmul((Vxa*dVxa),fa[k,:,:]))/na[k]
             _Ea[k]=Tnorma*np.sum(Vr2pidVra*np.matmul(dVxa,(Vra2Vxa2*fa[k,:,:])))/na[k]
 
-    wxa=np.zeros(nxb) # fixed capitalization
-    Ea=np.zeros(nxb)
+    wxa=np.zeros(nxb, dtype=np.float64) # fixed capitalization
+    Ea=np.zeros(nxb, dtype=np.float64)
 
     for k in range(k0,k1+1):
         kL=np.maximum(locate(Xa,Xb[k]),0) # fixed capitalization
@@ -227,8 +227,8 @@ def interp_fvrvxx(fa,Vra,Vxa,Xa,Tnorma,Vrb,Vxb,Xb,Tnormb,do_warn=None, debug=0, 
 
         #   Process each spatial location
 
-        AN=np.zeros((2,nvxb,nvrb))
-        BN=np.zeros((2,nvxb,nvrb))
+        AN=np.zeros((2,nvxb,nvrb), dtype=np.float64)
+        BN=np.zeros((2,nvxb,nvrb), dtype=np.float64)
 
         sgn=np.array([-1,1])
 
@@ -252,7 +252,7 @@ def interp_fvrvxx(fa,Vra,Vxa,Xa,Tnorma,Vrb,Vxb,Xb,Tnormb,do_warn=None, debug=0, 
 
                     #   Compute Nij from fb, padded with zeros
 
-                    Nij=np.zeros((nvxb+2,nvrb+2))
+                    Nij=np.zeros((nvxb+2,nvrb+2), dtype=np.float64)
                     Nij[1:-1,1:-1]=fb[k,:,:]*Vol/nb
 
                     #   Set Cutoff and remove Nij very close to zero
@@ -302,7 +302,7 @@ def interp_fvrvxx(fa,Vra,Vxa,Xa,Tnorma,Vrb,Vxb,Xb,Tnormb,do_warn=None, debug=0, 
 
                     #   Cycle through 4 possibilies of sign(alpha),sign(beta)
 
-                    TB1=np.zeros(2); TB2=np.zeros(2)
+                    TB1=np.zeros(2, dtype=np.float64); TB2=np.zeros(2, dtype=np.float64)
 
                     for ia in range(2):
 
@@ -399,10 +399,10 @@ def interp_fvrvxx(fa,Vra,Vxa,Xa,Tnorma,Vrb,Vxb,Xb,Tnormb,do_warn=None, debug=0, 
 
     #   Rescale
 
-    tot_a=np.zeros(nxa)
+    tot_a=np.zeros(nxa, dtype=np.float64)
     for k in range(nxa):
         tot_a[k]=np.sum(Vr2pidVra*np.matmul(dVxa,fa[k,:,:]))
-    tot_b=np.zeros(nxb)
+    tot_b=np.zeros(nxb, dtype=np.float64)
     tot_b[k0:k1+1]=interpolate.interp1d(Xa,tot_a,fill_value="extrapolate")(Xb[k0:k1+1])
     ii=np.argwhere(fb>0)
     if ii.size>0: # replaced fb with ii
@@ -417,10 +417,10 @@ def interp_fvrvxx(fa,Vra,Vxa,Xa,Tnorma,Vrb,Vxb,Xb,Tnormb,do_warn=None, debug=0, 
 
         #   na, Uxa, Ta
 
-        na=np.zeros(nxa)
-        Uxa=np.zeros(nxa)
-        Ta=np.zeros(nxa)
-        vr2vx2_ran2=np.zeros((nvxa,nvra)) # fixed np.zeros() call
+        na=np.zeros(nxa, dtype=np.float64)
+        Uxa=np.zeros(nxa, dtype=np.float64)
+        Ta=np.zeros(nxa, dtype=np.float64)
+        vr2vx2_ran2=np.zeros((nvxa,nvra), dtype=np.float64) # fixed np.zeros() call
 
         for k in range(nxa):
             na[k]=np.sum(Vr2pidVra*np.matmul(dVxa,fa[k,:,:])) # fixed capitalization
@@ -432,10 +432,10 @@ def interp_fvrvxx(fa,Vra,Vxa,Xa,Tnorma,Vrb,Vxb,Xb,Tnormb,do_warn=None, debug=0, 
 
         #   nb, Uxb, Tb
 
-        nb=np.zeros(nxb)
-        Uxb=np.zeros(nxb)
-        Tb=np.zeros(nxb)
-        vr2vx2_ran2=np.zeros((nvxb,nvrb)) # fixed np.zeros() call
+        nb=np.zeros(nxb, dtype=np.float64)
+        Uxb=np.zeros(nxb, dtype=np.float64)
+        Tb=np.zeros(nxb, dtype=np.float64)
+        vr2vx2_ran2=np.zeros((nvxb,nvrb), dtype=np.float64) # fixed np.zeros() call
 
         for k in range(nxb):
             nb[k]=np.sum(Vr2pidVrb*np.matmul(dVxb,fb[k,:,:]))
