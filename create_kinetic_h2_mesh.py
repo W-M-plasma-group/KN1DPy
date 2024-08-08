@@ -70,7 +70,7 @@ def create_kinetic_h2_mesh(nv, mu, x, Ti, Te, n, PipeDia, E0 = 0, ixE0 = 0, irE0
     ##
     big_dx = 0.02 * fctr
     calculated_dx_max = fctr*0.8*(2*vth*np.min(vr)/RR)
-    if calculated_dx_max == big_dx:
+    if np.all(calculated_dx_max == big_dx):
         dx_max = big_dx - np.finfo(np.float64).eps
     else:
         dx_max = np.minimum(calculated_dx_max, big_dx)

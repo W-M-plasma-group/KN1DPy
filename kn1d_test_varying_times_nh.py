@@ -15,7 +15,7 @@ def save_results(filename, results):
     with open(filename, 'w') as file:
         for name, value in results.items():
             file.write(f"{name}: {value}\n")
-for times_nh in range(2,13,1):
+for times_nh in range(2,5,2):
     logger.info(f"time_nh = {times_nh}")
     x_rd = np.linspace(data_file['x'][0],data_file['x'][-1],times_nh*len(data_file['x']))
     ####
@@ -69,35 +69,35 @@ for times_nh in range(2,13,1):
             'Lyman': Lyman, 'Balmer': Balmer,
             'tiempo_ejecución': t
         }
-    output_filename = f"txt_file_times_nh_{times_nh}.txt"
+    output_filename = f"txt_interp_scalar_file_times_nh_{times_nh}.txt"
     save_results(output_filename, results)
     logger.info(f'Completed in {str(t)} seconds')
 
-    print('xH2',len(xH2))
-    print('nH2',len(nH2))
-    print('data_file[xH2]',len(data_file['xH2']))
-    print('data_file[nH2]',len(data_file['nH2']))
+    # print('xH2',len(xH2))
+    # print('nH2',len(nH2))
+    # print('data_file[xH2]',len(data_file['xH2']))
+    # print('data_file[nH2]',len(data_file['nH2']))
 
 
-    plt.plot(xH2,nH2)
-    plt.plot(data_file['xH2'],data_file['nH2'])
-    plt.title(r'n$_{H_2}$ Comparison: Shot '+fname[:10])
-    plt.yscale('log')
-    plt.legend(['Python','IDL'])
-    plt.xlabel('x (m)')
-    plt.ylabel(r'Density (m$^{-3}$)')
-    #plt.savefig(fileloc + fname+'_nH2_testplotb')
-    plt.show()
-    plt.clf()
-    print('xH',len(xH))
-    print('nH',len(nH))
-    print('data_file[xH]',len(data_file['xH']))
-    print('data_file[nH]',len(data_file['nH']))
-    plt.plot(xH,nH)
-    plt.plot(data_file['xH'],data_file['nH'])
-    plt.yscale('log')
-    plt.title(r'n$_{H}$ Comparison: Shot '+fname[:10])
-    plt.legend(['Python','IDL'])
-    plt.xlabel('x (m)')
-    plt.ylabel(r'Density (m$^{-3}$)')
-    plt.show()
+    # plt.plot(xH2,nH2)
+    # plt.plot(data_file['xH2'],data_file['nH2'])
+    # plt.title(r'n$_{H_2}$ Comparison: Shot '+fname[:10])
+    # plt.yscale('log')
+    # plt.legend(['Python','IDL'])
+    # plt.xlabel('x (m)')
+    # plt.ylabel(r'Density (m$^{-3}$)')
+    # #plt.savefig(fileloc + fname+'_nH2_testplotb')
+    # plt.show()
+    # plt.clf()
+    # print('xH',len(xH))
+    # print('nH',len(nH))
+    # print('data_file[xH]',len(data_file['xH']))
+    # print('data_file[nH]',len(data_file['nH']))
+    # plt.plot(xH,nH)
+    # plt.plot(data_file['xH'],data_file['nH'])
+    # plt.yscale('log')
+    # plt.title(r'n$_{H}$ Comparison: Shot '+fname[:10])
+    # plt.legend(['Python','IDL'])
+    # plt.xlabel('x (m)')
+    # plt.ylabel(r'Density (m$^{-3}$)')
+    # plt.show()
