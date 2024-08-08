@@ -34,7 +34,7 @@ def create_VrVxMesh(nv, Ti, E0 = np.array([0.0]), Tmax = 0.0): # removed unused 
     for k in range(np.size(E0)): # fixed range - nh
         if E0[k] > 0.0:
             v0 = np.sqrt(E0[k]/Tnorm)
-            ii = np.argwhere(v > v0).T[0] # argwhere has a weird output, but this should put it in a usable format - nh
+            ii = np.where(v > v0)[0] # ii = np.argwhere(v > v0).T[0] # argwhere has a weird output, but this should put it in a usable format - nh
             if np.size(ii) > 0: # removed count variable
                 v = np.concatenate([v[0 : ii[0]], [v0], v[ii[0] : ]])
             else: 
@@ -43,10 +43,10 @@ def create_VrVxMesh(nv, Ti, E0 = np.array([0.0]), Tmax = 0.0): # removed unused 
     vr = v[1 : ] # fixed indexing - nh
     vx = np.concatenate([-reverse(vr), vr]) 
 
-    ixE0 = np.argwhere(abs(vx) == v0).T[0] # modified argwhere output - nh
+    ixE0 = np.where(np.abs(vx) == v0)[0] # ixE0 = np.argwhere(abs(vx) == v0).T[0] # modified argwhere output - nh
     if np.size(ixE0) == 1: # removed count variable; same changes made to following lines - nh
         ixE0 = ixE0[0]
-    irE0 = np.argwhere(vr == v0).T[0]
+    irE0 = np.where(vr == v0)[0] # irE0 = np.argwhere(vr == v0).T[0]
     if np.size(irE0) == 1:
         irE0 = irE0[0]
     return vx,vr,Tnorm,ixE0,irE0 # changed to return outputs as a variables - GG

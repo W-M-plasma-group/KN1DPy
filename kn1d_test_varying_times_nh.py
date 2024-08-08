@@ -15,7 +15,7 @@ def save_results(filename, results):
     with open(filename, 'w') as file:
         for name, value in results.items():
             file.write(f"{name}: {value}\n")
-for times_nh in range(2,9,2):
+for times_nh in range(2,13,1):
     logger.info(f"time_nh = {times_nh}")
     x_rd = np.linspace(data_file['x'][0],data_file['x'][-1],times_nh*len(data_file['x']))
     ####
@@ -34,6 +34,7 @@ for times_nh in range(2,9,2):
     lc_rd = copy.copy(func_lc(x_rd))
     vx_rd = copy.copy(func_vx(x_rd))
     logger.info('Variables refinadas')
+    logger.info(f'len(xh2)= {len(x_rd)}')
     ####
     ####
     t0=time.time()
@@ -56,7 +57,7 @@ for times_nh in range(2,9,2):
     xH, nH, GammaxH, TH, qxH_total, NetHSource, Sion, QH_total, SideWallH, Lyman, Balmer=\
                 KN1D(**params)
     
-    
+    logger.info(f'len(xH2)_KN1D= {len(xH2)}')
     tf=time.time()
     t=tf-t0
 
