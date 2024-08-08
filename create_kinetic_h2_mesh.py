@@ -15,17 +15,17 @@ def create_kinetic_h2_mesh(nv, mu, x, Ti, Te, n, PipeDia, E0 = 0, ixE0 = 0, irE0
 
     nx=np.size(x)
 
-    gamma_wall = np.zeros(nx, dtype=np.float64) #gamma_wall = [0] * nx
+    gamma_wall = np.zeros(nx, dtype=np.float64) #gamma_wall = [0] * nx # unnecessary but with double precision --> np.float64
 
     #Estimate total reaction rate for destruction of molecules and for interation with side walls
     RR=n*sigmav_ion_hh(Te)+n*sigmav_h1s_h1s_hh(Te)+n*sigmav_h1s_h2s_hh(Te)
 
-    Y = np.zeros(nx, dtype=np.float64) # changed to make more concise  - GG
+    Y = np.zeros(nx, dtype=np.float64) # unnecessary but with double precision --> np.float64
     for k in range(1, nx-1):
         Y[k]=Y[k-1]-(x[k]-x[k-1])*0.5*(RR[k]+RR[k-1])/v0_bar
 
     #Find x location where Y = -10, i.e., where nH2 should be down by exp(-10)
-    interpfunc = interpolate.interp1d(Y, x) # fixed error with interpolation - GG
+    interpfunc = interpolate.interp1d(Y, x, fill_value="extrapolate") # fixed error with interpolation - GG
     xmaxH2 = np.minimum(interpfunc(-10.0), max(x))
 
     xminH2 = copy.copy(x[0])
@@ -53,7 +53,7 @@ def create_kinetic_h2_mesh(nv, mu, x, Ti, Te, n, PipeDia, E0 = 0, ixE0 = 0, irE0
 
     #Estimate interaction rate with side walls
     nxfine=np.size(xfine)
-    gamma_wall = np.zeros(nxfine, dtype=np.float64)#[0] * nxfine
+    gamma_wall = np.zeros(nxfine, dtype=np.float64)#[0] * nxfine # unnecessary but with double precision --> np.float64
     for k in range(nxfine):#range(nxfine-1):
         if PipeDiafine[k] > 0: # fixed brackets - GG
             gamma_wall[k]=2*max(vr)*vth/PipeDiafine[k]

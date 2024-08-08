@@ -18,7 +18,7 @@ def interp_scalarx(fa,xa,xb,do_warn=0,debug=0):
 
   nxa=xa.size
   
-  if fa.size!=nxa:
+  if fa.size != nxa:
     raise Exception('Number of elements in fa and Xa do not agree!')
   okk=np.array(np.nonzero(np.logical_and(xb<max(xa), xb>min(xa)))[0])
   if len(okk)==0:
@@ -26,7 +26,7 @@ def interp_scalarx(fa,xa,xb,do_warn=0,debug=0):
   
   k0,k1=okk[0],okk[-1]
   nxb=xb.size
-  fb=np.zeros(nxb)
+  fb=np.zeros(nxb, dtype=np.float64)
 
   fb[k0:k1+1]=interpolate.interp1d(xa,fa)(xb[okk])
 
