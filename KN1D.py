@@ -10,7 +10,7 @@ from integ_bl import integ_bl
 from Make_dVr_dVx import Make_dVr_dVx
 from sval import sval
 # from interp_fvrvxx import interp_fvrvxx
-from interp_fvrvxx import interp_fvrvxx
+from interp_fvrvxx_v5 import interp_fvrvxx
 from create_kinetic_h_mesh import create_kinetic_h_mesh
 from kinetic_h import kinetic_h 
 from kinetic_h2 import Kinetic_H2 
@@ -438,6 +438,18 @@ def KN1D(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, nv_h2, nv_
                 do_warn=5e-3
                 fHM=np.maximum(interp_fvrvxx(fH,vrA,vxA,xH,TnormA,vrM,vxM,xH2,TnormM,do_warn=do_warn, debug=interp_debug, g=g) ,0)
 
+                # Supongamos que tienes la función y las variables necesarias definidas
+
+                # Abrir el archivo en modo escritura ('w') o modo agregar ('a')
+                with open('interp_fvrvxx_resultado.txt', 'w') as file:
+                    # Ejecutar la función y obtener el resultado y la longitud
+                    resultado = interp_fvrvxx(fH, vrA, vxA, xH, TnormA, vrM, vxM, xH2, TnormM, do_warn=do_warn, debug=interp_debug, g=g)
+                    longitud = resultado.shape
+                    
+                    # Escribir el resultado en el archivo
+                    file.write(f'interp_fvrvxx: {resultado} {longitud}\n')
+
+
                 # Compute fH2 using Kinetic_H2
                 ni_correct=1
                 Compute_H_Source=1
@@ -471,7 +483,23 @@ def KN1D(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, nv_h2, nv_
                 # Interpolate H2 data onto H mesh: fH2 -> fH2A, fSH -> fSHA, nHP -> nHPA, THP -> THPA
                 do_warn = 5.0E-3
                 fH2A = np.maximum(interp_fvrvxx(fH2,vrM,vxM,xH2,TnormM,vrA,vxA,xH,TnormA, do_warn=do_warn, debug=interp_debug, g=g),0 )
+                with open('interp_fvrvxx_2_resultado.txt', 'w') as file:
+                    # Ejecutar la función y obtener el resultado y la longitud
+                    resultado =interp_fvrvxx(fH2,vrM,vxM,xH2,TnormM,vrA,vxA,xH,TnormA, do_warn=do_warn, debug=interp_debug, g=g)
+                    longitud = resultado.shape
+                    
+                    # Escribir el resultado en el archivo
+                    file.write(f'interp_fvrvxx: {resultado} {longitud}\n')
+
                 fSHA = np.maximum(interp_fvrvxx(fSH,vrM,vxM,xH2,TnormM,vrA,vxA,xH,TnormA, do_warn=do_warn, debug=interp_debug, g=g) ,0)
+                with open('interp_fvrvxx_3_resultado.txt', 'w') as file:
+                    # Ejecutar la función y obtener el resultado y la longitud
+                    resultado =interp_fvrvxx(fSH,vrM,vxM,xH2,TnormM,vrA,vxA,xH,TnormA, do_warn=do_warn, debug=interp_debug, g=g)
+                    longitud = resultado.shape
+                    
+                    # Escribir el resultado en el archivo
+                    file.write(f'interp_fvrvxx: {resultado} {longitud}\n')
+
                 nHPA = interp_scalarx(nHP,xH2,xH, do_warn=do_warn, debug=interp_debug) 
                 THPA = interp_scalarx(THP,xH2,xH, do_warn=do_warn, debug=interp_debug)     
 

@@ -137,7 +137,7 @@ def create_shifted_maxwellian_include(vr,vx,Tnorm,vx_shift,Tmaxwell,Shifted_Maxw
       if Shifted_Maxwellian_Debug: # fixed capitalization
         vx_out2=vth*np.sum(Vr2pidVr*np.matmul((vx*dVx),maxwell[k,:,:])) # fixed matmul argument order - nh
         for i in range(nvr):
-          vr2vx2_ran2[:,i]=vr[i]**2+(vx-vx_out2/vth)**2
+          vr2vx2_ran2[:,i]=vr[i]**2+((vx-vx_out2)/vth)**2
         T_out2=(mol*mu*mH)*vth2*np.sum(Vr2pidVr*np.matmul(dVx,vr2vx2_ran2*maxwell[k,:,:]))/(3*q) # fixed matmul argument order - nh
         Terror2=abs(Tmaxwell[k]-T_out2)/Tmaxwell[k]
         Verror2=abs(vx_shift[k]-vx_out2)/vth_local
