@@ -1,10 +1,18 @@
-// ejemplo de grafo
+// KN1D.py
 digraph {
-	A [label="Nodo A"]
-	B [label="Nodo B"]
-	C [label="Nodo C"]
+	KN1D [label=Kinetic_h]
+	KN1D [label=Kinetic_h2]
+	A [label=KN1D]
+	B [label=Kinetic_h]
+	C [label=Kinetic_h2]
+	A [label=KN1D]
+	B [label=Kinetic_h]
+	C [label=Kinetic_h2]
 	A -> B
 	A -> C
-	B -> C
-	C -> A [constrint=false]
+	A [label=KN1D]
+	B [label=Kinetic_h]
+	C [label=Kinetic_h2]
+	A -> B
+	A -> C
 }

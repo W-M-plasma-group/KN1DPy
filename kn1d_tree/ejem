@@ -1,0 +1,8 @@
+digraph "KN1D.py" {
+	"KN1D 
+ details" -> "Kinetik_h 
+ details"
+	"KN1D 
+ details" -> "Kinetic_h2 
+ details"
+}
