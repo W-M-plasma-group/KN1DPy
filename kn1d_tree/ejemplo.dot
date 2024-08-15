@@ -1,0 +1,10 @@
+// ejemplo de grafo
+digraph {
+	A [label="Nodo A"]
+	B [label="Nodo B"]
+	C [label="Nodo C"]
+	A -> B
+	A -> C
+	B -> C
+	C -> A [constrint=false]
+}
