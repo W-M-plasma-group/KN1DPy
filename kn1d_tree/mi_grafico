@@ -1,0 +1,24 @@
+// Mi gráfico
+digraph {
+	size="4,4"
+	main [shape=box]
+	parse
+	execute
+	init [style=dotted]
+	cleanup
+	make_string [label="make a
+string"]
+	printf
+	compare
+	main -> parse [weight=8]
+	parse -> execute
+	main -> init [style=dotted]
+	main -> cleanup
+	execute -> make_string
+	execute -> printf
+	init -> make_string
+	main -> printf [label="100 times" style=bold]
+	edge [color=red]
+	execute -> compare
+	node [color=".7 .3 1.0" shape=box style=filled]
+}
