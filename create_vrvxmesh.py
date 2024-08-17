@@ -12,6 +12,9 @@ import numpy as np
 # Gwendolyn Galleher 
 
 def create_VrVxMesh(nv, Ti, E0 = np.array([0.0]), Tmax = 0.0): # removed unused input parameters
+    print('######################################')
+    print('nv:',nv)
+    print('Ti:',Ti)
     _Ti = np.array(Ti) 
     _Ti = np.concatenate([_Ti, E0[E0>0]]) 
     if Tmax > 0:

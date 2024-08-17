@@ -8,9 +8,26 @@
 import numpy as np
 
 def Make_dVr_dVx(Vr, Vx): # For this to work inputs must be np arrays so I might need to ammend this later to make sure all inputs are arrays
-
-    Vr=np.array(Vr)
-    Vx=np.array(Vx) # sets inputs to np.array if they aren't already; resolves earlier comment - nh
+    # Vr = np.asarray(Vr)
+    # Vx = np.asarray(Vx)
+    
+    # # Convertir a listas
+    # Vr_list = Vr.tolist()
+    # Vx_list = Vx.tolist()
+    
+    # # Crear las cadenas en el formato deseado
+    # Vr_str = f"[{', '.join(map(str, Vr_list))}]"
+    # Vx_str = f"[{', '.join(map(str, Vx_list))}]"
+    
+    # # Abrir el archivo en modo de escritura
+    # with open('variables_Make_dvr_dvx.txt', 'w') as file:
+    #     file.write(f'vr= {Vr_str}, tipo: {type(Vr_list)}\n')
+    #     file.write(f'vx= {Vx_str}, tipo: {type(Vx_list)}\n')
+    
+    # print('--------------->Vr= ', Vr)
+    # print('--------------->Vx= ', Vx)
+    # Vr=np.array(Vr)
+    # Vx=np.array(Vx) # sets inputs to np.array if they aren't already; resolves earlier comment - nh
     
     # Determine velocity space differentials 
     nVr = np.size(Vr)
@@ -43,7 +60,7 @@ def Make_dVr_dVx(Vr, Vx): # For this to work inputs must be np arrays so I might
     vol = np.zeros((nVx, nVr), float)
     for i in range(0, nVr):
         vol[:,i] = Vr2pidVr[i] * dVx # fixed minor indexing bugs - nh
-
+    print('vol: ',vol.shape, type(vol))
     #compute DeltaVx, DeltaVr
     DeltaVx = VxR - VxL
     DeltaVr = VrR - VrL
@@ -73,4 +90,5 @@ def Make_dVr_dVx(Vr, Vx): # For this to work inputs must be np arrays so I might
         jna = jn[0][0]; jnb = jn[np.size(jn) - 1][0] # modified section to return -1 if jp or jn is empty (previously this raised an error) - nh
     
     # changed return line to provide an output as a list - nh
+    
     return Vr2pidVr,VrVr4pidVr,dVx,VrL,VrR,VxL,VxR,vol,Vth_DeltaVx,Vx_DeltaVx,Vr_DeltaVr,Vr2Vx2,jpa,jpb,jna,jnb

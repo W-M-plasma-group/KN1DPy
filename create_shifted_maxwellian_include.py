@@ -77,7 +77,9 @@ def create_shifted_maxwellian_include(vr: np.ndarray,       # (40,) - Array of r
   #             file.write(f'{name}: {value}, tipo: {type(value)}\n')
 
   print('we are inside create_sihfted_maxwellian_include')
-  
+  print('maxwell.shape= ',maxwell.shape,type(maxwell))
+  print('Tmaxwell.sjape= ',Tmaxwell.shape,type(Tmaxwell))
+  print('dvx.shape= ',dVx.shape,type(dVx))
 
 
 
@@ -89,6 +91,7 @@ def create_shifted_maxwellian_include(vr: np.ndarray,       # (40,) - Array of r
       for i in range(nvr):
         arg=-(vr[i]**2+(vx-vx_shift[k]/vth)**2) * mol*Tnorm/Tmaxwell[k]
         arg=np.minimum(arg,0)
+        # maxwell[i,:,k]=np.exp(arg)>(-80)
         maxwell[k,:,i]=np.e**(np.maximum(arg,-80)) # replaced < and > with np.minimum and np.maximum - nh
 
       maxwell[k,:,:]/=np.sum(Vr2pidVr*(np.matmul(dVx,maxwell[k,:,:]))) # fixed matmul argument order - nh
@@ -199,173 +202,173 @@ def create_shifted_maxwellian_include(vr: np.ndarray,       # (40,) - Array of r
 ##################################################################################################################
 ##################################################################################################################
 
-# def create_shifted_maxwellian_include(vr: np.ndarray,       # (40,) - Array of radial velocity values
-#                                       vx: np.ndarray,       # (80,) - Array of x-velocity values
-#                                       Tnorm: float,         # Scalar value for temperature normalization
-#                                       vx_shift: np.ndarray, # (80,) - Array of x-velocity shifts
-#                                       Tmaxwell: np.ndarray, # (80,) - Array of Maxwellian temperature values
-#                                       Shifted_Maxwellian_Debug: int, # Integer flag for debugging
-#                                       mu: float,            # Scalar value for mu (2.0 in this case)
-#                                       mol: int,             # Integer value for molecule type
-#                                       nx: int,              # Integer value for the mesh size in x
-#                                       nvx: int,             # Integer value for the mesh size in vx
-#                                       nvr: int,             # Integer value for the mesh size in vr
-#                                       vth: float,           # Scalar value for thermal velocity
-#                                       vth2: float,          # Scalar value for squared thermal velocity
-#                                       maxwell: np.ndarray,  # (80, 80, 40) - 3D array of Maxwellian distribution function
-#                                       vr2vx2_ran2: np.ndarray, # (80, 40) - 2D array of vr2vx2 relation
-#                                       Vr2pidVr: np.ndarray, # (40,) - Array of Vr2pidVr values
-#                                       dVx: np.ndarray,      # (80,) - Array of differences in vx
-#                                       Vol: np.ndarray,      # (80, 40) - 2D array of volumes
-#                                       Vth_DVx: np.ndarray,  # (82, 42) - 2D array for Vth_DVx relation
-#                                       Vx_DVx: np.ndarray,   # (82, 42) - 2D array for Vx_DVx relation
-#                                       Vr_DVr: np.ndarray,   # (82, 42) - 2D array for Vr_DVr relation
-#                                       vr2vx2_2D: np.ndarray, # (80, 40) - 2D array of vr2vx2 in 2D
-#                                       jpa: int,             # Integer value for index jpa
-#                                       jpb: int,             # Integer value for index jpb
-#                                       jna: int,             # Integer value for index jna
-#                                       jnb: int) -> np.ndarray: # Integer value for index jnb; output is maxwell
-#     # Inicializar arrays
-#     AN = np.zeros((nvr, nvx, 2), dtype=np.float64)
-#     BN = np.zeros((nvr, nvx, 2), dtype=np.float64)
-#     # Definir el arreglo de signos
-#     sgn = np.array([1, -1], dtype=np.int32) 
-#     # Inicializar el array maxwell a cero
-#     maxwell = np.zeros((nvr, nvx, nx), dtype=np.float64)
+def create_shifted_maxwellian_include(vr: np.ndarray,       # (40,) - Array of radial velocity values
+                                      vx: np.ndarray,       # (80,) - Array of x-velocity values
+                                      Tnorm: float,         # Scalar value for temperature normalization
+                                      vx_shift: np.ndarray, # (80,) - Array of x-velocity shifts
+                                      Tmaxwell: np.ndarray, # (80,) - Array of Maxwellian temperature values
+                                      Shifted_Maxwellian_Debug: int, # Integer flag for debugging
+                                      mu: float,            # Scalar value for mu (2.0 in this case)
+                                      mol: int,             # Integer value for molecule type
+                                      nx: int,              # Integer value for the mesh size in x
+                                      nvx: int,             # Integer value for the mesh size in vx
+                                      nvr: int,             # Integer value for the mesh size in vr
+                                      vth: float,           # Scalar value for thermal velocity
+                                      vth2: float,          # Scalar value for squared thermal velocity
+                                      maxwell: np.ndarray,  # (80, 80, 40) - 3D array of Maxwellian distribution function
+                                      vr2vx2_ran2: np.ndarray, # (80, 40) - 2D array of vr2vx2 relation
+                                      Vr2pidVr: np.ndarray, # (40,) - Array of Vr2pidVr values
+                                      dVx: np.ndarray,      # (80,) - Array of differences in vx
+                                      Vol: np.ndarray,      # (80, 40) - 2D array of volumes
+                                      Vth_DVx: np.ndarray,  # (82, 42) - 2D array for Vth_DVx relation
+                                      Vx_DVx: np.ndarray,   # (82, 42) - 2D array for Vx_DVx relation
+                                      Vr_DVr: np.ndarray,   # (82, 42) - 2D array for Vr_DVr relation
+                                      vr2vx2_2D: np.ndarray, # (80, 40) - 2D array of vr2vx2 in 2D
+                                      jpa: int,             # Integer value for index jpa
+                                      jpb: int,             # Integer value for index jpb
+                                      jna: int,             # Integer value for index jna
+                                      jnb: int) -> np.ndarray: # Integer value for index jnb; output is maxwell
+    # Inicializar arrays
+    AN = np.zeros((nvr, nvx, 2), dtype=np.float64)
+    BN = np.zeros((nvr, nvx, 2), dtype=np.float64)
+    # Definir el arreglo de signos
+    sgn = np.array([1, -1], dtype=np.int32) 
+    # Inicializar el array maxwell a cero
+    maxwell = np.zeros((nvr, nvx, nx), dtype=np.float64)
     
-#     # Iterar sobre todos los valores de k
-#     for k in range(nx):
-#         # Si Tmaxwell[k] es mayor que 0.0, entonces hacer:
-#         if Tmaxwell[k] > 0.0:
-#             # Iterar sobre todos los valores de i
-#             for i in range(nvr):
-#                 arg = -(vr[i]**2 + (vx - vx_shift[k]/vth)**2)*(mol*Tnorm/Tmaxwell[k])
-#                 # Comparación como en IDL, los valores menores a cero, se convierten en 1, los mayores que cero, se convierten en 0
-#                 arg = np.where(arg < 0.0, 1, 0)                
-#                 # Calcular maxwell: Los valores mayyores a -80, se convierten en 1, los menores en 0, y se toma el e^{1 o 0}
-#                 maxwell[i, :, k] = np.exp(np.where(arg > -80, 1, 0)) 
-#             print(maxwell[:,:,k].shape)
-#             print(maxwell[:,:,k])
-#             print(dVx.shape)
-#             maxwell[:, :, k] /= np.sum(Vr2pidVr * np.sum(maxwell[:, :, k] * dVx, axis=1))#(np.matmul(dVx,maxwell[:, :, k])))
+    # Iterar sobre todos los valores de k
+    for k in range(nx):
+        # Si Tmaxwell[k] es mayor que 0.0, entonces hacer:
+        if Tmaxwell[k] > 0.0:
+            # Iterar sobre todos los valores de i
+            for i in range(nvr):
+                arg = -(vr[i]**2 + (vx - vx_shift[k]/vth)**2)*(mol*Tnorm/Tmaxwell[k])
+                # Comparación como en IDL, los valores menores a cero, se convierten en 1, los mayores que cero, se convierten en 0
+                arg = np.where(arg < 0.0, 1, 0)                
+                # Calcular maxwell: Los valores mayyores a -80, se convierten en 1, los menores en 0, y se toma el e^{1 o 0}
+                maxwell[i, :, k] = np.exp(np.where(arg > -80, 1, 0)) 
+            print(maxwell[:,:,k].shape)
+            print(maxwell[:,:,k])
+            print(dVx.shape)
+            maxwell[:, :, k] /= np.sum(Vr2pidVr * np.sum(maxwell[:, :, k] * dVx, axis=1))#(np.matmul(dVx,maxwell[:, :, k])))
 
-#             if Shifted_Maxwellian_Debug:
-#                 # Calculate vx_out1
-#                 print(vx*dVx)
-#                 print((vx*dVx).shape)
-#                 print(maxwell[:,:,k].shape)
-#                 print(maxwell[:,:,k])
-#                 vx_out1 = vth * np.sum(Vr2pidVr * ((np.matmul((vx * dVx),maxwell[:, :, k]))))   #### Vx, vx, vX y VX son la misma variable, IDL es insensible a estos cambios de mayúsculas y minúsculas.
+            if Shifted_Maxwellian_Debug:
+                # Calculate vx_out1
+                print(vx*dVx)
+                print((vx*dVx).shape)
+                print(maxwell[:,:,k].shape)
+                print(maxwell[:,:,k])
+                vx_out1 = vth * np.sum(Vr2pidVr * ((np.matmul((vx * dVx),maxwell[:, :, k]))))   #### Vx, vx, vX y VX son la misma variable, IDL es insensible a estos cambios de mayúsculas y minúsculas.
                 
-#                 # Compute vr2vx2_ran2
-#                 for i in range(len(vr)):
-#                     vr2vx2_ran2[i, :] = vr[i]**2 + (vx - vx_out1 / vth)**2
+                # Compute vr2vx2_ran2
+                for i in range(len(vr)):
+                    vr2vx2_ran2[i, :] = vr[i]**2 + (vx - vx_out1 / vth)**2
                 
-#                 # Calculate T_out1
-#                 weighted_maxwell = np.matmul(dVx,maxwell[:, :, k])
-#                 T_out1 = (mol * mu * mH) * vth2 * np.sum(Vr2pidVr * (vr2vx2_ran2 * weighted_maxwell)) / (3 * q)
+                # Calculate T_out1
+                weighted_maxwell = np.matmul(dVx,maxwell[:, :, k])
+                T_out1 = (mol * mu * mH) * vth2 * np.sum(Vr2pidVr * (vr2vx2_ran2 * weighted_maxwell)) / (3 * q)
                 
-#                 # Calculate vth_local
-#                 vth_local = 0.1 * np.sqrt((2 * Tmaxwell[k] * q)/(mol * mu * mH))
+                # Calculate vth_local
+                vth_local = 0.1 * np.sqrt((2 * Tmaxwell[k] * q)/(mol * mu * mH))
                 
-#                 # Calculate errors
-#                 Terror = abs(Tmaxwell[k] - T_out1) / Tmaxwell[k]
-#                 Verror = abs(vx_out1 - vx_shift[k]) / vth_local
+                # Calculate errors
+                Terror = abs(Tmaxwell[k] - T_out1) / Tmaxwell[k]
+                Verror = abs(vx_out1 - vx_shift[k]) / vth_local
             
-#             # Calcular momentos deseados
-#             WxD = vx_shift[k]
-#             ED = WxD**2 + 3 * q * Tmaxwell[k] / (mol * mu * mH)
+            # Calcular momentos deseados
+            WxD = vx_shift[k]
+            ED = WxD**2 + 3 * q * Tmaxwell[k] / (mol * mu * mH)
 
-#             # Calcular momentos actuales de maxwell
-#             WxMax = vth * np.sum(Vr2pidVr * (np.matmul((vx * dVx),maxwell[:, :, k])))
-#             EMax = vth2 * np.sum(Vr2pidVr * (np.matmul(dVx,(vr2vx2_2D * maxwell[:, :, k]))))
+            # Calcular momentos actuales de maxwell
+            WxMax = vth * np.sum(Vr2pidVr * (np.matmul((vx * dVx),maxwell[:, :, k])))
+            EMax = vth2 * np.sum(Vr2pidVr * (np.matmul(dVx,(vr2vx2_2D * maxwell[:, :, k]))))
             
-#             # Calcular Nij y agregar ceros alrededor
-#             Nij = np.zeros((nvr + 2, nvx + 2))  # Crear un array de ceros con dimensiones aumentadas
-#             Nij[1:nvr+1, 1:nvx+1] = maxwell[:, :, k] * Vol  # Llenar el array interior con los valores de maxwell * vol
+            # Calcular Nij y agregar ceros alrededor
+            Nij = np.zeros((nvr + 2, nvx + 2))  # Crear un array de ceros con dimensiones aumentadas
+            Nij[1:nvr+1, 1:nvx+1] = maxwell[:, :, k] * Vol  # Llenar el array interior con los valores de maxwell * vol
   
-#             # Calcular variaciones de Nij
-#             Nijp1_vx_Dvx = shift(Nij * Vx_DVx, shift=( 0,-1), mode='wrap')  # Desplazamiento a la izquierda en la segunda dimensión
-#             Nij_vx_Dvx = Nij * Vx_DVx
-#             Nijm1_vx_Dvx = shift(Nij * Vx_DVx, shift=( 0, 1), mode='wrap')  # Desplazamiento a la derecha en la segunda dimensión
-#             Nip1j_vr_Dvr = shift(Nij * Vr_DVr, shift=(-1, 0), mode='wrap')  # Desplazamiento hacia arriba en la primera dimensión
-#             Nij_vr_Dvr = Nij * Vr_DVr
-#             Nim1j_vr_Dvr = shift(Nij * Vr_DVr, shift=( 1, 0), mode='wrap')  # Desplazamiento hacia abajo en la primera dimensión
+            # Calcular variaciones de Nij
+            Nijp1_vx_Dvx = shift(Nij * Vx_DVx, shift=( 0,-1), mode='wrap')  # Desplazamiento a la izquierda en la segunda dimensión
+            Nij_vx_Dvx = Nij * Vx_DVx
+            Nijm1_vx_Dvx = shift(Nij * Vx_DVx, shift=( 0, 1), mode='wrap')  # Desplazamiento a la derecha en la segunda dimensión
+            Nip1j_vr_Dvr = shift(Nij * Vr_DVr, shift=(-1, 0), mode='wrap')  # Desplazamiento hacia arriba en la primera dimensión
+            Nij_vr_Dvr = Nij * Vr_DVr
+            Nim1j_vr_Dvr = shift(Nij * Vr_DVr, shift=( 1, 0), mode='wrap')  # Desplazamiento hacia abajo en la primera dimensión
 
-#             _AN =  shift(Nij * Vth_DVx, shift=(0, 1),mode='wrap') - (Nij * Vth_DVx)
-#             AN[:,:,0] = _AN[1:nvr+1,1:nvx+1]
+            _AN =  shift(Nij * Vth_DVx, shift=(0, 1),mode='wrap') - (Nij * Vth_DVx)
+            AN[:,:,0] = _AN[1:nvr+1,1:nvx+1]
 
-#             _AN = -shift(Nij * Vth_DVx, shift=(0,-1),mode='wrap') + (Nij * Vth_DVx)
-#             AN[:,:,1] = _AN[1:nvr+1,1:nvx+1]
-
-
-#             BN[:, jpa+1:jpb+1   , 0] =  Nijm1_vx_Dvx[   1:nvr+1 , jpa+2:jpb+2   ] - Nij_vx_Dvx[1:nvr+1  , jpa+2:jpb+2]
-#             BN[:,   jpa         , 0] = -Nij_vx_Dvx[     1:nvr+1 , jpa+1         ]
-#             BN[:,   jnb         , 0] =  Nij_vx_Dvx[     1:nvr+1 , jnb+1         ]
-#             BN[:,   jna:jnb     , 0] = -Nijp1_vx_Dvx[   1:nvr+1 , jna+1:jnb+1   ] + Nij_vx_Dvx[1:nvr+1  , jna+1:jnb+1]
-#             BN[:,      :        , 0] += Nim1j_vr_Dvr[   1:nvr+1 ,     1:nvx+1   ] - Nij_vr_Dvr[1:nvr+1  ,     1:nvx+1]
-
-#             BN[:, jpa+1:jpb+1   , 1] = -Nijp1_vx_Dvx[1:nvr+1, jpa+2:jpb+2] + Nij_vx_Dvx[1:nvr+1,    jpa+2:jpb+2 ]
-#             BN[:,   jpa         , 1] = -Nijp1_vx_Dvx[1:nvr+1, jpa+1      ]
-#             BN[:,   jnb         , 1] =  Nijm1_vx_Dvx[1:nvr+1, jnb+1      ]
-#             BN[:,   jna:jnb     , 1] =  Nijm1_vx_Dvx[1:nvr+1, jna+1:jnb+1] - Nij_vx_Dvx[1:nvr+1,    jna+1:jnb+1 ]
-#             BN[1:nvr,  :        , 1] -= Nip1j_vr_Dvr[2:nvr+1,     1:nvx+1] - Nij_vr_Dvr[1:nvr+1,        1:nvx+1 ]
-#             BN[0,      :        , 1] -= Nip1j_vr_Dvr[1      ,     1:nvx+1]
+            _AN = -shift(Nij * Vth_DVx, shift=(0,-1),mode='wrap') + (Nij * Vth_DVx)
+            AN[:,:,1] = _AN[1:nvr+1,1:nvx+1]
 
 
-#             Nij = Nij[1:nvr+1, 1:nvx+1]
+            BN[:, jpa+1:jpb+1   , 0] =  Nijm1_vx_Dvx[   1:nvr+1 , jpa+2:jpb+2   ] - Nij_vx_Dvx[1:nvr+1  , jpa+2:jpb+2]
+            BN[:,   jpa         , 0] = -Nij_vx_Dvx[     1:nvr+1 , jpa+1         ]
+            BN[:,   jnb         , 0] =  Nij_vx_Dvx[     1:nvr+1 , jnb+1         ]
+            BN[:,   jna:jnb     , 0] = -Nijp1_vx_Dvx[   1:nvr+1 , jna+1:jnb+1   ] + Nij_vx_Dvx[1:nvr+1  , jna+1:jnb+1]
+            BN[:,      :        , 0] += Nim1j_vr_Dvr[   1:nvr+1 ,     1:nvx+1   ] - Nij_vr_Dvr[1:nvr+1  ,     1:nvx+1]
 
-#             # Inicializar los arrays de tipo flotante
-#             TB1 = np.zeros(2, dtype=np.float32)
-#             TB2 = np.zeros(2, dtype=np.float32)
+            BN[:, jpa+1:jpb+1   , 1] = -Nijp1_vx_Dvx[1:nvr+1, jpa+2:jpb+2] + Nij_vx_Dvx[1:nvr+1,    jpa+2:jpb+2 ]
+            BN[:,   jpa         , 1] = -Nijp1_vx_Dvx[1:nvr+1, jpa+1      ]
+            BN[:,   jnb         , 1] =  Nijm1_vx_Dvx[1:nvr+1, jnb+1      ]
+            BN[:,   jna:jnb     , 1] =  Nijm1_vx_Dvx[1:nvr+1, jna+1:jnb+1] - Nij_vx_Dvx[1:nvr+1,    jna+1:jnb+1 ]
+            BN[1:nvr,  :        , 1] -= Nip1j_vr_Dvr[2:nvr+1,     1:nvx+1] - Nij_vr_Dvr[1:nvr+1,        1:nvx+1 ]
+            BN[0,      :        , 1] -= Nip1j_vr_Dvr[1      ,     1:nvx+1]
 
-#             # Inicializar la variable
-#             ia = 0
+
+            Nij = Nij[1:nvr+1, 1:nvx+1]
+
+            # Inicializar los arrays de tipo flotante
+            TB1 = np.zeros(2, dtype=np.float32)
+            TB2 = np.zeros(2, dtype=np.float32)
+
+            # Inicializar la variable
+            ia = 0
 
 
-#             while ia < 2:
-#                 TA1 = vth * np.sum(np.matmul(vx,AN[:, :, ia]))
-#                 TA2 = vth2 * np.sum(vr2vx2_2D * AN[:, :, ia])
-#                 ib = 0
+            while ia < 2:
+                TA1 = vth * np.sum(np.matmul(vx,AN[:, :, ia]))
+                TA2 = vth2 * np.sum(vr2vx2_2D * AN[:, :, ia])
+                ib = 0
 
-#                 while ib < 2:
-#                     if TB1[ib] == 0:
-#                         TB1[ib] = vth * np.sum(np.matmul(vx,BN[:, :, ib]))
-#                     if TB2[ib] == 0:
-#                         TB2[ib] = vth2 * np.sum(vr2vx2_2D * BN[:, :, ib])
+                while ib < 2:
+                    if TB1[ib] == 0:
+                        TB1[ib] = vth * np.sum(np.matmul(vx,BN[:, :, ib]))
+                    if TB2[ib] == 0:
+                        TB2[ib] = vth2 * np.sum(vr2vx2_2D * BN[:, :, ib])
                     
-#                     denom = TA2 * TB1[ib] - TA1 * TB2[ib]
-#                     b_Max = 0.0
-#                     a_Max = 0.0
+                    denom = TA2 * TB1[ib] - TA1 * TB2[ib]
+                    b_Max = 0.0
+                    a_Max = 0.0
                     
-#                     if denom != 0.0 and TA1 != 0.0:
-#                         b_Max = (TA2 * (WxD - WxMax) - TA1 * (ED - EMax)) / denom
-#                         a_Max = (WxD - WxMax - TB1[ib] * b_Max) / TA1
+                    if denom != 0.0 and TA1 != 0.0:
+                        b_Max = (TA2 * (WxD - WxMax) - TA1 * (ED - EMax)) / denom
+                        a_Max = (WxD - WxMax - TB1[ib] * b_Max) / TA1
                     
-#                     if a_Max * sgn[ia] > 0.0 and b_Max * sgn[ib] > 0.0:
-#                         maxwell[:, :, k] = (Nij + AN[:, :, ia] * a_Max + BN[:, :, ib] * b_Max) / Vol
-#                         ia = 2
-#                         ib = 2
-#                     ib += 1
-#                 ia += 1
-#             maxwell[:, :, k] = maxwell[:, :, k] / (np.sum(Vr2pidVr * (np.matmul(dVx,maxwell[:, :, k]))))
+                    if a_Max * sgn[ia] > 0.0 and b_Max * sgn[ib] > 0.0:
+                        maxwell[:, :, k] = (Nij + AN[:, :, ia] * a_Max + BN[:, :, ib] * b_Max) / Vol
+                        ia = 2
+                        ib = 2
+                    ib += 1
+                ia += 1
+            maxwell[:, :, k] = maxwell[:, :, k] / (np.sum(Vr2pidVr * (np.matmul(dVx,maxwell[:, :, k]))))
 
-#             if Shifted_Maxwellian_Debug:
-#                 # Calcular vx_out2
-#                 vx_out2 = vth * np.sum(Vr2pidVr * (np.matmul((vx * dVx),maxwell[:, :, k])))
+            if Shifted_Maxwellian_Debug:
+                # Calcular vx_out2
+                vx_out2 = vth * np.sum(Vr2pidVr * (np.matmul((vx * dVx),maxwell[:, :, k])))
                 
-#                 # Calcular vr2vx2_ran2
-#                 vr2vx2_ran2 = np.zeros((nvr, len(vx)))
-#                 for i in range(nvr):
-#                     vr2vx2_ran2[i, :] = vr[i]**2 + (vx - vx_out2 / vth)**2
+                # Calcular vr2vx2_ran2
+                vr2vx2_ran2 = np.zeros((nvr, len(vx)))
+                for i in range(nvr):
+                    vr2vx2_ran2[i, :] = vr[i]**2 + (vx - vx_out2 / vth)**2
                 
-#                 # Calcular T_out2
-#                 T_out2 = (mol * mu * mH) * vth2 * np.sum(Vr2pidVr * ((np.matmul(dVx,vr2vx2_ran2 * maxwell[:, :, k])))) / (3 * q)
+                # Calcular T_out2
+                T_out2 = (mol * mu * mH) * vth2 * np.sum(Vr2pidVr * ((np.matmul(dVx,vr2vx2_ran2 * maxwell[:, :, k])))) / (3 * q)
                 
-#                 # Calcular errores
-#                 Terror2 = np.abs(Tmaxwell[k] - T_out2) / Tmaxwell[k]
-#                 Verror2 = np.abs(vx_shift[k] - vx_out2) / vth_local
+                # Calcular errores
+                Terror2 = np.abs(Tmaxwell[k] - T_out2) / Tmaxwell[k]
+                Verror2 = np.abs(vx_shift[k] - vx_out2) / vth_local
                 
-#                 # Imprimir resultados
-#                 print(f'CREATE_SHIFTED_MAXWELLIAN=> Terror: {Terror:.4f} -> {Terror2:.4f}  Verror: {Verror:.4f} -> {Verror2:.4f}')
-#     return maxwell
+                # Imprimir resultados
+                print(f'CREATE_SHIFTED_MAXWELLIAN=> Terror: {Terror:.4f} -> {Terror2:.4f}  Verror: {Verror:.4f} -> {Verror2:.4f}')
+    return maxwell
