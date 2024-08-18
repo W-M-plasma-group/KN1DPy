@@ -52,7 +52,11 @@ pro Create_VrVxMesh,nv,Ti,vx,vr,Tnorm,E0=E0,ixE0=ixE0,irE0=irE0,Tmax=Tmax
    Key_Default,E0,[0.0]
    Key_Default,Tmax,0.0
    _Ti=Ti
-   for k=0,n_elements(E0)-1 do if E0(k) gt 0 then _Ti=[_Ti,E0(k)]
+
+   for k=0,n_elements(E0)-1 do 
+      if E0(k) gt 0 then 
+         _Ti=[_Ti,E0(k)]
+         
    if Tmax gt 0 then begin
       ii=where(_Ti lt Tmax,count)
       if count gt 0 then _Ti=_Ti(ii)
