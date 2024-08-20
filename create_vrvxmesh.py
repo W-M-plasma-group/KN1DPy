@@ -16,7 +16,10 @@ def create_VrVxMesh(nv, Ti, E0 = np.array([0.0]), Tmax = 0.0): # removed unused 
     print('nv:',nv)
     print('Ti:',Ti)
     _Ti = np.array(Ti) 
-    _Ti = np.concatenate([_Ti, E0[E0>0]]) 
+    _Ti = np.concatenate([_Ti, E0[E0>0]]) ## Check point <-- tracing (08/18/2024)
+    ####
+    ##
+    ##
     if Tmax > 0:
         _Ti = _Ti[_Ti<Tmax] # simplified previous lines by replacing loops - nh
     maxTi = np.max(_Ti)
