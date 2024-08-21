@@ -106,7 +106,7 @@ def Make_dVr_dVx(vr: np.ndarray
                 ,vx: np.ndarray):
     ''' 
     vr & vx are from:
-    -> 1090904024_950to1050.sav
+    -> function: create_vr_vx_mesh
 
     Constructs velocity space differentials for distribution functions
     used by Kinetic_Neutrals.pro, Kinetic_H2.pro, Kinetic_H2.pro
