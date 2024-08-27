@@ -2,8 +2,8 @@
 from reverse import * # fixed import
 import numpy as np
 
-# sets up optimum Vr and Vx velocity space mesh for Kinetic_Neutrals procedure 
 # Input: 
+# sets up optimum Vr and Vx velocity space mesh for Kinetic_Neutrals procedure 
 #   nv - Integer, number of elements desired in vr mesh
 #   Ti - arrray, Ti profile
 #   E0 - array, energy where a velocity is desired ( optional )
