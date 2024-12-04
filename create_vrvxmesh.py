@@ -172,3 +172,4 @@ if __name__ == "__main__":
 
     vx,vr,Tnorm,ixE0,irE0 = create_vr_vx_mesh(nv, Ti)
     print(vr)
+    print(vx)

@@ -238,9 +238,11 @@ if __name__ == "__main__":
     from matplotlib.colors import LogNorm
     
     plt.imshow(diferencia, cmap='coolwarm', interpolation='nearest', norm=LogNorm())
-    plt.colorbar(label='Diferencia')
-    plt.title("Mapa de diferencias entre vol1 y vol2")
+    plt.colorbar(label='Difference')
+    # plt.title("Mapa de diferencias entre vol1 y vol2")
     plt.savefig("draft_Make_dVr_dVx_vol_difference.pdf")
+    plt.savefig("draft_Make_dVr_dVx_vol_difference.svg")
+    plt.savefig("draft_Make_dVr_dVx_vol_difference.png")
     # plt.show()
 
     print('max: \t',diferencia.max())
