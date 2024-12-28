@@ -1,0 +1,140 @@
+;
+; Create_Shifted Maxwellian.include
+;
+; This INCLUDE file is used by Kinetic_H2.pro and Kinetic_H.pro
+;
+; Input:
+;	Vx_shift  - dblarr(nx), (m s^-1)
+;       Tmaxwell  - dblarr(nx), (eV)
+;       Shifted_Maxwellian_Debug - if set, then print debugging information
+;       mol       - 1=atom, 2=diatomic molecule
+;
+; Output:
+;	Maxwell   - dblarr(nvr,nvx,nx) a shifted Maxwellian distribution function
+;		    having numerically evaluated vx moment close to Vx_shift and
+;		    temperature close to Tmaxwell
+;
+; Notes on Algorithm
+;
+;   One might think that Maxwell could be simply computed by a direct evaluation of the EXP function:
+;
+;     for i=0,nvr-1 do begin
+;        arg=-(vr(i)^2+(vx-Vx_shift/vth)^2) * mol*Tnorm/Tmaxwell
+;        Maxwell(i,*,k)=exp(arg > (-80))
+;     endfor
+;
+;   But owing to the discrete velocity space bins, this method does not necessarily lead to a digital representation 
+;   of a shifted Maxwellian (Maxwell) that when integrated numerically has the desired vx moment of Vx_shift
+;   and temperature, Tmaxwell.
+;
+;   In order to insure that Maxwell has the desired vx and T moments when evaluated numerically, a compensation
+;   scheme is employed - similar to that used in Interp_fVrVxX.pro
+;
+   AN=dblarr(nvr,nvx,2)
+   BN=dblarr(nvr,nvx,2)
+   sgn=[1,-1]
+   Maxwell(*)=0.0
+   for k=0,nx-1 do begin
+      if Tmaxwell(k) gt 0.0 then begin
+         for i=0,nvr-1 do begin
+            arg=-(vr(i)^2+(vx-Vx_shift(k)/vth)^2) * mol*Tnorm/Tmaxwell(k)
+            arg=arg < 0.0
+            Maxwell(i,*,k)=exp(arg > (-80))
+         endfor
+         Maxwell(*,*,k)=Maxwell(*,*,k)/total(Vr2pidVr*(Maxwell(*,*,k)#dVx))
+         if shifted_Maxwellian_debug then begin
+            vx_out1=vth*total(Vr2pidVr*(Maxwell(*,*,k)#(Vx*dVx)))
+            for i=0,nvr-1 do vr2vx2_ran2(i,*)=vr(i)^2+(vx-vx_out1/vth)^2
+            T_out1=(mol*mu*mH)*vth2*total(Vr2pidVr*((vr2vx2_ran2*Maxwell(*,*,k))#dVx))/(3*q)
+            vth_local=0.1*sqrt(2*Tmaxwell(k)*q/(mol*mu*mH))
+            Terror=abs(Tmaxwell(k)-T_out1)/Tmaxwell(k) & Verror=abs(vx_out1-vx_shift(k))/vth_local
+         endif
+;
+; Compute desired moments
+;
+         WxD=Vx_shift(k)
+         ED=WxD^2+3*q*Tmaxwell(k)/(mol*mu*mH)
+;
+; Compute present moments of Maxwell, WxMax, and EMax 
+;     
+         WxMax=vth*total(Vr2pidVr*(Maxwell(*,*,k)#(Vx*dVx)))
+         EMax=vth2*total(Vr2pidVr*((vr2vx2_2D*Maxwell(*,*,k))#dVx))
+;
+; Compute Nij from Maxwell, padded with zeros
+;
+         Nij=dblarr(nvr+2,nvx+2)
+         Nij(1:nvr,1:nvx)=Maxwell(*,*,k)*vol
+      
+         Nijp1_vx_Dvx=shift(Nij*vx_Dvx,0,-1)
+         Nij_vx_Dvx  =Nij*vx_Dvx
+         Nijm1_vx_Dvx=shift(Nij*vx_Dvx,0,1)
+         Nip1j_vr_Dvr=shift(Nij*vr_Dvr,-1,0)
+         Nij_vr_Dvr  =Nij*vr_Dvr
+         Nim1j_vr_Dvr=shift(Nij*vr_Dvr,1,0)
+;
+; Compute Ap, Am, Bp, and Bm (0=p 1=m)
+;
+         _AN=shift(Nij*vth_Dvx,0,1) - Nij*vth_Dvx
+         AN(*,*,0)=_AN(1:nvr,1:nvx)
+         _AN=-shift(Nij*vth_Dvx,0,-1) + Nij*vth_Dvx
+         AN(*,*,1)=_AN(1:nvr,1:nvx)
+      
+         BN(*,jpa+1:jpb,0)=Nijm1_vx_Dvx(1:nvr,jpa+2:jpb+1)-Nij_vx_Dvx(1:nvr,jpa+2:jpb+1)
+         BN(*,jpa,0)=-Nij_vx_Dvx(1:nvr,jpa+1)
+         BN(*,jnb,0)=Nij_vx_Dvx(1:nvr,jnb+1)
+         BN(*,jna:jnb-1,0)=-Nijp1_vx_Dvx(1:nvr,jna+1:jnb)+Nij_vx_Dvx(1:nvr,jna+1:jnb)
+         BN(*,*,0)=BN(*,*,0) + Nim1j_vr_Dvr(1:nvr,1:nvx)-Nij_vr_Dvr(1:nvr,1:nvx)
+
+         BN(*,jpa+1:jpb,1)=-Nijp1_vx_Dvx(1:nvr,jpa+2:jpb+1)+Nij_vx_Dvx(1:nvr,jpa+2:jpb+1)
+         BN(*,jpa,1)=-Nijp1_vx_Dvx(1:nvr,jpa+1)
+         BN(*,jnb,1)=Nijm1_vx_Dvx(1:nvr,jnb+1)
+         BN(*,jna:jnb-1,1)=Nijm1_vx_Dvx(1:nvr,jna+1:jnb)-Nij_vx_Dvx(1:nvr,jna+1:jnb)
+         BN(1:nvr-1,*,1)=BN(1:nvr-1,*,1) - Nip1j_vr_Dvr(2:nvr,1:nvx)+Nij_vr_Dvr(2:nvr,1:nvx)
+         BN(0,*,1)=BN(0,*,1) - Nip1j_vr_Dvr(1,1:nvx)
+;
+; Remove padded zeros in Nij
+;         
+         Nij=Nij(1:nvr,1:nvx)
+;
+; Cycle through 4 possibilies of sign(a_Max),sign(b_Max)
+;
+         TB1=fltarr(2) & TB2=fltarr(2)
+         ia=0
+         while ia lt 2 do begin
+;
+; Compute TA1, TA2
+;
+            TA1=vth*total(AN(*,*,ia)#Vx)
+            TA2=vth2*total(vr2vx2_2D*AN(*,*,ia))
+            ib=0
+            while ib lt 2 do begin
+;     
+; Compute TB1, TB2
+;
+               if TB1(ib) eq 0 then TB1(ib)=vth*total(BN(*,*,ib)#Vx)
+               if TB2(ib) eq 0 then TB2(ib)=vth2*total(vr2vx2_2D*BN(*,*,ib))
+               denom=TA2*TB1(ib)-TA1*TB2(ib)
+               b_Max=0.0
+               a_Max=0.0
+               if denom ne 0.0 and TA1 ne 0.0 then begin
+                  b_Max=(TA2*(WxD-WxMax)-TA1*(ED-EMax))/denom
+                  a_Max=(WxD-WxMax-TB1(ib)*b_Max)/TA1
+               endif
+               if a_Max*sgn(ia) gt 0.0 and b_Max*sgn(ib) gt 0.0 then begin
+                  Maxwell(*,*,k)=(Nij+AN(*,*,ia)*a_Max+BN(*,*,ib)*b_Max)/vol
+                  ia=2 & ib=2
+               endif
+               ib=ib+1
+            endwhile
+            ia=ia+1
+         endwhile
+         Maxwell(*,*,k)=Maxwell(*,*,k)/total(Vr2pidVr*(Maxwell(*,*,k)#dVx))
+         if shifted_Maxwellian_debug then begin
+            vx_out2=vth*total(Vr2pidVr*(Maxwell(*,*,k)#(Vx*dVx)))
+            for i=0,nvr-1 do vr2vx2_ran2(i,*)=vr(i)^2+(vx-vx_out2/vth)^2
+            T_out2=(mol*mu*mH)*vth2*total(Vr2pidVr*((vr2vx2_ran2*Maxwell(*,*,k))#dVx))/(3*q)
+            Terror2=abs(Tmaxwell(k)-T_out2)/Tmaxwell(k) & Verror2=abs(vx_shift(k)-vx_out2)/vth_local
+            print,'CREATE_SHIFTED_MAXWELLIAN=> Terror:'+sval(Terror)+'->'+sval(Terror2)+'  Verror:'+sval(Verror)+'->'+sval(Verror2)
+         endif
+      endif
+   endfor

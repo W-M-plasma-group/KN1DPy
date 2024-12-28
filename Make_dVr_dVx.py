@@ -92,6 +92,12 @@
 #     # changed return line to provide an output as a list - nh
     
 #     return Vr2pidVr,VrVr4pidVr,dVx,VrL,VrR,VxL,VxR,vol,Vth_DeltaVx,Vx_DeltaVx,Vr_DeltaVr,Vr2Vx2,jpa,jpb,jna,jnb
+#################################################################################
+#################################################################################
+#################################################################################
+#################################################################################
+#################################################################################
+
 import numpy as np
 import copy
 from tqdm import tqdm
@@ -232,9 +238,11 @@ if __name__ == "__main__":
     from matplotlib.colors import LogNorm
     
     plt.imshow(diferencia, cmap='coolwarm', interpolation='nearest', norm=LogNorm())
-    plt.colorbar(label='Diferencia')
-    plt.title("Mapa de diferencias entre vol1 y vol2")
+    plt.colorbar(label='Difference')
+    # plt.title("Mapa de diferencias entre vol1 y vol2")
     plt.savefig("draft_Make_dVr_dVx_vol_difference.pdf")
+    plt.savefig("draft_Make_dVr_dVx_vol_difference.svg")
+    plt.savefig("draft_Make_dVr_dVx_vol_difference.png")
     # plt.show()
 
     print('max: \t',diferencia.max())
