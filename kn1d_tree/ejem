@@ -1,8 +1,9 @@
-digraph "KN1D.py" {
-	"KN1D 
- details" -> "Kinetik_h 
- details"
-	"KN1D 
- details" -> "Kinetic_h2 
- details"
+// KN1D.py
+digraph {
+	A [label="KN1D 
+ Hi"]
+	B [label=Kinetic_h]
+	C [label=Kinetic_h2]
+	A -> B
+	A -> C
 }
