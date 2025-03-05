@@ -33,12 +33,12 @@ def sigma_el_h_hh(E: np.ndarray) -> np.ndarray:
     E = np.clip(E, 0.03, 1.01e4)
 
     # Coefficients for the polynomial expansion
-    a = np.flip(np.array([
+    a = np.array([
         -3.495671e1, -4.062257e-1, -3.820531e-2, -9.404486e-3, 3.963723e-4
-    ]))
+        ])
 
     # Compute the cross-section using the polynomial expansion
-    result = np.exp(np.polyval(a, np.log(E))) * 1e-4
+    result = np.exp(np.polyval(a[::-1], np.log(E))) * 1e-4
 
     return result
 

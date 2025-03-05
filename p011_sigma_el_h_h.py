@@ -38,13 +38,13 @@ def sigma_el_h_h(E, vis=False):
 
     if vis: ### vis = True
         # Coefficients for the viscosity cross-section
-        a = np.flip(np.array([-3.344860e1, -4.238982e-1, -7.477873e-2, -7.915053e-3, -2.686129e-4]))
+        a = np.array([-3.344860e1, -4.238982e-1, -7.477873e-2, -7.915053e-3, -2.686129e-4])
     else:   ### vis = False
         # Coefficients for the momentum transfer cross-section
-        a = np.flip(np.array([-3.330843e1, -5.738374e-1, -1.028610e-1, -3.920980e-3, 5.964135e-4]))
+        a = np.array([-3.330843e1, -5.738374e-1, -1.028610e-1, -3.920980e-3, 5.964135e-4])
 
     # Compute the cross-section using the polynomial expansion
-    result = np.exp(np.polyval(a, np.log(E))) * 1e-4
+    result = np.exp(np.polyval(a[::-1], np.log(E))) * 1e-4
     return result
 
 

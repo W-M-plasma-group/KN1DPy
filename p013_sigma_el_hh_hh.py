@@ -37,12 +37,12 @@ def sigma_el_hh_hh(E, vis: bool = False) -> np.ndarray:
     E = np.clip(E, 0.03, 1.01e4)
 
     # Coefficients for the polynomial expansion (in reverse order for np.polyval)
-    a = np.flip(np.array([
+    a = np.array([
             -3.430345e1, -2.960406e-1, -6.382532e-2, -7.557519e-3, 2.606259e-4
-        ]))
+        ])
 
     # Compute the cross-section using the polynomial expansion
-    result = np.exp(np.polyval(a, np.log(E))) * 1e-4
+    result = np.exp(np.polyval(a[::-1], np.log(E))) * 1e-4
 
     # If vis is True, print a warning (as in the IDL code)
     if vis:

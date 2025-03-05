@@ -38,24 +38,24 @@ def sigma_el_p_h(E: np.ndarray) -> np.ndarray:
     result = np.zeros_like(E)
 
     # Coefficients for the low-energy range (E ≤ 10.0 eV)
-    a_low = np.flip(np.array([
+    a_low = np.array([
         -3.233966e1, -1.126918e-1, 5.287706e-3, -2.445017e-3, -1.044156e-3, 8.419691e-5, 3.824773e-5
-    ]))
+        ])
 
     # Coefficients for the high-energy range (E > 10.0 eV)
-    a_high = np.flip(np.array([
+    a_high = np.array([
         -3.231141e1, -1.386002e-1
-    ]))
+        ])
 
     # Compute the cross-section for the low-energy range
     mask_low = E <= 10.0
     if np.any(mask_low):
-        result[mask_low] = np.exp(np.polyval(a_low, np.log(E[mask_low]))) * 1e-4
+        result[mask_low] = np.exp(np.polyval(a_low[::-1], np.log(E[mask_low]))) * 1e-4
 
     # Compute the cross-section for the high-energy range
     mask_high = E > 10.0
     if np.any(mask_high):
-        result[mask_high] = np.exp(np.polyval(a_high, np.log(E[mask_high]))) * 1e-4
+        result[mask_high] = np.exp(np.polyval(a_high[::-1], np.log(E[mask_high]))) * 1e-4
 
     return result
 

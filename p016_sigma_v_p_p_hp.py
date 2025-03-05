@@ -18,14 +18,14 @@ def sigma_v_p_p_hp(Te):
     Te = np.clip(Te, 0.1, 2.01e4)
 
     # Coefficients for the polynomial expansion
-    b = np.flip(np.array([
+    b = np.array([
         -3.746192301092e+1,         1.559355031108e+1,        -6.693238367093e+0,
          1.981700292134e+0,        -4.044820889297e-1,         5.352391623039e-2,
         -4.317451841436e-3,         1.918499873454e-4,        -3.591779705419e-6
-    ]))
+        ])
 
     # Compute the Maxwellian-averaged <sigma V> using the polynomial expansion
-    result = np.exp(np.polyval(b, np.log(Te))) * 1e-6
+    result = np.exp(np.polyval(b[::-1], np.log(Te))) * 1e-6
 
     return result
 

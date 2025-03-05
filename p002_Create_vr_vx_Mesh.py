@@ -9,7 +9,10 @@ Date: August 20th, 2024
 # def create_vr_vx_mesh(nv: np.int32, Ti: np.ndarray, E0: np.ndarray = None, Tmax: np.float64 = 0.0):
 #     if E0 is None:
 #         E0 = np.array([0.0])
-def create_vr_vx_mesh(nv:np.int32, Ti:np.array, E0=np.array([0.0]), Tmax: np.float64 = 0.0):
+def create_vr_vx_mesh(nv:   np.int32, 
+                      Ti:   np.ndarray, 
+                      E0:   np.ndarray = np.array([0.0]), 
+                      Tmax: np.float64 = 0.0):
     ''' 
     nv & Ti are from:
     -> 1090904024_950to1050.sav
@@ -21,9 +24,10 @@ def create_vr_vx_mesh(nv:np.int32, Ti:np.array, E0=np.array([0.0]), Tmax: np.flo
     E0:     np.array,   energy where a velocity is desired ( optional )
     Tmax:   np.float64, ignore Ti above this value
     '''
+    E0 = np.asarray(E0)
     _Ti = copy.copy(Ti)  
 
-    _Ti = np.concatenate((Ti, E0[E0 > 0]))  # Añadir valores de E0 a Ti
+    _Ti = np.concatenate((Ti, E0[E0 > 0]))  # Add values of E0 that are greater than 0 to Ti to form _Ti
     if Tmax > 0:
         ii = np.where(_Ti < Tmax)
         _Ti = copy.copy(_Ti[ii])
@@ -37,13 +41,14 @@ def create_vr_vx_mesh(nv:np.int32, Ti:np.array, E0=np.array([0.0]), Tmax: np.flo
 
     if maxTi-minTi < 0.1*maxTi:
         v = np.arange(nv+1, dtype=np.float64)*(vmax/nv)
-        print(v)
+        # print(v)
     else:
         G = 2*nv*np.sqrt(minTi/maxTi)/(1-np.sqrt(minTi/maxTi))
         b = vmax/(nv*(nv+G))
         a = G*b
         v = (a*np.arange(nv+1, dtype=np.float64)) + \
             (b*np.arange(nv+1, dtype=np.float64)**2)
+        
     v0 = 0.0
     # Option: add velocity bins corresponding to E0
     for k in tqdm(range(0,len(E0)),desc=f'create_vrvxmesh.py: calc. v'):
@@ -51,7 +56,10 @@ def create_vr_vx_mesh(nv:np.int32, Ti:np.array, E0=np.array([0.0]), Tmax: np.flo
             v0 = np.sqrt(E0[k]/Tnorm)
             ii = np.where(v>v0)
             if len(ii[0]) > 0:
-                v = np.concatenate((v[:ii[0][0]], [v0], v[ii[0][0]:]))
+                v = np.concatenate((v[:ii[0][0]], [v0], v[ii[0][0]:]))  
+                # Note: np.where returns a tuple. ii[0] is the array of indices where the condition is met (satisfied),  
+                # and ii[0][0] is the first index in that array.
+                # print(v)
             else:
                 v = np.concatenate((v, [v0]))
 
@@ -65,14 +73,14 @@ def create_vr_vx_mesh(nv:np.int32, Ti:np.array, E0=np.array([0.0]), Tmax: np.flo
         ixE0=ixE0[0]
 
     irE0 = np.where(vr==v0)
-    print(irE0)
     if len(irE0[0]==1):
         irE0=irE0[0]
 
     return vx,vr,Tnorm,ixE0,irE0
 
 if __name__ == "__main__":
-    Ti = np.array([9.34678841, 9.34678841, 9.34678841, 9.34678841, 9.34678841,  
+    Ti = np.array([
+        9.34678841, 9.34678841, 9.34678841, 9.34678841, 9.34678841,  
         9.34678841, 9.34678841, 9.34678841, 9.34678841, 9.34678841,  
         9.34678841, 9.34678841, 9.34678841, 9.34678841, 9.34678841,  
         9.34678841, 9.34678841, 9.34678841, 9.35320316, 9.37376491,  
@@ -100,9 +108,71 @@ if __name__ == "__main__":
         187.65798817, 190.88856844, 194.1191481, 197.34972896, 200.58029711,  
         203.81087269, 207.04146861, 210.27208269, 213.50268786, 216.73328038,  
         219.96386318, 223.19443731, 226.4250055, 229.65557301, 232.88615218,  
-        236.11672325, 239.3472975, 242.57787344, 245.80844117, 249.03902203])
+        236.11672325, 239.3472975, 242.57787344, 245.80844117, 249.03902203
+        ])
     nv = 20
 
-    vx,vr,Tnorm,ixE0,irE0 = create_vr_vx_mesh(nv, Ti)
-    print('vr:',vr)
-    print('vr:',vx)
+    import matplotlib.pyplot as plt
+
+    # Llamar a la función para generar las mallas de velocidades
+    vx, vr, Tnorm, ixE0, irE0 = create_vr_vx_mesh(nv, Ti)
+
+    # Graficar las mallas de velocidades
+    plt.figure(figsize=(12, 6))
+
+    # Graficar vr
+    plt.subplot(1, 2, 1)
+    plt.plot(vr, np.zeros_like(vr), '^', label='vr')
+    plt.title('Malla de Velocidades Radiales (vr)')
+    plt.xlabel('Velocidad radial (vr)')
+    plt.ylabel('Valor')
+    plt.grid(True)
+    plt.legend()
+
+    # Graficar vx
+    plt.subplot(1, 2, 2)
+    plt.plot(vx, np.zeros_like(vx), '^', label='vx')
+    plt.title('Malla de Velocidades Axiales (vx)')
+    plt.xlabel('Velocidad axial (vx)')
+    plt.ylabel('Valor')
+    plt.grid(True)
+    plt.legend()
+
+    plt.tight_layout()
+    plt.show()
+
+    # Imprimir resultados adicionales
+    print(f"Temperatura normalizada (Tnorm): {Tnorm} eV")
+    print(f"Índices en vx para E0 (ixE0): {ixE0}")
+    print(f"Índices en vr para E0 (irE0): {irE0}")
+
+    vx, vr, Tnorm, ixE0, irE0 = create_vr_vx_mesh(nv, Ti,E0=[0.003,0.01,0.03,0.1,0.3,1.0,3.0])
+
+    # Graficar las mallas de velocidades
+    plt.figure(figsize=(12, 6))
+
+    # Graficar vr
+    plt.subplot(1, 2, 1)
+    plt.plot(vr, np.zeros_like(vr), '^', label='vr')
+    plt.title('Malla de Velocidades Radiales (vr)')
+    plt.xlabel('Velocidad radial (vr)')
+    plt.ylabel('Valor')
+    plt.grid(True)
+    plt.legend()
+
+    # Graficar vx
+    plt.subplot(1, 2, 2)
+    plt.plot(vx, np.zeros_like(vx), '^', label='vx')
+    plt.title('Malla de Velocidades Axiales (vx)')
+    plt.xlabel('Velocidad axial (vx)')
+    plt.ylabel('Valor')
+    plt.grid(True)
+    plt.legend()
+
+    plt.tight_layout()
+    plt.show()
+
+    # Imprimir resultados adicionales
+    print(f"Temperatura normalizada (Tnorm): {Tnorm} eV")
+    print(f"Índices en vx para E0 (ixE0): {ixE0}")
+    print(f"Índices en vr para E0 (irE0): {irE0}")

@@ -28,10 +28,10 @@ def sigma_el_p_hh(E):
     E = np.clip(E, 0.03, 1.01e4)
     
     # Coefficients for the polynomial fit (reversed order for np.polyval)
-    a = np.flip(np.array([-3.355719e1, -5.696568e-1, -4.089556e-2, -1.143513e-2, 5.926596e-4]))
+    a = np.array([-3.355719e1, -5.696568e-1, -4.089556e-2, -1.143513e-2, 5.926596e-4])
     
     # Calculate the cross section using the polynomial fit
-    result = np.exp(np.polyval(a, np.log(E))) * 1e-4
+    result = np.exp(np.polyval(a[::-1], np.log(E))) * 1e-4
     
     return result
 

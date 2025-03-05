@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-def sigma_cx_h0(E=None, coef='freeman'):
+def sigma_cx_h0(E=None, coef='janev'):
     """
     Compute the charge exchange cross-section for neutral hydrogen (H0).
 
@@ -56,11 +56,11 @@ def sigma_cx_h0(E=None, coef='freeman'):
     elif coef == 'janev':
         E = np.clip(E, np.float64(0.1), np.float64(2.01e4))
         ## Information: Janev 1987, p. 250
-        alpha = np.flip(np.array([-3.274123792568e+01, -8.916456579806e-02, -3.016990732025e-02,
+        alpha = np.array([-3.274123792568e+01, -8.916456579806e-02, -3.016990732025e-02,
                                    9.205482406462e-03,  2.400266568315e-03, -1.927122311323e-03,
                                    3.654750340106e-04, -2.788866460622e-05,  7.422296363524e-07], 
-                                   dtype=np.float64))
-        return np.exp(np.polyval(alpha, np.log(E))) * np.float64(1e4)
+                                   dtype=np.float64)
+        return np.exp(np.polyval(alpha[::-1], np.log(E))) * np.float64(1e-4)
     else:
         raise ValueError("The coefficient must be 'freeman' or 'janev'.")
 
