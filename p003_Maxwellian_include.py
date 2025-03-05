@@ -4,6 +4,7 @@ from tqdm import tqdm
 import numpy as np
 import sympy as sp
 import copy
+import time
 
 
 def create_maxwellian_include(vr:np.ndarray, vx:np.ndarray, vx_shift:np.ndarray,Tmaxwell:np.ndarray,Tnorm: np.float32,mu:np.float32,mol:np.int32):
@@ -28,19 +29,34 @@ def create_maxwellian_include(vr:np.ndarray, vx:np.ndarray, vx_shift:np.ndarray,
     #################################################################
     for k in tqdm(range(nx),desc=f'k'):
         if Tmaxwell[k]>0.0:
-            for i in tqdm(range(nvr),desc=f'i'):
-                arg = -((vr[i]**2 + ((vx) - (vx_shift[k] / vth))**2) * mol * Tnorm / Tmaxwell[k])  # Error de \pm 3e-3
-                arg = np.where(np.logical_and((-80 < arg),(arg < 0.0)), arg, -80)
-                maxwell[i,:,k] = np.exp(arg)
-            variable = np.array(sp.Matrix(maxwell[:, :, k]) * sp.Matrix(dVx), dtype=float).flatten()
-            maxwell[:,:,k] = copy.copy(maxwell[:,:,k]/(np.nansum(Vr2pidVr*variable)))
+            # # for i in tqdm(range(nvr),desc=f'i'):
+            # for i in range(nvr):
+            #     arg = -((vr[i]**2 + ((vx) - (vx_shift[k] / vth))**2) * mol * Tnorm / Tmaxwell[k])  # Error de \pm 3e-3
+            #     arg = np.where(np.logical_and((-80 < arg),(arg < 0.0)), arg, -80)
+            #     maxwell[i,:,k] = np.exp(arg)
+            arg = -((vr[:, np.newaxis]**2 + (vx - vx_shift[k] / vth)**2) * mol * Tnorm / Tmaxwell[k])
+            arg = np.where(np.logical_and((-80 < arg), (arg < 0.0)), arg, -80)
+            maxwell[:, :, k] = np.exp(arg)
+
+            # variable = np.array(sp.Matrix(maxwell[:, :, k]) * sp.Matrix(dVx), dtype=float).flatten()
+            # maxwell[:,:,k] = copy.copy(maxwell[:,:,k]/(np.nansum(Vr2pidVr*variable)))
+
+            # This change reduced 1.5s/iteration
+            variable = np.sum(maxwell[:, :, k] * dVx, axis=1)
+            maxwell[:, :, k] /= np.nansum(Vr2pidVr * variable)
+            
             # Compute desired moments
             WxD = copy.copy(vx_shift[k])
             ED = (WxD**2)+3*q*(Tmaxwell[k])/(mol*mu*mH)
             # Compute present moments of Maxwell, WxMax, and EMax 
-            vx_dvx = vx*dVx
-            maxwell_2d  = copy.copy(maxwell[:, :, k])
-            max_2d_xd   = np.array(sp.Matrix(maxwell[:, :, k]) * sp.Matrix(vx * dVx), dtype=float).flatten()
+            # these two next variables don't interact with the code
+            # # vx_dvx = vx*dVx
+            # # maxwell_2d  = copy.copy(maxwell[:, :, k])
+            
+            # This change also reduced the time in othe 1.5s/ it
+            # max_2d_xd   = np.array(sp.Matrix(maxwell[:, :, k]) * sp.Matrix(vx * dVx), dtype=float).flatten()
+            max_2d_xd = np.sum(maxwell[:, :, k] * vx * dVx, axis=1)
+            
             WxMax       = vth  * (np.nansum(Vr2pidVr * (max_2d_xd) ))
             EMax        = vth2 * (np.nansum(Vr2pidVr*(np.matmul((vr2vx2*maxwell[:,:,k]),dVx))))
             # Compute Nij from Maxwell, padded with zeros
@@ -310,63 +326,28 @@ if __name__ == "__main__":
     mol = 2
     mu = 2.0
 
-
+    start_time = time.time()
     maxwell = create_maxwellian_include(vr, vx, vx_shift,Tmaxwell,Tnorm,mu,mol)
-    print(maxwell.shape)
-    # print(maxwell[:,:,5])
-    np.savetxt('salida.dat', maxwell[:,:,0], fmt='%.4e',delimiter='\t')
+    end_time = time.time()
+    total_time = end_time - start_time
+    print(f"Tiempo total de ejecución: {total_time:.4f} segundos")
+    print('Maxwell',maxwell.shape)
+    print('vr',vr.shape)
+    print('vx',vx.shape)
+    print('vx_shift',vx_shift.shape)
+    print('Tmaxwell',Tmaxwell.shape)
+    print('Tnorm',Tnorm)
+    print('mu',mu)
+    print('mol',mol)
+    
+    # np.savetxt('salida.dat', maxwell[:,:,0], fmt='%.4e',delimiter='\t')
     import matplotlib.pyplot as plt
     from matplotlib.colors import LogNorm
-    # plot = copy.copy(maxwell[:,:,5])
-    # plt.imshow(plot, cmap='coolwarm', interpolation='nearest', norm=LogNorm())
-    # plt.colorbar(label='Difference')
-    # plt.show()
-    # slices = [5, 20, 35, 50, 65, 80]
-
-    # # Crear subplots
-    # fig, axes = plt.subplots(2, 3, figsize=(15, 10))  # 2 filas, 3 columnas
-
-    # # Graficar cada capa en un subplot
-    # for ax, layer in zip(axes.flatten(), slices):
-    #     plot = maxwell[:, :, layer]
-    #     im = ax.imshow(plot, cmap='coolwarm', interpolation='nearest', norm=LogNorm())
-    #     ax.set_title(f'Layer {layer}')
-    #     ax.axis('off')  # Opcional: quitar los ejes
-
-    # # Ajustar la figura y agregar una barra de color
-    # fig.colorbar(im, ax=axes, orientation='horizontal', fraction=0.02, pad=0.1, label='Difference')
-
-    # # Mostrar la figura
-    # plt.tight_layout()
-    # plt.show()
-
-
-    import matplotlib.pyplot as plt
     import numpy as np
-    import os
     from matplotlib.colors import LogNorm
     from matplotlib.animation import FuncAnimation, PillowWriter
-    # output_gif_path = "maxwell_evolution2.gif"
 
-    # # Crear figura para la animación
-    # fig, ax = plt.subplots(figsize=(6, 6))
-
-    # # Configurar la imagen inicial
-    # im = ax.imshow(maxwell[:, :, 0], cmap="coolwarm", norm=LogNorm(vmin=maxwell.min(), vmax=maxwell.max()))
-    # ax.set_title("Layer 0")
-    # plt.colorbar(im, ax=ax, label="Value")
-
-    # # Función de actualización para cada frame
-    # def update(frame):
-    #     im.set_data(maxwell[:, :, frame])
-    #     ax.set_title(f"Layer {frame}")
-
-    # # Crear la animación
-    # anim = FuncAnimation(fig, update, frames=maxwell.shape[2], interval=100)
-
-    # # Guardar el GIF
-    # anim.save(output_gif_path, writer=PillowWriter(fps=10))
-    output_gif_path = "maxwell_evolutionh2_3_1.gif"
+    output_gif_path = "maxwell_evolutionh2_3_2.gif"
 
     # Crear figura para la animación
     fig, ax = plt.subplots(figsize=(6, 6))
@@ -376,9 +357,9 @@ if __name__ == "__main__":
         maxwell[maxwell <= 0] = 1e-10  # Reemplazar ceros y valores negativos
 
     # Configurar la imagen inicial con LogNorm
-    vmin = np.min(maxwell[maxwell > 0])  # El valor mínimo positivo
-    vmax = np.max(maxwell)
-    im = ax.imshow(maxwell[:, :, 0], cmap="coolwarm", norm=LogNorm(vmin=vmin, vmax=vmax))
+    valor_min = np.min(maxwell[maxwell > 0])  # El valor mínimo positivo
+    valor_max = np.max(maxwell)
+    im = ax.imshow(maxwell[:, :, 0], cmap="coolwarm", norm=LogNorm(vmin=valor_min, vmax=valor_max))
     ax.set_title("Layer 0")
     plt.colorbar(im, ax=ax, label="Value")
 
@@ -392,3 +373,4 @@ if __name__ == "__main__":
 
     # Guardar el GIF
     anim.save(output_gif_path, writer=PillowWriter(fps=10))
+    plt.show()
