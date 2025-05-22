@@ -189,3 +189,26 @@ obj_Kinetic_H2_input        = Kinetic_H2_input()
 obj_Kinetic_H2_internal     = Kinetic_H2_internal()
 obj_Kinetic_H2_H_moments    = Kinetic_H2_H_moments()
 #-----------------------------------------------------------
+
+class INTERP_FVRVXX_internal1:
+    def __init__(self):
+        self.vra1               = None
+        self.vxa1               = None
+        self.Tnorma1            = None
+        self.vrb1               = None
+        self.vxb1               = None
+        self.Tnormb1            = None
+        self.weight1            = None
+
+class INTERP_FVRVXX_internal2:
+    def __init__(self):
+        self.vra2               = None
+        self.vxa2               = None
+        self.Tnorma2            = None
+        self.vrb2               = None
+        self.vxb2               = None
+        self.Tnormb2            = None
+        self.weight2            = None
+#-----------------------------------------------------------
+obj_interp_fvrvxx_1 = INTERP_FVRVXX_internal1()
+obj_interp_fvrvxx_2 = INTERP_FVRVXX_internal2()

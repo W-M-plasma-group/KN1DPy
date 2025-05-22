@@ -4,11 +4,12 @@ from t_014_test_02_function import kinetic_h
 
 # Simulación de un bucle
 for i in range(5):
-    vx = [i, i + 1, i + 2]
-    vr = [i, i + 1, i + 2]
-    x = [i, i + 1, i + 2]
+    vx =    [i, i + 1, i + 2]
+    vr =    [i, i + 1, i + 2]
+    x =     [i, i + 1, i + 2]
     Tnorm = [i, i + 1, i + 2]
-    mu = [i, i + 1, i + 2]
+    mu =    [i, i + 1, i + 2]
+
 for i in range(5):
     print(66*'-')
     print('Antes')
