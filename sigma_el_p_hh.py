@@ -15,7 +15,7 @@ from poly import poly
 #
 #	units: m^-2
 # Gwendolyn Galleher 
-def Sigma_EL_P_HH(E):
+def sigma_el_p_hh(E):
     E = np.array([E])
     _E = E.astype(float)
     # ensures 0.03e0 < E < 1.01e4

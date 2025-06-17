@@ -2,14 +2,14 @@ import numpy as np
 from sval import sval
 from make_sigmav import make_sigmav
 import scipy.interpolate
-from sigma_el_p_h import Sigma_EL_P_H # added import for sigma function
+from sigma_el_p_h import sigma_el_p_h # added import for sigma function
 
 #Creates a save set storing Bi-cubic spline interpolation
 def create_sigmav_el_h_p_bscoef():
 
     #particle is h, target is p
 
-    sigma_function = Sigma_EL_P_H # changed string variable to function
+    sigma_function = sigma_el_p_h # changed string variable to function
 
     mE=6
     Emin=0.1

@@ -11,7 +11,7 @@ from poly import poly
 # Inputs: 
 #  E       -   array or float, energy of H2 molecule (target H2 molecule is at rest)
 # Gwendolyn Galleher
-def Sigma_EL_P_H(E):
+def sigma_el_p_h(E):
     E = np.array([E])
     _E = E.astype(float)
     # ensures that 0.001e0 < E < 1.01e5

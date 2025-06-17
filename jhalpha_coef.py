@@ -1,23 +1,10 @@
 import numpy as np
-from create_jh_bscoef import Create_JH_BSCoef
 from scipy import interpolate
+from create_jh_bscoef import create_jh_bscoef
 import os.path
-# Evaluates the ionization rate coefficients, S (m^-3 s^-1), from  Johnson-Hinnov table 2 (MKS units).
-#; Input:
-#  	Density	- fltarr, electron density (=hydrogen ion density) (m^-3)
-#  	Te	- fltarr, electron temperature (eV)
-#
-# Keywords:
-#	create	- if set, then create bi-cubic spline coefficients for
-#		  interpolation of S and save them in the default save set. 
-#	No_Null	- if set, then rather than generate a NULL value when Density and Te
-#                 are outside the data range, compute the rate based on the min or max
-#		  data range values.
-#________________________________________________________________________________
-# History:
-#    Coding by B. LaBombard  6/29/99
-#    Coefficients from J. Terry's idl code JH_RATES.PRO
-def JHS_coef(Density, Te, create = 0, no_null = 0, g=None):
+# Evaluates the alpha coefficients 
+# - the comment on the original file seemed to be wrong so I will probaly have to expand on this later
+def jhalpha_coef(Density, Te,  create = 0, no_null = 0, g=None):
     # these are the variables that will be called from the classes for now I am defining them at the top. 
     # They are not defined as there actual values because the actual values used are defined in other files.
     Dknot = g.JH_Coef_DKnot
@@ -28,7 +15,7 @@ def JHS_coef(Density, Te, create = 0, no_null = 0, g=None):
     A_Lyman=g.JH_Coef_A_Lyman
     A_Balmer=g.JH_Coef_A_Balmer
     if create or not os.path.exists('jh_bscoef.npz'):
-        Create_JH_BSCoef()
+        create_jh_bscoef()
     if LogR_BSCoef is None:
         # this is where old data is restored 
         s=np.load('jh_bscoef.npz')
@@ -50,7 +37,7 @@ def JHS_coef(Density, Te, create = 0, no_null = 0, g=None):
         g.JH_Coef_A_Lyman=A_Lyman
         g.JH_Coef_A_Balmer=A_Balmer
 
-    # Evaluate S coefficients 
+    # Evaluate Alpha coefficients 
     if np.size(Density) != np.size(Te):
         raise Exception('Number of elements of Density and Te are different!')
     result = Density ; result[:] = 1.0e32
@@ -70,7 +57,7 @@ def JHS_coef(Density, Te, create = 0, no_null = 0, g=None):
     count = np.size(ok)
     ok = ok.astype(int) 
     if count > 0: 
-        for i in ok: # fixed how result is defined not completely confident in this - GG
-            #result[i] = np.exp( ) # currently missing the python equivalent to bs2dr will come back to this later 
-            result[i]=np.exp(interpolate.bisplev(LDensity[i],LTe[i],(Dknot,Tknot,LogS_BSCoef,3,3),0,0)) # updated 
+        for i in ok:
+            #result[ok] = np.exp( ) # currently missing the python equivalent to bs2dr will come back to this later 
+            result[i]=np.exp(interpolate.bisplev(LDensity[i],LTe[i],(Dknot,Tknot,LogS_BSCoef,3,3),0,0)) # updated
     return result

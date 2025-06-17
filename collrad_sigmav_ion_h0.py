@@ -11,6 +11,8 @@ from scipy import interpolate
 #   Ionization Rate (m^3 s^-1)
 #
 #Gwendolyn Galleher 
+
+
 def collrad_sigmav_ion_h0(N_e, T_e): # removed unused argument p - nh
     if np.size(N_e) != np.size(T_e):
         raise Exception('Number of elements in inputs do not match.')

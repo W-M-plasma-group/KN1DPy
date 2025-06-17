@@ -1,4 +1,4 @@
-from KN1D import KN1D
+from kn1d import kn1d
 import scipy.io as sio
 from scipy.io import readsav
 import numpy as np
@@ -42,7 +42,7 @@ print('PipeDia', values_list[13])
 #         Hplot = 0, Hdebug = 0, Hdebreif = 0, Hpause = 0, \
 #         H2plot = 0, H2debug = 0, H2debreif = 0, H2pause = 0)
 
-KN1D( values_list[3], values_list[4], values_list[5], 50, values_list[7], values_list[8], values_list[9], values_list[10], values_list[11], values_list[13], values_list[14])
+kn1d( values_list[3], values_list[4], values_list[5], 50, values_list[7], values_list[8], values_list[9], values_list[10], values_list[11], values_list[13], values_list[14])
 
 
 

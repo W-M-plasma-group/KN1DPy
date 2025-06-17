@@ -1,12 +1,12 @@
 import numpy as np
 from scipy import interpolate
-from create_jh_bscoef import Create_JH_BSCoef
+from create_jh_bscoef import create_jh_bscoef
 import os.path
 # Evaluates the r0(p) and r1(p) coefficients from Johnson-Hinnov tables 1 or 2.
 # Gwendolyn Galleher 
 
 
-def JHR_Coef(Density, Te, Ion, p, create = 0, no_null = 0, g=None):
+def jhr_coef(Density, Te, Ion, p, create = 0, no_null = 0, g=None):
 
 
 # Input:
@@ -32,7 +32,7 @@ def JHR_Coef(Density, Te, Ion, p, create = 0, no_null = 0, g=None):
     A_Lyman=g.JH_Coef_A_Lyman
     A_Balmer=g.JH_Coef_A_Balmer
     if create or not os.path.exists('jh_bscoef.npz'):
-        Create_JH_BSCoef()
+        create_jh_bscoef()
     if LogR_BSCoef is None:
         # this is where old data is restored 
         s=np.load('jh_bscoef.npz')

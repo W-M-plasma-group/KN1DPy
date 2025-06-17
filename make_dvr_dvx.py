@@ -7,7 +7,7 @@
 
 import numpy as np
 
-def Make_dVr_dVx(Vr, Vx): # For this to work inputs must be np arrays so I might need to ammend this later to make sure all inputs are arrays
+def make_dvr_dvx(Vr, Vx): # For this to work inputs must be np arrays so I might need to ammend this later to make sure all inputs are arrays
 
     Vr=np.array(Vr)
     Vx=np.array(Vx) # sets inputs to np.array if they aren't already; resolves earlier comment - nh

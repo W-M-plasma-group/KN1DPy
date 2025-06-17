@@ -14,7 +14,7 @@ from poly import poly
 #               transfer cross section 
 # Gwendolyn Galleher 
 
-def Sigma_EL_HH_HH( E, vis = 0):
+def sigma_el_hh_hh( E, vis = 0):
     E = np.array([E])
     _E = E.astype(float)
     # ensures 3.03e0 < _E < 1.01e4

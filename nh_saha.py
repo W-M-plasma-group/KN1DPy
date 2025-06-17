@@ -21,7 +21,7 @@ import numpy as np
 #  a = {m^3 eV^1.5)
 #  a=3.310e-28
 
-def NHSaha(Density, Te, p):
+def nh_saha(Density, Te, p):
     if len(Density) != len(Te):
         raise Exception('Number of Elements of Density and Te are different!')
     if hasattr(p, "__len__"):

@@ -15,7 +15,7 @@ from poly import poly
 
 # Gwendolyn Galleher
 
-def Sigma_EL_H_H(E, vis = 0):
+def sigma_el_h_h(E, vis = 0):
     E = np.array([E])
     _E = E.astype(float)
     # ensures 3.03e0 < _E < 1.01e4

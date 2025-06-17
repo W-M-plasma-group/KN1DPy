@@ -3,7 +3,7 @@ from sigmav_ion_hh import sigmav_ion_hh
 from sigmav_h1s_h1s_hh import sigmav_h1s_h1s_hh
 from sigmav_h1s_h2s_hh import sigmav_h1s_h2s_hh
 from sigmav_cx_hh import sigmav_cx_hh
-from create_vrvxmesh import create_VrVxMesh # fixed capitalization
+from create_vr_vx_mesh import create_vr_vx_mesh # fixed capitalization
 from scipy import interpolate
 
 from global_vars import mH, q, k_boltz, Twall
@@ -46,7 +46,7 @@ def create_kinetic_h2_mesh(nv, mu, x, Ti, Te, n, PipeDia, E0 = 0, ixE0 = 0, irE0
 
     #Setup a vx,vr mesh based on raw data to get typical vx, vr values
     #probably need to do stuff about the namespace because of the differences between IDL and python
-    vx, vr, Tnorm, ixE0, irE0 = create_VrVxMesh(nv, Tifine) # pulled necessary variables from the return of create_vrvxmesh - GG
+    vx, vr, Tnorm, ixE0, irE0 = create_vr_vx_mesh(nv, Tifine) # pulled necessary variables from the return of create_vrvxmesh - GG
 
     vth = np.sqrt(2*q*Tnorm/(mu*mH))
 
@@ -93,6 +93,6 @@ def create_kinetic_h2_mesh(nv, mu, x, Ti, Te, n, PipeDia, E0 = 0, ixE0 = 0, irE0
     interpfunc = interpolate.interp1d(xfine, PipeDiafine)
     PipeDiaH2=interpfunc(xH2)
 
-    vx, vr, Tnorm, ixE0, irE0 = create_VrVxMesh(nv,TiH2) # changed how we pulled the variables - GG
+    vx, vr, Tnorm, ixE0, irE0 = create_vr_vx_mesh(nv,TiH2) # changed how we pulled the variables - GG
 
     return xH2, TiH2, TeH2, neH2, PipeDiaH2, vx, vr, Tnorm # returned necessary varibales - GG

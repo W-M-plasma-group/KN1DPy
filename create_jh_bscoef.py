@@ -5,7 +5,7 @@ import scipy.interpolate
 # coefficients for parameters in Johnson - Hinov rate equations. 
 #Gwendolyn Galleher 
 
-def Create_JH_BSCoef():
+def create_jh_bscoef():
     DENS = np.array([1e10, 1e11, 1e12, 1e13, 1e14, 1e15, 1e16])
     TEMP = np.array([0.245, 0.69, 1.38, 2.76, 5.52, 11.0, 22.1, 44.1, 88.0, 176.5, 706.0])
 

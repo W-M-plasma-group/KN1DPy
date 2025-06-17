@@ -7,15 +7,15 @@ from edit_keys import edit_keys
 from create_kinetic_h2_mesh import create_kinetic_h2_mesh
 from create_shifted_maxwellian import create_shifted_maxwellian # fixed function name - nh
 from integ_bl import integ_bl
-from Make_dVr_dVx import Make_dVr_dVx
+from make_dvr_dvx import make_dvr_dvx
 from sval import sval
 from interp_fvrvxx import interp_fvrvxx
 from create_kinetic_h_mesh import create_kinetic_h_mesh
 from kinetic_h import kinetic_h 
-from kinetic_h2 import Kinetic_H2 
+from kinetic_h2 import kinetic_h2 
 from interp_scalarx import interp_scalarx 
-from lyman_alpha import Lyman_Alpha
-from balmer_alpha import Balmer_Alpha 
+from lyman_alpha import lyman_alpha
+from balmer_alpha import balmer_alpha
 
 from global_vars import mH, q, k_boltz, Twall
 from global_vars import global_vars
@@ -32,7 +32,7 @@ from global_vars import global_vars
 # History: First coding 5/1/2001  -  B. LaBombard
  
 
-def KN1D(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
+def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
          truncate = 1.0e-3, refine = 0, File = '', NewFile = 0, ReadInput = 0, \
          error = 0, compute_errors = 0, plot = 0, debug = 0, debrief = 0, pause = 0, \
          Hplot = 0, Hdebug = 0, Hdebrief = 0, Hpause = 0, \
@@ -346,9 +346,9 @@ def KN1D(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
         #   Test for v0_bar consistency in the numerics by computing it from a half maxwellian at the wall temperature
 
         vthM=np.sqrt(2*q*TnormM/(mu*mH))
-        Vr2pidVrM,VrVr4pidVrM,dVxM=Make_dVr_dVx(vrM,vxM)[0:3]
+        Vr2pidVrM,VrVr4pidVrM,dVxM=make_dvr_dvx(vrM,vxM)[0:3]
         vthA=np.sqrt(2*q*TnormA/(mu*mH))
-        Vr2pidVrA,VrVr4pidVrA,dVxA=Make_dVr_dVx(vrA,vxA)[0:3]
+        Vr2pidVrA,VrVr4pidVrA,dVxA=make_dvr_dvx(vrA,vxA)[0:3]
 
         nbarHMax=np.sum(Vr2pidVrM*np.matmul(dVxM,fh2BC))
         vbarM=2*vthM*np.sum(Vr2pidVrM*np.matmul(vxM*dVxM,fh2BC))/nbarHMax
@@ -381,6 +381,8 @@ def KN1D(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
             #   Plotting - will maybe add later
 
         #   Starting back at line 429 from IDL code
+
+        print("Satisfaction condition: ", truncate)
             
         if oldrun:
             # checks if the previous run satisfies the required conditions 
@@ -417,7 +419,7 @@ def KN1D(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
                 Compute_H_Source=1
                 H2compute_errors=compute_errors and H2debrief # is this accurate, how can it be equal to both? - GG 2/15
                 fH2, nHP, THP, nH2, GammaxH2, VxH2, pH2, TH2, qxH2, qxH2_total, Sloss, \
-                    QH2, RxH2, QH2_total, AlbedoH2, WallH2, fSH, SH, SP, SHP, NuE, NuDis, ESH, Eaxis, error = Kinetic_H2(\
+                    QH2, RxH2, QH2_total, AlbedoH2, WallH2, fSH, SH, SP, SHP, NuE, NuDis, ESH, Eaxis, error = kinetic_h2(\
                         vxM, vrM, xH2, TnormM, mu, TiM, TeM, nM, vxiM, fh2BC, GammaxH2BC, NuLoss, PipeDiaM, fHM, SH2, fH2, nH2, THP, \
                         truncate=truncate, Simple_CX=Simple_CX, Max_Gen=max_gen, Compute_H_Source=Compute_H_Source,\
                         H2_H2_EL=H2_H2_EL,H2_P_EL=H2_P_EL,H2_H_EL=H2_H_EL,H2_HP_CX=H2_HP_CX, ni_correct=ni_correct,\
@@ -527,6 +529,8 @@ def KN1D(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
                         print(prompt, 'Normalized H2 <-> H Momentum Transfer Error: ', sval(nDRx))
                 Delta_nH2 = np.abs(nH2-nH2s)
                 nDelta_nH2=np.max(Delta_nH2/np.max(nH2))
+
+                print("nDelta_nH2: ", nDelta_nH2)
         
         # fH_fH2_done code section  
         error = 0
@@ -554,8 +558,8 @@ def KN1D(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
             gammaxH_minus[k] = vthM * np.sum(Vr2pidVrM* np.dot(fH2[k][i_n][:], vxM[i_n] * dVxM[i_n]))
         
         # Compute Lyman and Balmer
-        Lyman = Lyman_Alpha(nA, TeA, nH, no_null = 1, g=g)
-        Balmer = Balmer_Alpha(nA, TeA, nH, no_null = 1, g=g)
+        Lyman = lyman_alpha(nA, TeA, nH, no_null = 1, g=g)
+        Balmer = balmer_alpha(nA, TeA, nH, no_null = 1, g=g)
 
         fH_s=fH
         fH2_s=fH2

@@ -1,6 +1,6 @@
 import numpy as np
-from create_vrvxmesh import *
-from Make_dVr_dVx import *
+from create_vr_vx_mesh import *
+from make_dvr_dvx import *
 
 def make_sigmav(E_particle, mu_particle, T_target, mu_target, sigma_function):
 
@@ -18,8 +18,8 @@ def make_sigmav(E_particle, mu_particle, T_target, mu_target, sigma_function):
   trange=np.sort(trange)
   nvb=100
 
-  vxb, vrb, Tnorm, ixE0, irE0 = create_VrVxMesh(nvb,trange)
-  Vr2pidVrb, VrVr4pidVrb, dVxb = Make_dVr_dVx(vrb,vxb)[:3] 
+  vxb, vrb, Tnorm, ixE0, irE0 = create_vr_vx_mesh(nvb,trange)
+  Vr2pidVrb, VrVr4pidVrb, dVxb = make_dvr_dvx(vrb,vxb)[:3] 
   # fixed lines to properly use create_VrVxMesh and Make_dVr_dVx to set variables - nh
 
   mH=1.6726231e-27

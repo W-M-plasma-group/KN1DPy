@@ -1,7 +1,7 @@
 import numpy as np
-from NHSaha import NHSaha
-from create_jh_bscoef import Create_JH_BSCoef
-from JHR_coef import JHR_Coef # fixed capotalization - GG
+from nh_saha import nh_saha
+from create_jh_bscoef import create_jh_bscoef
+from jhr_coef import jhr_coef # fixed capotalization - GG
 import os.path
 #   Computes Balmer-alpha emissivity (watts m^-3) given the local
 # electron density, electron temperature, and ground-state
@@ -14,7 +14,7 @@ import os.path
 #   (2) Multiply by the n=3->2 spontaneous emission coefficient
 #   (3) Convert to watts/m^3
 
-def Balmer_Alpha(Density, Te, N0, photons = 0, create = 0, no_null = 0, g=None):
+def balmer_alpha(Density, Te, N0, photons = 0, create = 0, no_null = 0, g=None):
     #________________________________________________________________________________
     # Input:
     #  	Density	- fltarr, electron density (=hydrogen ion density) (m^-3)
@@ -43,7 +43,7 @@ def Balmer_Alpha(Density, Te, N0, photons = 0, create = 0, no_null = 0, g=None):
     A_Lyman=g.JH_Coef_A_Lyman
     A_Balmer=g.JH_Coef_A_Balmer
     if create or not os.path.exists('jh_bscoef.npz'):
-        Create_JH_BSCoef()
+        create_jh_bscoef()
     if LogR_BSCoef is None:
         # this is where old data is restored 
         s=np.load('jh_bscoef.npz')
@@ -74,10 +74,10 @@ def Balmer_Alpha(Density, Te, N0, photons = 0, create = 0, no_null = 0, g=None):
         raise Exception(' Number of elements of Density and N0 are different! ')
     result = np.full(Density.shape,1.0e32)
     photons = np.full(Density.shape,1.0e32)
-    r03 = JHR_Coef(Density, Te, 0, 3, no_null = no_null, g=g)
-    r13 = JHR_Coef(Density, Te, 1, 3, no_null = no_null, g=g)
-    NHSaha1 = NHSaha(Density, Te, 1)
-    NHSaha3 = NHSaha(Density, Te, 3)
+    r03 = jhr_coef(Density, Te, 0, 3, no_null = no_null, g=g)
+    r13 = jhr_coef(Density, Te, 1, 3, no_null = no_null, g=g)
+    NHSaha1 = nh_saha(Density, Te, 1)
+    NHSaha3 = nh_saha(Density, Te, 3)
     ok=np.array([])
     for i in range(0, np.size(Density)):
         if 0 < N0[i] < 1e32 and r03[i] < 1.0e32 and r13[i] < 1.0e32 and NHSaha1[i] < 1.0e32 and NHSaha3[i] < 1.0e32:

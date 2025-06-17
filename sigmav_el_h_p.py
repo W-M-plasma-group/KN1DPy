@@ -9,7 +9,7 @@ import numpy as np
 # Helium Ions, Neutrals, and Isotopes  by D.R. Schultz, S. Yu. Ovchinnikov, and S.V.
 # Passovets, page 301.
 
-def SigmaV_EL_H_P( T, E, use_Bspline = 0):
+def sigmav_el_h_p( T, E, use_Bspline = 0):
     #  Input:
     #	T	- fltarr(*) or float, proton temperature (eV)
     #	E	- fltarr(*) or float, atom mono-energy (eV)

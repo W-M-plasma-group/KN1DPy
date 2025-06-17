@@ -1,10 +1,10 @@
 import numpy as np 
 from scipy import interpolate
 from sigmav_ion_h0 import sigmav_ion_h0
-from create_vrvxmesh import create_VrVxMesh
+from create_vr_vx_mesh import create_vr_vx_mesh
 from collrad_sigmav_ion_h0 import collrad_sigmav_ion_h0
 from sigma_cx_h0 import sigma_cx_h0
-from JHS_coef import JHS_coef
+from jhs_coef import jhs_coef
 
 from global_vars import mH, q
 
@@ -58,7 +58,7 @@ def create_kinetic_h_mesh(nv, mu, x, Ti, Te, n, PipeDia, E0 = 0, ixE0 = 0 ,irE0 
     PipeDiafine = interpfunc(xfine)
 
     # Set up a vx, vr mesh based on raw data to get typical vx, vr values 
-    vx, vr, Tnorm, ixE0, ixE0 = create_VrVxMesh(nv, Tifine) # fixed error from not assigning all outputs - GG
+    vx, vr, Tnorm, ixE0, ixE0 = create_vr_vx_mesh(nv, Tifine) # fixed error from not assigning all outputs - GG
     vth = np.sqrt( 2 * q * Tnorm / (mu * mH))
     minVr = vth * min(vr)
     minE0 = 0.5 * mH * minVr * minVr / q
@@ -76,7 +76,7 @@ def create_kinetic_h_mesh(nv, mu, x, Ti, Te, n, PipeDia, E0 = 0, ixE0 = 0 ,irE0 
         ioniz_rate = collrad_sigmav_ion_h0(nfine, Tefine)
     else:
         if JH:
-            ioniz_rate = JHS_coef(nfine, Tefine, no_null = True, g=g) # deleted unecessary variable - GG
+            ioniz_rate = jhs_coef(nfine, Tefine, no_null = True, g=g) # deleted unecessary variable - GG
         else:
             ioniz_rate = sigmav_ion_h0(Tefine)
     RR = nfine * ioniz_rate + nfine * sigma_cx_h0(Tifine, np.array([minE0] * nxfine)) + gamma_wall # replaced size(nxfine) with nxfine
@@ -115,5 +115,5 @@ def create_kinetic_h_mesh(nv, mu, x, Ti, Te, n, PipeDia, E0 = 0, ixE0 = 0 ,irE0 
     neH = interpfunc(xH)
     interpfunc = interpolate.interp1d(xfine, PipeDiafine)
     PipeDiaH = interpfunc(xH)
-    vx, vr, Tnorm, ixE0, ixE0 = create_VrVxMesh(nv, TiH) # fixed error from not assigning all outputs - GG
+    vx, vr, Tnorm, ixE0, ixE0 = create_vr_vx_mesh(nv, TiH) # fixed error from not assigning all outputs - GG
     return xH, TiH, TeH, neH, PipeDiaH, vx, vr, Tnorm

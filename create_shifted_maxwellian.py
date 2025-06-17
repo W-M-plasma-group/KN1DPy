@@ -1,6 +1,6 @@
 import numpy as np
 from sval import sval
-from Make_dVr_dVx import Make_dVr_dVx
+from make_dvr_dvx import make_dvr_dvx
 from create_shifted_maxwellian_include import create_shifted_maxwellian_include
 from global_vars import mH, q
 
@@ -16,7 +16,7 @@ def create_shifted_maxwellian(vr,vx,Tmaxwell,vx_shift,mu,mol,Tnorm): # fixed fun
 
   shifted_maxwellian_debug=0
 
-  Vr2pidVr,VrVr4pidVr,dVx,vrL,vrR,vxL,vxR,Vol,Vth_DVx,Vx_DVx,Vr_DVr,vr2vx2_2D,jpa,jpb,jna,jnb = Make_dVr_dVx(vr,vx)
+  Vr2pidVr,VrVr4pidVr,dVx,vrL,vrR,vxL,vxR,Vol,Vth_DVx,Vx_DVx,Vr_DVr,vr2vx2_2D,jpa,jpb,jna,jnb = make_dvr_dvx(vr,vx)
 
   return create_shifted_maxwellian_include(vr,vx,Tnorm,vx_shift,Tmaxwell,shifted_maxwellian_debug,mu,mol,nx,nvx,nvr,vth,vth2,
                                            maxwell,vr2vx2_ran2,Vr2pidVr,dVx,Vol,Vth_DVx,Vx_DVx,Vr_DVr,vr2vx2_2D,jpa,jpb,jna,jnb)

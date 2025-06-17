@@ -1,5 +1,5 @@
 import numpy as np
-from Make_dVr_dVx import Make_dVr_dVx
+from make_dvr_dvx import make_dvr_dvx
 from create_shifted_maxwellian import create_shifted_maxwellian
 from sigmav_ion_hh import sigmav_ion_hh
 from sigmav_h1s_h1s_hh import sigmav_h1s_h1s_hh
@@ -13,9 +13,9 @@ from sigmav_p_hn2_hp import sigmav_p_hn2_hp
 from sigmav_p_p_hp import sigmav_p_p_hp
 from sigmav_h1s_hn_hp import sigmav_h1s_hn_hp
 from sigma_cx_hh import sigma_cx_hh
-from sigma_el_h_hh import Sigma_El_H_HH
-from sigma_el_p_hh import Sigma_EL_P_HH
-from sigma_el_hh_hh import Sigma_EL_HH_HH
+from sigma_el_h_hh import sigma_el_h_hh
+from sigma_el_p_hh import sigma_el_p_hh
+from sigma_el_hh_hh import sigma_el_hh_hh
 from create_shifted_maxwellian_include import create_shifted_maxwellian_include
 from sigmav_cx_hh import sigmav_cx_hh
 from sign import sign
@@ -59,7 +59,7 @@ import copy
 # Note: Variable names contain characters to help designate species -
 #       atomic neutral (H), molecular neutral (H2), molecular ion (HP), proton (i) or (P)
 
-def Kinetic_H2(vx, vr, x, Tnorm, mu, Ti, Te, n, vxi, fH2BC, GammaxH2BC, NuLoss, PipeDia, fH, SH2,\
+def kinetic_h2(vx, vr, x, Tnorm, mu, Ti, Te, n, vxi, fH2BC, GammaxH2BC, NuLoss, PipeDia, fH, SH2,\
                fH2, nHP, THP, \
                truncate = 1.0e-4, Simple_CX = 1, Max_Gen = 50,  Compute_H_Source = 0, \
                No_Sawada = 0, H2_H2_EL = 0, H2_P_EL = 0, H2_H_EL = 0, H2_HP_CX = 0, \
@@ -683,7 +683,7 @@ def Kinetic_H2(vx, vr, x, Tnorm, mu, Ti, Te, n, vxi, fH2BC, GammaxH2BC, NuLoss, 
     CI_H2_H2_error = np.zeros(nx)
     Maxwell = np.zeros((nvr,nvx,nx)).T
 
-    Vr2pidVr,VrVr4pidVr,dVx,VrL,VrR,VxL,VxR,vol,Vth_DeltaVx,Vx_DeltaVx,Vr_DeltaVr,Vr2Vx2,jpa,jpb,jna,jnb = Make_dVr_dVx(vr, vx)
+    Vr2pidVr,VrVr4pidVr,dVx,VrL,VrR,VxL,VxR,vol,Vth_DeltaVx,Vx_DeltaVx,Vr_DeltaVr,Vr2Vx2,jpa,jpb,jna,jnb = make_dvr_dvx(vr, vx)
     
     # Vr^2-2*Vx^2
     for i in range(0, nvr):
@@ -977,7 +977,7 @@ def Kinetic_H2(vx, vr, x, Tnorm, mu, Ti, Te, n, vxi, fH2BC, GammaxH2BC, NuLoss, 
 
         # Compute sigma_H2_H * v_v at all possible relative velocities
         _Sig = np.zeros((nvr * nvx * nvr * nvx ,ntheta)).T
-        _Sig[:] = (v_v * Sigma_El_H_HH(v_v2 * (0.5 * mH * Vth2 / q))).reshape(_Sig.shape)
+        _Sig[:] = (v_v * sigma_el_h_hh(v_v2 * (0.5 * mH * Vth2 / q))).reshape(_Sig.shape)
 
         # Note: using H energy here for cross-section tabulated as H -> H2
         # Set SIG_H2_H = vr' x vx_vx x Integral{v_v * sigma_H2_H} over theta = 0, 2pi times differential velocity space element Vr'2pidVr'*dVx
@@ -994,7 +994,7 @@ def Kinetic_H2(vx, vr, x, Tnorm, mu, Ti, Te, n, vxi, fH2BC, GammaxH2BC, NuLoss, 
 
         # Compute sigma_H2_P * v_v at all possible relative velocities
         _Sig = np.zeros((nvr * nvx * nvr * nvx, ntheta)).T
-        _Sig[:] = (v_v * Sigma_EL_P_HH(v_v2 * (0.5 * mH * Vth2 / q))).reshape(_Sig.shape)
+        _Sig[:] = (v_v * sigma_el_p_hh(v_v2 * (0.5 * mH * Vth2 / q))).reshape(_Sig.shape)
 
         # Note: using H energy here for cross-section tabulated as p -> H2
 
@@ -1013,7 +1013,7 @@ def Kinetic_H2(vx, vr, x, Tnorm, mu, Ti, Te, n, vxi, fH2BC, GammaxH2BC, NuLoss, 
 
         # Compute sigma_H2_H2 * vr2_vx2 * v_v at all possible relative velocities 
         _Sig = np.zeros((nvr * nvx * nvr * nvx, ntheta)).T
-        _Sig[:] = (vr2_vx2 * Sigma_EL_HH_HH(v_v2 * (mH * mu * Vth2 / q), vis = 1) / 8.0).reshape(_Sig.shape)
+        _Sig[:] = (vr2_vx2 * sigma_el_hh_hh(v_v2 * (mH * mu * Vth2 / q), vis = 1) / 8.0).reshape(_Sig.shape)
 
         # Note : For viscosity, the cross section for D -> D is the same function of 
         # center of mass energy as H -> H.

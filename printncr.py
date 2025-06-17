@@ -1,10 +1,10 @@
-from Revon import Revon
-from Revoff import Revoff
+from revon import revon
+from revoff import revoff
 
 def printncr(string, rev=None):
   if rev!=None:
-    Revon()
+    revon()
     print(string, end="")
-    Revoff()
+    revoff()
   else:
     print(string, end="")

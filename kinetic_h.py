@@ -1,17 +1,17 @@
 import numpy as np
 from reverse import reverse
-from Make_dVr_dVx import Make_dVr_dVx
+from make_dvr_dvx import make_dvr_dvx
 from create_shifted_maxwellian_include import create_shifted_maxwellian_include
 
 from collrad_sigmav_ion_h0 import collrad_sigmav_ion_h0
-from JHS_coef import JHS_coef
+from jhs_coef import jhs_coef
 from sigmav_ion_h0 import sigmav_ion_h0
-from JHAlpha_coef import JHAlpha_coef
+from jhalpha_coef import jhalpha_coef
 from sigmav_rec_h1s import sigmav_rec_h1s
 from sigma_cx_h0 import sigma_cx_h0
-from sigma_el_h_h import Sigma_EL_H_H
-from sigma_el_h_hh import Sigma_El_H_HH
-from sigma_el_p_h import Sigma_EL_P_H
+from sigma_el_h_h import sigma_el_h_h
+from sigma_el_h_hh import sigma_el_h_hh
+from sigma_el_p_h import sigma_el_p_h
 from sigmav_cx_h0 import sigmav_cx_h0
 
 from sign import sign
@@ -614,7 +614,7 @@ def kinetic_h(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,TH
 	CI_H_H_error=np.zeros(nx)
 	Maxwell=np.zeros((nx,nvx,nvr))
 
-	Vr2pidVr,VrVr4pidVr,dVx,vrL,vrR,vxL,vxR,Vol,Vth_DVx,Vx_DVx,Vr_DVr,Vr2Vx2_2D,jpa,jpb,jna,jnb=Make_dVr_dVx(vr,vx)
+	Vr2pidVr,VrVr4pidVr,dVx,vrL,vrR,vxL,vxR,Vol,Vth_DVx,Vx_DVx,Vr_DVr,Vr2Vx2_2D,jpa,jpb,jna,jnb=make_dvr_dvx(vr,vx)
 
 	#	Vr^2-2*Vx^2
 
@@ -827,14 +827,14 @@ def kinetic_h(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,TH
 			sigv[1,:]=collrad_sigmav_ion_h0(n,Te) # from COLLRAD code (DEGAS-2)
 		else:
 			if JH:
-				sigv[1,:]=JHS_coef(n,Te,no_null=True, g=g) # Johnson-Hinnov, limited Te range; fixed JHS_coef capitalization
+				sigv[1,:]=jhs_coef(n,Te,no_null=True, g=g) # Johnson-Hinnov, limited Te range; fixed JHS_coef capitalization
 			else:
 				sigv[1,:]=sigmav_ion_h0(Te) # from Janev et al., up to 20keV
 
 		#	Reaction R2:  e + H(+) -> H(1s) + hv  (radiative recombination)
 
 		if JH:
-			sigv[2,:]=JHAlpha_coef(n,Te,no_null=True, g=g) # fixed JHAlpha_coef capitalization
+			sigv[2,:]=jhalpha_coef(n,Te,no_null=True, g=g) # fixed JHAlpha_coef capitalization
 		else:
 			sigv[2,:]=sigmav_rec_h1s(Te)
 
@@ -928,7 +928,7 @@ def kinetic_h(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,TH
 		#	Compute sigma_H_H * vr2_vx2 * v_v at all possible relative velocities
 
 		_Sig=np.zeros((ntheta,nvr*nvx*nvr*nvx))
-		_Sig[:]=(vr2_vx2*v_v*Sigma_EL_H_H(v_v2*(.5*mH*mu*Vth2/q),vis=True)/8).reshape(_Sig.shape)
+		_Sig[:]=(vr2_vx2*v_v*sigma_el_h_h(v_v2*(.5*mH*mu*Vth2/q),vis=True)/8).reshape(_Sig.shape)
 
 		#	Note: For viscosity, the cross section for D -> D is the same function of
 		#		center of mass energy as H -> H.
@@ -952,7 +952,7 @@ def kinetic_h(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,TH
 		#	Compute sigma_H_H2 * v_v at all possible relative velocities
 
 		_Sig=np.zeros((ntheta,nvr*nvx*nvr*nvx))
-		_Sig[:]=(v_v*Sigma_El_H_HH(v_v2*(.5*mH*Vth2/q))).reshape(_Sig.shape)
+		_Sig[:]=(v_v*sigma_el_h_hh(v_v2*(.5*mH*Vth2/q))).reshape(_Sig.shape)
 
 		#	NOTE: using H energy here for cross-sections tabulated as H->H2
 
@@ -975,7 +975,7 @@ def kinetic_h(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,TH
 		#	Compute sigma_H_P * v_v at all possible relative velocities
 
 		_Sig=np.zeros((ntheta,nvr*nvx*nvr*nvx))
-		_Sig[:]=(v_v*Sigma_EL_P_H(v_v2*(.5*mH*Vth2/q))).reshape(_Sig.shape)
+		_Sig[:]=(v_v*sigma_el_p_h(v_v2*(.5*mH*Vth2/q))).reshape(_Sig.shape)
 
 		#	Set SIG_H_P = vr' x vx_vx x Integral{v_v*sigma_H_P} over theta=0,
 		#		2pi times differential velocity space element Vr'2pidVr'*dVx'
@@ -1228,7 +1228,7 @@ def kinetic_h(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,TH
 		if not do_fH_done:
 			do_next_generation=True
 			while do_next_generation:
-				print('check next_generation')
+				#print('check next_generation')
 				if igen+1> Max_Gen:
 					if debrief>0:
 						print(prompt+'Completed '+sval(Max_Gen)+' generations. Returning present solution...')

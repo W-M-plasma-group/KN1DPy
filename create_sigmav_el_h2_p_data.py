@@ -1,14 +1,14 @@
 import numpy as np
 from make_sigmav import make_sigmav
 from sval import sval
-from sigma_el_p_hh import Sigma_EL_P_HH # added import for sigma_function - nh
+from sigma_el_p_hh import sigma_el_p_hh # added import for sigma_function - nh
 
 def create_sigmav_el_h2_p_data():
 
     #Creates a 2D SigmaV data table in particle energy and target temperature
     #   and saves it as a save set.
     
-    sigma_function=Sigma_EL_P_HH
+    sigma_function=sigma_el_p_hh
 
     mE=50
     Emin, Emax = 0.1, 1e3

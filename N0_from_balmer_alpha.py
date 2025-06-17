@@ -1,10 +1,12 @@
 import numpy as np
-from create_jh_bscoef import Create_JH_BSCoef
-from JHR_Coef import JHR_Coef
-from NHSaha import NHSaha
-from JHS_coef import JHS_coef
-from JHAlpha_coef import JHAlpha_coef
+from create_jh_bscoef import create_jh_bscoef
+from jhr_coef import jhr_coef
+from nh_saha import nh_saha
+from jhs_coef import jhs_coef
+from jhalpha_coef import jhalpha_coef
 import os.path
+
+
 def N0_from_balmer_alpha(B_Alpha, Density, Te , Source = 0, Ionization = 0,Recombination = 0, create = 0, g=None):
     #________________________________________________________________________________
 # Input:
@@ -33,7 +35,7 @@ def N0_from_balmer_alpha(B_Alpha, Density, Te , Source = 0, Ionization = 0,Recom
     A_Lyman=g.JH_Coef_A_Lyman
     A_Balmer=g.JH_Coef_A_Balmer
     if create or not os.path.exists('jh_bscoef.npz'):
-        Create_JH_BSCoef()
+        create_jh_bscoef()
     if LogR_BSCoef is None:
         # this is where old data is restored 
         s=np.load('jh_bscoef.npz')
@@ -68,12 +70,12 @@ def N0_from_balmer_alpha(B_Alpha, Density, Te , Source = 0, Ionization = 0,Recom
     Source = N0
     Ionization = N0
     Recombination = N0
-    r03 = JHR_Coef(Density, Te, 0, 3, g=g)
-    r13 = JHR_Coef(Density, Te, 1, 3, g=g)
-    NHSaha1 = NHSaha(Density, Te, 1)
-    NHSaha3 = NHSaha(Density, Te, 3)
-    S = JHS_coef(Density, Te, g=g)
-    Alpha = JHAlpha_coef(Density, Te, g=g)
+    r03 = jhr_coef(Density, Te, 0, 3, g=g)
+    r13 = jhr_coef(Density, Te, 1, 3, g=g)
+    NHSaha1 = nh_saha(Density, Te, 1)
+    NHSaha3 = nh_saha(Density, Te, 3)
+    S = jhs_coef(Density, Te, g=g)
+    Alpha = jhalpha_coef(Density, Te, g=g)
     for i in range(0, np.size(Density)):
         if 0 < B_Alpha[i] < 1e32 and r03[i] < 1.0e32 and r13[i] < 1.0e32 and \
             NHSaha1 < 1.0e32 and NHSaha3 < 1.0e32 and 0 <  S < 1.0e32 and 0 < Alpha < 1.0e32:

@@ -2,7 +2,7 @@ import numpy as np
 from warnings import warn
 from scipy import interpolate
 
-from Make_dVr_dVx import Make_dVr_dVx
+from make_dvr_dvx import make_dvr_dvx
 from locate import locate
 from sval import sval
 
@@ -42,6 +42,11 @@ def interp_fvrvxx(fa,Vra,Vxa,Xa,Tnorma,Vrb,Vxb,Xb,Tnormb,do_warn=None, debug=0, 
     #		  a warning message is generated.
 
     prompt='INTERP_FVRVXX => '
+
+    # NOTE Dubugging Print Statements, intial version has different sizes between global and given, causes issues when checking 
+    # print("Global: ", g.INTERP_FVRVXX_internal1_vra1)
+    # print("First VrA: ", Vra)
+    # print("First VrB: ", Vrb)
 
     #   Calls INTERP_FVRVXX_internal1 and INTERP_FVRVXX_internal2 common blocks
     vra1=g.INTERP_FVRVXX_internal1_vra1
@@ -103,17 +108,17 @@ def interp_fvrvxx(fa,Vra,Vxa,Xa,Tnorma,Vrb,Vxb,Xb,Tnormb,do_warn=None, debug=0, 
 
     fb=np.zeros((nxb,nvxb,nvrb)) # added parenthesis - GG
 
-    make_dvr_dvx_out=Make_dVr_dVx(Vra,Vxa)
+    make_dvr_dvx_out=make_dvr_dvx(Vra,Vxa)
     Vr2pidVra,VrVr4pidVra,dVxa,vraL,vraR,vxaL,vxaR=make_dvr_dvx_out[:7]
     Vra2Vxa2=make_dvr_dvx_out[11]
-    Vr2pidVrb,VrVr4pidVrb,dVxb,vrbL,vrbR,vxbL,vxbR,Vol,Vth_DVx,Vx_DVx,Vr_DVr,Vrb2Vxb2,jpa,jpb,jna,jnb=Make_dVr_dVx(Vrb,Vxb)
+    Vr2pidVrb,VrVr4pidVrb,dVxb,vrbL,vrbR,vxbL,vxbR,Vol,Vth_DVx,Vx_DVx,Vr_DVr,Vrb2Vxb2,jpa,jpb,jna,jnb=make_dvr_dvx(Vrb,Vxb)
 
     #   Determine if Weight was already computed by checking vra_s,vxa_s,Tnorma_s,vrb_s,vxb_s,Tnormb_s for cases 1 and 2
 
     w1_active=0
     w1_match=0
 
-    if not vra1 is None:
+    if (not vra1 is None) and (nvra == len(vra1)) and (nvrb == len(vrb1)): #NOTE Temporary fix, added check for same size, given not same a saved
         w1_active=1
         test=0
 
@@ -132,7 +137,7 @@ def interp_fvrvxx(fa,Vra,Vxa,Xa,Tnorma,Vrb,Vxb,Xb,Tnormb,do_warn=None, debug=0, 
     w2_active=0
     w2_match=0
 
-    if not vra2 is None:
+    if (not vra2 is None) and (nvra == len(vra1)) and (nvrb == len(vrb1)): #NOTE Temporary fix, added check for same size
         w2_active=1
         test=0
 
@@ -448,6 +453,7 @@ def interp_fvrvxx(fa,Vra,Vxa,Xa,Tnorma,Vrb,Vxb,Xb,Tnormb,do_warn=None, debug=0, 
         #   Plotting stuff was here in the original code
         #   May be added later, but has been left out for now
     #   update INTERP_FVRVXX_internal1 and INTERP_FVRVXX_internal2 common blocks
+
     if w_new:
         if w1_active:
             if debug:
