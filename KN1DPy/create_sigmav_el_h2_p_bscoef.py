@@ -3,7 +3,7 @@ import scipy.interpolate
 
 from .sval import sval
 from .make_sigmav import make_sigmav
-from .sigma_el_p_hh import sigma_el_p_hh # added import for sigma_function
+from .sigma.sigma_el_p_hh import sigma_el_p_hh # added import for sigma_function
 
 #   Creates save set storing Bi-cubic spine interpoaltion 
 # coefficients for parameters in Johnson-Hinov rate equations.

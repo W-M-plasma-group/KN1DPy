@@ -6,12 +6,12 @@ from .type_of import type_of
 from .reverse import reverse
 from .make_dvr_dvx import make_dvr_dvx
 from .create_shifted_maxwellian import create_shifted_maxwellian
-from .sigmav_ion_he_goto import sigmav_ion_he_goto
+from .sigma.sigmav_ion_he_goto import sigmav_ion_he_goto
 from .jhalpha_coef import jhalpha_coef
-from .sigma_el_h_h import sigma_el_h_h
-from .sigma_el_h_hh import sigma_el_h_hh
-from .sigma_el_p_he import sigma_el_p_he
-from .sigmav_cx_h0 import sigmav_cx_h0
+from .sigma.sigma_el_h_h import sigma_el_h_h
+from .sigma.sigma_el_h_hh import sigma_el_h_hh
+from .sigma.sigma_el_p_he import sigma_el_p_he
+from .sigma.sigmav_cx_h0 import sigmav_cx_h0
 from .press_return import press_return
 from .sign import sign
 from .sval import sval

@@ -1,10 +1,10 @@
 import numpy as np 
 from scipy import interpolate
 
-from .sigmav_ion_h0 import sigmav_ion_h0
+from .sigma.sigmav_ion_h0 import sigmav_ion_h0
 from .create_vr_vx_mesh import create_vr_vx_mesh
 from .collrad_sigmav_ion_h0 import collrad_sigmav_ion_h0
-from .sigma_cx_h0 import sigma_cx_h0
+from .sigma.sigma_cx_h0 import sigma_cx_h0
 from .jhs_coef import jhs_coef
 
 from .global_vars import mH, q

@@ -2,7 +2,7 @@ import numpy as np
 
 from .make_sigmav import make_sigmav
 from .sval import sval
-from .sigma_el_p_h import sigma_el_p_h # added import line for sigma_function - nh
+from .sigma.sigma_el_p_h import sigma_el_p_h # added import line for sigma_function - nh
 
 def create_sigmav_el_h_p_data():
 

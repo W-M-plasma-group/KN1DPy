@@ -3,7 +3,7 @@ import scipy.interpolate
 
 from .sval import sval
 from .make_sigmav import make_sigmav
-from .sigma_el_p_h import sigma_el_p_h # added import for sigma function
+from .sigma.sigma_el_p_h import sigma_el_p_h # added import for sigma function
 
 #Creates a save set storing Bi-cubic spline interpolation
 def create_sigmav_el_h_p_bscoef():

@@ -6,14 +6,14 @@ from .create_shifted_maxwellian_include import create_shifted_maxwellian_include
 
 from .collrad_sigmav_ion_h0 import collrad_sigmav_ion_h0
 from .jhs_coef import jhs_coef
-from .sigmav_ion_h0 import sigmav_ion_h0
+from .sigma.sigmav_ion_h0 import sigmav_ion_h0
 from .jhalpha_coef import jhalpha_coef
-from .sigmav_rec_h1s import sigmav_rec_h1s
-from .sigma_cx_h0 import sigma_cx_h0
-from .sigma_el_h_h import sigma_el_h_h
-from .sigma_el_h_hh import sigma_el_h_hh
-from .sigma_el_p_h import sigma_el_p_h
-from .sigmav_cx_h0 import sigmav_cx_h0
+from .sigma.sigmav_rec_h1s import sigmav_rec_h1s
+from .sigma.sigma_cx_h0 import sigma_cx_h0
+from .sigma.sigma_el_h_h import sigma_el_h_h
+from .sigma.sigma_el_h_hh import sigma_el_h_hh
+from .sigma.sigma_el_p_h import sigma_el_p_h
+from .sigma.sigmav_cx_h0 import sigmav_cx_h0
 
 from .sign import sign
 from .sval import sval

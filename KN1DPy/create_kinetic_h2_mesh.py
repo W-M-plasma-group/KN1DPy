@@ -1,10 +1,10 @@
 import numpy as np
 from scipy import interpolate
 
-from .sigmav_ion_hh import sigmav_ion_hh
-from .sigmav_h1s_h1s_hh import sigmav_h1s_h1s_hh
-from .sigmav_h1s_h2s_hh import sigmav_h1s_h2s_hh
-from .sigmav_cx_hh import sigmav_cx_hh
+from .sigma.sigmav_ion_hh import sigmav_ion_hh
+from .sigma.sigmav_h1s_h1s_hh import sigmav_h1s_h1s_hh
+from .sigma.sigmav_h1s_h2s_hh import sigmav_h1s_h2s_hh
+from .sigma.sigmav_cx_hh import sigmav_cx_hh
 from .create_vr_vx_mesh import create_vr_vx_mesh # fixed capitalization
 
 from .global_vars import mH, q, k_boltz, Twall
