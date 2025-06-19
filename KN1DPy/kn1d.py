@@ -554,8 +554,8 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
         i_p = np.argwhere(vxM > 0).T[0]
         i_n = np.argwhere(vxM < 0).T[0]
         for k in range(0, nxH2):
-            gammaxH_plus[k] = vthM * np.sum(Vr2pidVrM* np.dot(fH2[k][i_p][:], vxM[i_p] * dVxM[i_p]))
-            gammaxH_minus[k] = vthM * np.sum(Vr2pidVrM* np.dot(fH2[k][i_n][:], vxM[i_n] * dVxM[i_n]))
+            gammaxH2_plus[k] = vthM * np.sum(Vr2pidVrM* np.dot(fH2[k][i_p][:], vxM[i_p] * dVxM[i_p]))
+            gammaxH2_minus[k] = vthM * np.sum(Vr2pidVrM* np.dot(fH2[k][i_n][:], vxM[i_n] * dVxM[i_n]))
         
         # Compute Lyman and Balmer
         Lyman = lyman_alpha(nA, TeA, nH, no_null = 1, g=g)
