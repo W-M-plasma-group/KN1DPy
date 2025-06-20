@@ -7,11 +7,11 @@ from .sigma.sigmav_h1s_h2s_hh import sigmav_h1s_h2s_hh
 from .sigma.sigmav_cx_hh import sigmav_cx_hh
 from .create_vr_vx_mesh import create_vr_vx_mesh # fixed capitalization
 
-from .global_vars import mH, q, k_boltz, Twall
+from .common import constants as CONST
 
 def create_kinetic_h2_mesh(nv, mu, x, Ti, Te, n, PipeDia, E0 = 0, ixE0 = 0, irE0 = 0, fctr = 1.0): # - removed output variables from input - GG
 
-    v0_bar = np.sqrt(8.0*Twall*q/(np.pi*2*mu*mH))	#directed random velocity of diatomic molecule
+    v0_bar = np.sqrt(8.0*CONST.TWALL*CONST.Q/(np.pi*2*mu*CONST.H_MASS))	#directed random velocity of diatomic molecule
 
     nx=np.size(x)
 
@@ -49,7 +49,7 @@ def create_kinetic_h2_mesh(nv, mu, x, Ti, Te, n, PipeDia, E0 = 0, ixE0 = 0, irE0
     #probably need to do stuff about the namespace because of the differences between IDL and python
     vx, vr, Tnorm, ixE0, irE0 = create_vr_vx_mesh(nv, Tifine) # pulled necessary variables from the return of create_vrvxmesh - GG
 
-    vth = np.sqrt(2*q*Tnorm/(mu*mH))
+    vth = np.sqrt(2*CONST.Q*Tnorm/(mu*CONST.H_MASS))
 
     #Estimate interaction rate with side walls
     nxfine=np.size(xfine)

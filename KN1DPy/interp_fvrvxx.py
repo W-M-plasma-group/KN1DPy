@@ -43,11 +43,6 @@ def interp_fvrvxx(fa,Vra,Vxa,Xa,Tnorma,Vrb,Vxb,Xb,Tnormb,do_warn=None, debug=0, 
 
     prompt='INTERP_FVRVXX => '
 
-    # NOTE Dubugging Print Statements, intial version has different sizes between global and given, causes issues when checking 
-    # print("Global: ", g.INTERP_FVRVXX_internal1_vra1)
-    # print("First VrA: ", Vra)
-    # print("First VrB: ", Vrb)
-
     #   Calls INTERP_FVRVXX_internal1 and INTERP_FVRVXX_internal2 common blocks
     vra1=g.INTERP_FVRVXX_internal1_vra1
     vxa1=g.INTERP_FVRVXX_internal1_vxa1

@@ -1,6 +1,7 @@
 # Contains Class definitions for shared variables primarily used in KN1D
 
 #   From the KN1D_Collisions common block; by default, the given collisions are accounted for during calculations
+#   NOTE These are just constants used for settings, change to config file later - Nicholas Brown
 class KN1D_Collisions:
 
     def __init__(self):

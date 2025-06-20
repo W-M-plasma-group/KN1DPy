@@ -7,11 +7,11 @@ from .collrad_sigmav_ion_h0 import collrad_sigmav_ion_h0
 from .sigma.sigma_cx_h0 import sigma_cx_h0
 from .jhs_coef import jhs_coef
 
-from .global_vars import mH, q
+from .common import constants as CONST
 
-def create_kinetic_h_mesh(nv, mu, x, Ti, Te, n, PipeDia, E0 = 0, ixE0 = 0 ,irE0 = 0,fctr = 1, g=None): # added common block input
+def create_kinetic_h_mesh(nv, mu, x, Ti, Te, n, PipeDia, E0 = 0, ixE0 = 0 ,irE0 = 0,fctr = 1): # added common block input
     # add these lines to improve velocity space resolution (use with care):
-    nv = 20
+    #nv = 20
     # E0[.1]
     JH = 0 
     Use_Collrad_Ionization = 1
@@ -22,14 +22,14 @@ def create_kinetic_h_mesh(nv, mu, x, Ti, Te, n, PipeDia, E0 = 0, ixE0 = 0 ,irE0 
     gamma_wall = np.zeros(nx) # fixed typo - GG
     # for k in range( 0, nx):
     #   if PipeDia[k] > 0:
-    #        gamma_wall[k] = 2*sqrt(2*Ti(k)*q/(2*mH))/PipeDia(k)
+    #        gamma_wall[k] = 2*sqrt(2*Ti(k)*CONST.Q/(2*CONST.H_MASS))/PipeDia(k)
 
     # Estimate total reaction rate for destriction of hydrogen atoms and for interation with side walls
     # RR = n*sigmav_ion_H0(Te)+gamma_wall
     RR = n * sigmav_ion_h0(Te) 
 
     # Set v0 to thermal speed to 10 eV neutral 
-    v0 = np.sqrt( 2 * 10 * q / (mu * mH))
+    v0 = np.sqrt( 2 * 10 * CONST.Q / (mu * CONST.H_MASS))
 
     # Determine x range for atoms by finding distance into plasma where density persists.
     #  dGamma/dx=-nH*RR = v0 dnH/dx = -nH*RR - these two lines are commented in the original code I dont understand them
@@ -60,9 +60,9 @@ def create_kinetic_h_mesh(nv, mu, x, Ti, Te, n, PipeDia, E0 = 0, ixE0 = 0 ,irE0 
 
     # Set up a vx, vr mesh based on raw data to get typical vx, vr values 
     vx, vr, Tnorm, ixE0, ixE0 = create_vr_vx_mesh(nv, Tifine) # fixed error from not assigning all outputs - GG
-    vth = np.sqrt( 2 * q * Tnorm / (mu * mH))
+    vth = np.sqrt( 2 * CONST.Q * Tnorm / (mu * CONST.H_MASS))
     minVr = vth * min(vr)
-    minE0 = 0.5 * mH * minVr * minVr / q
+    minE0 = 0.5 * CONST.H_MASS * minVr * minVr / CONST.Q
 
     # Estimate interaction rate with side walls
     nxfine = np.size(xfine)
