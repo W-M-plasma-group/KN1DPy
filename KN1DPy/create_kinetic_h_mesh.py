@@ -68,7 +68,7 @@ def create_kinetic_h_mesh(nv, mu, x, Ti, Te, n, PipeDia, E0 = 0, ixE0 = 0 ,irE0 
     nxfine = np.size(xfine)
     gamma_wall = np.zeros(nxfine)
     #print(PipeDiafine)
-    for k in range(0, nxfine): # fixed typo on next two lines
+    for k in range(nxfine): # fixed typo on next two lines
         if PipeDiafine[k] > 0:
             gamma_wall[k] = 2 * max(vr) * vth / PipeDiafine[k]
     
@@ -104,7 +104,9 @@ def create_kinetic_h_mesh(nv, mu, x, Ti, Te, n, PipeDia, E0 = 0, ixE0 = 0 ,irE0 
         # lowered dxh_max from 5e-4 to 4e-4; original was giving mesh size errors in kinetic_h - nh
         dxpt = min([dxpt1, dxpt2, dxh_max])
         xpt = xpt - dxpt 
-    xH = np.concatenate([np.array([xminH]), xH[0:np.size(xH) - 1]]) # put xminH in array to fix concatenation error
+        
+    # NOTE Old version, changed -2 to fit idl code xH = np.concatenate([np.array([xminH]), xH[0:np.size(xH) - 1]]) # put xminH in array to fix concatenation error
+    xH = np.concatenate([np.array([xminH]), xH[0:np.size(xH) - 2]])
     # if xH[1] - xH[0] > 0.5 * big_dx:
     #   xH = np.concatenate(xH[0], xH[2:])
 
@@ -116,5 +118,5 @@ def create_kinetic_h_mesh(nv, mu, x, Ti, Te, n, PipeDia, E0 = 0, ixE0 = 0 ,irE0 
     neH = interpfunc(xH)
     interpfunc = interpolate.interp1d(xfine, PipeDiafine)
     PipeDiaH = interpfunc(xH)
-    vx, vr, Tnorm, ixE0, ixE0 = create_vr_vx_mesh(nv, TiH) # fixed error from not assigning all outputs - GG
+    vx, vr, Tnorm, ixE0, irE0 = create_vr_vx_mesh(nv, TiH) # fixed error from not assigning all outputs - GG
     return xH, TiH, TeH, neH, PipeDiaH, vx, vr, Tnorm

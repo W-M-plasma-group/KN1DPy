@@ -10,7 +10,8 @@ from .integ_bl import integ_bl
 from .make_dvr_dvx import make_dvr_dvx
 from .sval import sval
 from .interp_fvrvxx import interp_fvrvxx
-from .create_kinetic_h_mesh import create_kinetic_h_mesh
+#from .create_kinetic_h_mesh import create_kinetic_h_mesh
+from .kinetic_mesh import create_kinetic_h_mesh
 from .kinetic_h import kinetic_h 
 from .kinetic_h2 import kinetic_h2 
 from .interp_scalarx import interp_scalarx 
@@ -206,7 +207,14 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
 
         # finished line since create_kinetic_h_mesh has been programmed - nh // fixed capitalization - GG // fixed keyword inputs - GG
         kh_mesh = create_kinetic_h_mesh(CONST.KH_NV, mu, x, Ti, Te, n, PipeDia, fctr = fctr) 
-        xH,TiA,TeA,nA,PipeDiaA,vxA,vrA,TnormA = kh_mesh
+        xH = kh_mesh.xH
+        TiA = kh_mesh.TiH
+        TeA = kh_mesh.TeH
+        nA = kh_mesh.neH
+        PipeDiaA = kh_mesh.PipeDiaH
+        vxA = kh_mesh.vx
+        vrA = kh_mesh.vr
+        TnormA = kh_mesh.Tnorm
 
 
     v0_bar=np.sqrt(8.0*CONST.TWALL*CONST.Q/(np.pi*2*mu*CONST.H_MASS))

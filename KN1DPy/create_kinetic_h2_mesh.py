@@ -15,7 +15,7 @@ def create_kinetic_h2_mesh(nv, mu, x, Ti, Te, n, PipeDia, E0 = 0, ixE0 = 0, irE0
 
     nx=np.size(x)
 
-    gamma_wall = [0] * nx
+    gamma_wall = np.zeros(nx)
 
     #Estimate total reaction rate for destruction of molecules and for interation with side walls
     RR=n*sigmav_ion_hh(Te)+n*sigmav_h1s_h1s_hh(Te)+n*sigmav_h1s_h2s_hh(Te)
@@ -53,8 +53,8 @@ def create_kinetic_h2_mesh(nv, mu, x, Ti, Te, n, PipeDia, E0 = 0, ixE0 = 0, irE0
 
     #Estimate interaction rate with side walls
     nxfine=np.size(xfine)
-    gamma_wall = [0] * nxfine
-    for k in range(nxfine-1):
+    gamma_wall = np.zeros(nxfine)
+    for k in range(nxfine):
         if PipeDiafine[k] > 0: # fixed brackets - GG
             gamma_wall[k]=2*max(vr)*vth/PipeDiafine[k]
 

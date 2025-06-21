@@ -46,6 +46,10 @@ print()
 
 print("nH")
 print(results[10])
+print()
+
+print("Full Results")
+print(results)
 
 output.close()
 sys.stdout = standard_out
