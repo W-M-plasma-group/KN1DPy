@@ -104,7 +104,6 @@ def create_kinetic_h_mesh(nv, mu, x, Ti, Te, n, PipeDia, E0 = 0, ixE0 = 0 ,irE0 
         # lowered dxh_max from 5e-4 to 4e-4; original was giving mesh size errors in kinetic_h - nh
         dxpt = min([dxpt1, dxpt2, dxh_max])
         xpt = xpt - dxpt 
-        
     # NOTE Old version, changed -2 to fit idl code xH = np.concatenate([np.array([xminH]), xH[0:np.size(xH) - 1]]) # put xminH in array to fix concatenation error
     xH = np.concatenate([np.array([xminH]), xH[0:np.size(xH) - 2]])
     # if xH[1] - xH[0] > 0.5 * big_dx:

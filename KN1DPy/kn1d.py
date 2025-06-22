@@ -4,14 +4,12 @@ from scipy import interpolate
 
 from .read import sav_read, nc_read
 from .edit_keys import edit_keys
-from .create_kinetic_h2_mesh import create_kinetic_h2_mesh
 from .create_shifted_maxwellian import create_shifted_maxwellian # fixed function name - nh
 from .integ_bl import integ_bl
 from .make_dvr_dvx import make_dvr_dvx
 from .sval import sval
 from .interp_fvrvxx import interp_fvrvxx
-#from .create_kinetic_h_mesh import create_kinetic_h_mesh
-from .kinetic_mesh import create_kinetic_h_mesh
+from .kinetic_mesh import create_kinetic_h_mesh, create_kinetic_h2_mesh
 from .kinetic_h import kinetic_h 
 from .kinetic_h2 import kinetic_h2 
 from .interp_scalarx import interp_scalarx 
@@ -197,7 +195,16 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
 
         # replaced function inputs, split output list into variables - nh // fixed keyword inputs - GG
         kh2_mesh = create_kinetic_h2_mesh(CONST.KH2_NV, mu, x, Ti, Te, n, PipeDia, E0 = Eneut, fctr = fctr) 
-        xH2,TiM,TeM,nM,PipeDiaM,vxM,vrM,TnormM = kh2_mesh
+        xH2 = kh2_mesh.xH
+        TiM = kh2_mesh.TiH
+        TeM = kh2_mesh.TeH
+        nM = kh2_mesh.neH
+        PipeDiaM = kh2_mesh.PipeDiaH
+        vxM = kh2_mesh.vx
+        vrM = kh2_mesh.vr
+        TnormM = kh2_mesh.Tnorm
+        
+        #xH2,TiM,TeM,nM,PipeDiaM,vxM,vrM,TnormM = kh2_mesh
         
         # determine optimized vr, vx grid for kinetic_h (atoms, A)
         #nv = 10 NOTE Replaced with Constatnts

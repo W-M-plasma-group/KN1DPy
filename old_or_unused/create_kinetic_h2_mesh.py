@@ -21,7 +21,7 @@ def create_kinetic_h2_mesh(nv, mu, x, Ti, Te, n, PipeDia, E0 = 0, ixE0 = 0, irE0
     RR=n*sigmav_ion_hh(Te)+n*sigmav_h1s_h1s_hh(Te)+n*sigmav_h1s_h2s_hh(Te)
 
     Y = np.zeros(nx) # changed to make more concise  - GG
-    for k in range(1, nx-1):
+    for k in range(1, nx):
         Y[k]=Y[k-1]-(x[k]-x[k-1])*0.5*(RR[k]+RR[k-1])/v0_bar
 
     #Find x location where Y = -10, i.e., where nH2 should be down by exp(-10)

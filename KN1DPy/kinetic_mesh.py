@@ -14,18 +14,16 @@ from .create_vr_vx_mesh import create_vr_vx_mesh
 from .common import constants as CONST
 
 class kinetic_mesh:
-    # TODO Add Kinetic_H2 function
 
     def __init__(self, mesh_type : str, nv, mu, x, Ti, Te, n, PipeDia, E0 = 0, ixE0 = 0 ,irE0 = 0,fctr = 1.0):
         
         self.mesh_type = mesh_type #'h' for kinetic_h_mesh, 'h2' for kinetic_h2_mesh
 
+        print("generating kinetic_" + mesh_type + "_mesh")
 
         # add these lines to improve velocity space resolution (use with care):
         #nv = 20
         # E0[.1]
-        JH = 0 
-        Use_Collrad_Ionization = 1
 
         nx = np.size(x)
 
@@ -35,12 +33,24 @@ class kinetic_mesh:
         #   if PipeDia[k] > 0:
         #        gamma_wall[k] = 2*sqrt(2*Ti(k)*CONST.Q/(2*CONST.H_MASS))/PipeDia(k)
 
-        # Estimate total reaction rate for destriction of hydrogen atoms and for interation with side walls
-        # RR = n*sigmav_ion_H0(Te)+gamma_wall
-        RR = n * sigmav_ion_h0(Te) 
+        if mesh_type == 'h':
+            # Estimate total reaction rate for destriction of hydrogen atoms and for interation with side walls
+            # RR = n*sigmav_ion_H0(Te)+gamma_wall
+            RR = n * sigmav_ion_h0(Te) 
 
-        # Set v0 to thermal speed to 10 eV neutral 
-        v0 = np.sqrt( 2 * 10 * CONST.Q / (mu * CONST.H_MASS))
+            # Set v0 to thermal speed to 10 eV neutral 
+            v0 = np.sqrt( 2 * 10 * CONST.Q / (mu * CONST.H_MASS))
+
+        elif mesh_type == 'h2':
+            #Estimate total reaction rate for destruction of molecules and for interation with side walls
+            RR=n*sigmav_ion_hh(Te)+n*sigmav_h1s_h1s_hh(Te)+n*sigmav_h1s_h2s_hh(Te)
+
+            #directed random velocity of diatomic molecule
+            v0 = np.sqrt(8.0*CONST.TWALL*CONST.Q/(np.pi*2*mu*CONST.H_MASS))	
+
+        else:
+            raise Exception("ERROR: Mesh type invalid:", mesh_type)
+
 
         # Determine x range for atoms by finding distance into plasma where density persists.
         #  dGamma/dx=-nH*RR = v0 dnH/dx = -nH*RR - these two lines are commented in the original code I dont understand them
@@ -50,13 +60,20 @@ class kinetic_mesh:
         for k in range(1, nx): 
             Y[k] = Y[k-1] - (x[k] - x[k-1] ) * 0.5 * (RR[k] + RR[k-1]) / v0
         
-        # Find x location where Y = -5, i.e. where nH should be down by exp(-5)
-        interpfunc = interpolate.interp1d(Y, x, kind = 'linear', bounds_error=False, fill_value="extrapolate") # previous version caused error on next line
-        xmaxH = np.minimum(interpfunc(-5), max(x))
+        if mesh_type == 'h':
+            # Find x location where Y = -5, i.e. where nH should be down by exp(-5)
+            interpfunc = interpolate.interp1d(Y, x, kind = 'linear', bounds_error=False, fill_value="extrapolate") # previous version caused error on next line
+            xmaxH = np.minimum(interpfunc(-5), max(x))
+        elif mesh_type == 'h2':
+            #Find x location where Y = -10, i.e., where nH2 should be down by exp(-10)
+            interpfunc = interpolate.interp1d(Y, x) # fixed error with interpolation - GG
+            xmaxH=np.minimum(interpfunc(-10.0), max(x))
+
         xminH = x[0]
 
         # Interpolate Ti and Te onto a fine mesh between xminH and xmaxH 
         xfine = xminH + (xmaxH - xminH) * np.arange( 1001 )/1000
+
         interpfunc = interpolate.interp1d(x, Ti, kind = 'linear')
         Tifine = interpfunc(xfine)
 
@@ -71,9 +88,8 @@ class kinetic_mesh:
 
         # Set up a vx, vr mesh based on raw data to get typical vx, vr values 
         vx, vr, Tnorm, ixE0, ixE0 = create_vr_vx_mesh(nv, Tifine) # fixed error from not assigning all outputs - GG
-        vth = np.sqrt( 2 * CONST.Q * Tnorm / (mu * CONST.H_MASS))
-        minVr = vth * min(vr)
-        minE0 = 0.5 * CONST.H_MASS * minVr * minVr / CONST.Q
+        
+        vth = np.sqrt( (2 * CONST.Q * Tnorm) / (mu * CONST.H_MASS))
 
         # Estimate interaction rate with side walls
         nxfine = np.size(xfine)
@@ -84,18 +100,35 @@ class kinetic_mesh:
                 gamma_wall[k] = 2 * max(vr) * vth / PipeDiafine[k]
         
         # Estimate total reaction rate, including charge exchange and elastic scattering, and interaction with side walls 
-        if Use_Collrad_Ionization:
-            ioniz_rate = collrad_sigmav_ion_h0(nfine, Tefine)
-        else:
-            if JH:
-                ioniz_rate = jhs_coef(nfine, Tefine, no_null = True, g=g) # deleted unecessary variable - GG
+        
+        if mesh_type == 'h':
+            minVr = vth * min(vr)
+            minE0 = 0.5 * CONST.H_MASS * minVr * minVr / CONST.Q
+            if CONST.USE_COLLRAD_IONIZATION:
+                ioniz_rate = collrad_sigmav_ion_h0(nfine, Tefine)
             else:
-                ioniz_rate = sigmav_ion_h0(Tefine)
-        RR = nfine * ioniz_rate + nfine * sigma_cx_h0(Tifine, np.array([minE0] * nxfine)) + gamma_wall # replaced size(nxfine) with nxfine
+                if CONST.USE_JH:
+                    ioniz_rate = jhs_coef(nfine, Tefine, no_null = True, g=g) # deleted unecessary variable - GG
+                else:
+                    ioniz_rate = sigmav_ion_h0(Tefine)
+            RR = nfine * ioniz_rate + nfine * sigma_cx_h0(Tifine, np.array([minE0] * nxfine)) + gamma_wall # replaced size(nxfine) with nxfine
+            
+            # Compute local maximum grid spacing dx_max = 2 
+            big_dx = 0.02 * fctr 
+            dx_max = np.maximum(fctr * 0.8 * ( 2 * vth * min(vr) / RR), big_dx)
 
-        # Compute local maximum grid spacing dx_max = 2 
-        big_dx = 0.02 * fctr 
-        dx_max = np.maximum(fctr * 0.8 * ( 2 * vth * min(vr) / RR), big_dx)
+        elif mesh_type == 'h2':
+            RR=nfine*sigmav_ion_hh(Tefine)+nfine*sigmav_h1s_h1s_hh(Tefine)+nfine*sigmav_h1s_h2s_hh(Tefine)+0.1*nfine*sigmav_cx_hh(Tifine,Tifine) + gamma_wall
+             #Compute local maximum grid spacing from dx_max = 2 min(vr) / RR
+            big_dx=0.02*fctr
+            dx_max=np.minimum(fctr*0.8*(2*vth*min(vr)/RR), big_dx) # fixed typo - GG
+            #TODO Check this calculation for dx_max here and above, they are the same in the idl code
+            #TODO Note the usage of minimum vs maximum
+
+        # NOTE See note in above statement, may be able to be combined here
+        # # Compute local maximum grid spacing dx_max = 2 
+        # big_dx = 0.02 * fctr 
+        # dx_max = np.maximum(fctr * 0.8 * ( 2 * vth * min(vr) / RR), big_dx)
 
         # Construct xH Axis 
         xpt = xmaxH
@@ -111,9 +144,14 @@ class kinetic_mesh:
                 dxpt2 = interpfunc(xpt_test)
             # dxpt = min([dxpt1, dxpt2]) * 0.5 ; FS: reduce spacing 
             # FS: force a preset maximum grid spacing 
-            dxh_max = 0.0004 # JWH: 0.0015 should be sufficient for D3D because scale lengths are 2.5x larger
-            # lowered dxh_max from 5e-4 to 4e-4; original was giving mesh size errors in kinetic_h - nh
-            dxpt = min([dxpt1, dxpt2, dxh_max])
+
+            if mesh_type == 'h':
+                dxh_max = 0.0004 # JWH: 0.0015 should be sufficient for D3D because scale lengths are 2.5x larger
+                # lowered dxh_max from 5e-4 to 4e-4; original was giving mesh size errors in kinetic_h - nh
+                dxpt = min([dxpt1, dxpt2, dxh_max])
+            elif mesh_type == 'h2':
+                dxpt=min([dxpt1,dxpt2])
+
             xpt = xpt - dxpt 
             
         # NOTE Old version, changed -2 to fit idl code xH = np.concatenate([np.array([xminH]), xH[0:np.size(xH) - 1]]) # put xminH in array to fix concatenation error
@@ -143,10 +181,10 @@ class kinetic_mesh:
         
 def create_kinetic_h_mesh(nv, mu, x, Ti, Te, n, PipeDia, E0 = 0, ixE0 = 0 ,irE0 = 0,fctr = 1):
     
-    mesh = kinetic_mesh('h', nv, mu, x, Ti, Te, n, PipeDia, E0 = 0, ixE0 = 0 ,irE0 = 0,fctr = 1)
+    mesh = kinetic_mesh('h', nv, mu, x, Ti, Te, n, PipeDia, E0, ixE0, irE0,fctr)
     return mesh
 
-def create_kinetic_h2_mesh(nv, mu, x, Ti, Te, n, PipeDia, E0 = 0, ixE0 = 0 ,irE0 = 0,fctr = 1):
+def create_kinetic_h2_mesh(nv, mu, x, Ti, Te, n, PipeDia, E0 = 0, ixE0 = 0 ,irE0 = 0,fctr = 1.0):
     
-    mesh = kinetic_mesh('h2', nv, mu, x, Ti, Te, n, PipeDia, E0 = 0, ixE0 = 0 ,irE0 = 0,fctr = 1)
+    mesh = kinetic_mesh('h2', nv, mu, x, Ti, Te, n, PipeDia, E0, ixE0, irE0, fctr)
     return mesh
