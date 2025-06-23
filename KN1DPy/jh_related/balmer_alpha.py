@@ -1,9 +1,10 @@
 import numpy as np
-import os.path
+from numpy.typing import NDArray
 
 from .nh_saha import nh_saha
-from .create_jh_bscoef import create_jh_bscoef
-from .jhr_coef import jhr_coef # fixed capotalization - GG
+from .jhr_coef import jhr_coef # fixed capitalization - GG
+from .generate_jh_coefficients import generate_jh_coeffs
+from KN1DPy.common.JH_Coef import JH_Coef
 
 #   Computes Balmer-alpha emissivity (watts m^-3) given the local
 # electron density, electron temperature, and ground-state
@@ -16,7 +17,7 @@ from .jhr_coef import jhr_coef # fixed capotalization - GG
 #   (2) Multiply by the n=3->2 spontaneous emission coefficient
 #   (3) Convert to watts/m^3
 
-def balmer_alpha(Density, Te, N0, photons = 0, create = 0, no_null = 0, g=None):
+def balmer_alpha(Density : NDArray, Te : NDArray, N0 : NDArray, jh_coeffs : JH_Coef, photons = 0, create = 0, no_null = 0):
     #________________________________________________________________________________
     # Input:
     #  	Density	- fltarr, electron density (=hydrogen ion density) (m^-3)
@@ -36,36 +37,7 @@ def balmer_alpha(Density, Te, N0, photons = 0, create = 0, no_null = 0, g=None):
     #    Coding by B. LaBombard  6/29/99
     #    Coefficients from J. Terry's idl code JH_RATES.PRO
     
-    # variables in JH_coef common block - this is only temporary bc we havent finished discussing common blocks
-    Dknot = g.JH_Coef_DKnot
-    Tknot = g.JH_Coef_TKnot
-    LogR_BSCoef=g.JH_Coef_LogR_BSCoef
-    LogS_BSCoef=g.JH_Coef_LogS_BSCoef
-    LogAlpha_BSCoef=g.JH_Coef_LogAlpha_BSCoef
-    A_Lyman=g.JH_Coef_A_Lyman
-    A_Balmer=g.JH_Coef_A_Balmer
-    if create or not os.path.exists('jh_bscoef.npz'):
-        create_jh_bscoef()
-    if LogR_BSCoef is None:
-        # this is where old data is restored 
-        s=np.load('jh_bscoef.npz')
-        Dknot=s['DKnot']
-        Tknot=s['TKnot']
-        order=s['order']
-        LogR_BSCoef=s['LogR_BSCoef']
-        LogS_BSCoef=s['LogS_BSCoef']
-        LogAlpha_BSCoef=s['LogAlpha_BSCoef']
-        A_Lyman=s['A_Lyman']
-        A_Balmer=s['A_Balmer']
-        # update global vars JH_coef common block
-        g.JH_Coef_DKnot=Dknot
-        g.JH_Coef_TKnot=Tknot
-        g.JH_Coef_order=order
-        g.JH_Coef_LogR_BSCoef=LogR_BSCoef
-        g.JH_Coef_LogS_BSCoef=LogS_BSCoef
-        g.JH_Coef_LogAlpha_BSCoef=LogAlpha_BSCoef
-        g.JH_Coef_A_Lyman=A_Lyman
-        g.JH_Coef_A_Balmer=A_Balmer
+    generate_jh_coeffs(jh_coeffs, create)
 
     # From Johnson-Hinnov, eq (11):
     # n(3) = ( r(0) + r1(3) * n(1) / NHsaha(1) ) * NHsaha(3)
@@ -76,8 +48,8 @@ def balmer_alpha(Density, Te, N0, photons = 0, create = 0, no_null = 0, g=None):
         raise Exception(' Number of elements of Density and N0 are different! ')
     result = np.full(Density.shape,1.0e32)
     photons = np.full(Density.shape,1.0e32)
-    r03 = jhr_coef(Density, Te, 0, 3, no_null = no_null, g=g)
-    r13 = jhr_coef(Density, Te, 1, 3, no_null = no_null, g=g)
+    r03 = jhr_coef(Density, Te, 0, 3, jh_coeffs, no_null = no_null)
+    r13 = jhr_coef(Density, Te, 1, 3, jh_coeffs, no_null = no_null)
     NHSaha1 = nh_saha(Density, Te, 1)
     NHSaha3 = nh_saha(Density, Te, 3)
     ok=np.array([])
@@ -87,6 +59,6 @@ def balmer_alpha(Density, Te, N0, photons = 0, create = 0, no_null = 0, g=None):
     count = np.size(ok)
     if count > 0:
         for i in range(0, np.size(ok)):
-            photons[i] = A_Balmer[0] * ( r03[i] + r13[i] * N0[i] / NHSaha1[i] ) * NHSaha3[i]
+            photons[i] = jh_coeffs.A_Balmer[0] * ( r03[i] + r13[i] * N0[i] / NHSaha1[i] ) * NHSaha3[i]
             result[i] = 13.6057 * ( 0.25 - 1.0 / 9.0 ) * photons[i] * 1.6e-19
     return result

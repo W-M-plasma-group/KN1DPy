@@ -1,14 +1,16 @@
 import numpy as np
-import os.path
+from numpy.typing import NDArray
 
-from .create_jh_bscoef import create_jh_bscoef
 from .jhr_coef import jhr_coef
 from .nh_saha import nh_saha
 from .jhs_coef import jhs_coef
 from .jhalpha_coef import jhalpha_coef
+from .generate_jh_coefficients import generate_jh_coeffs
+from KN1DPy.common.JH_Coef import JH_Coef
 
 
-def N0_from_balmer_alpha(B_Alpha, Density, Te , Source = 0, Ionization = 0,Recombination = 0, create = 0, g=None):
+def N0_from_balmer_alpha(B_Alpha : NDArray, Density : NDArray, Te : NDArray, jh_coeffs : JH_Coef,
+                         Source = 0, Ionization = 0,Recombination = 0, create = 0):
     #________________________________________________________________________________
 # Input:
 #  	B_alpha 	- fltarr, local Balmer-alpha emissivity (watts m^-3)
@@ -28,35 +30,8 @@ def N0_from_balmer_alpha(B_Alpha, Density, Te , Source = 0, Ionization = 0,Recom
 #    Coefficients from J. Terry's idl code JH_RATES.PRO
 
 # variables in JH_coef common block - this is only temporary bc we havent finished discussing common blocks
-    Dknot = g.JH_Coef_DKnot
-    Tknot = g.JH_Coef_TKnot
-    LogR_BSCoef=g.JH_Coef_LogR_BSCoef
-    LogS_BSCoef=g.JH_Coef_LogS_BSCoef
-    LogAlpha_BSCoef=g.JH_Coef_LogAlpha_BSCoef
-    A_Lyman=g.JH_Coef_A_Lyman
-    A_Balmer=g.JH_Coef_A_Balmer
-    if create or not os.path.exists('jh_bscoef.npz'):
-        create_jh_bscoef()
-    if LogR_BSCoef is None:
-        # this is where old data is restored 
-        s=np.load('jh_bscoef.npz')
-        Dknot=s['DKnot']
-        Tknot=s['TKnot']
-        order=s['order']
-        LogR_BSCoef=s['LogR_BSCoef']
-        LogS_BSCoef=s['LogS_BSCoef']
-        LogAlpha_BSCoef=s['LogAlpha_BSCoef']
-        A_Lyman=s['A_Lyman']
-        A_Balmer=s['A_Balmer']
-        # update global vars JH_coef common block
-        g.JH_Coef_DKnot=Dknot
-        g.JH_Coef_TKnot=Tknot
-        g.JH_Coef_order=order
-        g.JH_Coef_LogR_BSCoef=LogR_BSCoef
-        g.JH_Coef_LogS_BSCoef=LogS_BSCoef
-        g.JH_Coef_LogAlpha_BSCoef=LogAlpha_BSCoef
-        g.JH_Coef_A_Lyman=A_Lyman
-        g.JH_Coef_A_Balmer=A_Balmer
+    
+    generate_jh_coeffs(jh_coeffs, create)
 
     # From Johnson-Hinnov, eq(11):
     #   n(3) =  ( r0(3) + r1(3) * n(1) / NHsaha(1) ) * NHsaha(3)
@@ -71,19 +46,19 @@ def N0_from_balmer_alpha(B_Alpha, Density, Te , Source = 0, Ionization = 0,Recom
     Source = N0
     Ionization = N0
     Recombination = N0
-    r03 = jhr_coef(Density, Te, 0, 3, g=g)
-    r13 = jhr_coef(Density, Te, 1, 3, g=g)
+    r03 = jhr_coef(Density, Te, 0, 3, jh_coeffs)
+    r13 = jhr_coef(Density, Te, 1, 3, jh_coeffs)
     NHSaha1 = nh_saha(Density, Te, 1)
     NHSaha3 = nh_saha(Density, Te, 3)
-    S = jhs_coef(Density, Te, g=g)
-    Alpha = jhalpha_coef(Density, Te, g=g)
+    S = jhs_coef(Density, Te, jh_coeffs)
+    Alpha = jhalpha_coef(Density, Te, jh_coeffs)
     for i in range(0, np.size(Density)):
         if 0 < B_Alpha[i] < 1e32 and r03[i] < 1.0e32 and r13[i] < 1.0e32 and \
             NHSaha1 < 1.0e32 and NHSaha3 < 1.0e32 and 0 <  S < 1.0e32 and 0 < Alpha < 1.0e32:
             ok = np.append(ok, i)
     count = np.size(ok)
     if count > 0:
-        n3[ok] = B_Alpha[ok] / ( A_Balmer[0] * 13.6057 * (0.25 - 1.0 / 9.0) * 1.6e-19)
+        n3[ok] = B_Alpha[ok] / ( jh_coeffs.A_Balmer[0] * 13.6057 * (0.25 - 1.0 / 9.0) * 1.6e-19)
         N0[ok] = ( n3[ok] / NHSaha3[ok] - r03[ok] ) * NHSaha1[ok] / r13[ok]
         # Evaluate ionization, recombination and net source from Johnson-Hinnov equation (12)
         # Ionization = n(1)*Density*S

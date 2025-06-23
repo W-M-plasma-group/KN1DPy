@@ -6,9 +6,9 @@ from .create_shifted_maxwellian_include import create_shifted_maxwellian_include
 from .kinetic_mesh import kinetic_mesh
 
 from .collrad_sigmav_ion_h0 import collrad_sigmav_ion_h0
-from .jhs_coef import jhs_coef
+from .jh_related.jhs_coef import jhs_coef
 from .sigma.sigmav_ion_h0 import sigmav_ion_h0
-from .jhalpha_coef import jhalpha_coef
+from .jh_related.jhalpha_coef import jhalpha_coef
 from .sigma.sigmav_rec_h1s import sigmav_rec_h1s
 from .sigma.sigma_cx_h0 import sigma_cx_h0
 from .sigma.sigma_el_h_h import sigma_el_h_h

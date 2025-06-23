@@ -14,8 +14,8 @@ from .kinetic_mesh import create_kinetic_h_mesh, create_kinetic_h2_mesh
 from .kinetic_h import kinetic_h 
 from .kinetic_h2 import kinetic_h2 
 from .interp_scalarx import interp_scalarx 
-from .lyman_alpha import lyman_alpha
-from .balmer_alpha import balmer_alpha
+from .jh_related.lyman_alpha import lyman_alpha
+from .jh_related.balmer_alpha import balmer_alpha
 
 from .common import constants as CONST
 from .common.KN1D import KN1D_Collisions, KN1D_Internal
@@ -498,8 +498,8 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
 
     
     # Compute Lyman and Balmer
-    Lyman = lyman_alpha(kh_mesh.ne, kh_mesh.Te, nH, no_null = 1, g=g)
-    Balmer = balmer_alpha(kh_mesh.ne, kh_mesh.Te, nH, no_null = 1, g=g)
+    Lyman = lyman_alpha(kh_mesh.ne, kh_mesh.Te, nH, jh_coefficients, no_null = 1)
+    Balmer = balmer_alpha(kh_mesh.ne, kh_mesh.Te, nH, jh_coefficients, no_null = 1)
 
     #   Update KN1D_internal common block - GG 2/15
     #   NOTE What is the purpose of this, can it be removed?
