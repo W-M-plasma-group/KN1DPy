@@ -5,6 +5,7 @@ import copy
 
 from .make_dvr_dvx import make_dvr_dvx
 from .create_shifted_maxwellian import create_shifted_maxwellian
+from .kinetic_mesh import kinetic_mesh
 
 from .sigma.sigmav_ion_hh import sigmav_ion_hh
 from .sigma.sigmav_h1s_h1s_hh import sigmav_h1s_h1s_hh
@@ -61,12 +62,20 @@ from .global_vars import mH, q, k_boltz, Twall
 # Note: Variable names contain characters to help designate species -
 #       atomic neutral (H), molecular neutral (H2), molecular ion (HP), proton (i) or (P)
 
-def kinetic_h2(vx, vr, x, Tnorm, mu, Ti, Te, n, vxi, fH2BC, GammaxH2BC, NuLoss, PipeDia, fH, SH2,\
-               fH2, nHP, THP, \
-               truncate = 1.0e-4, Simple_CX = 1, Max_Gen = 50,  Compute_H_Source = 0, \
-               No_Sawada = 0, H2_H2_EL = 0, H2_P_EL = 0, H2_H_EL = 0, H2_HP_CX = 0, \
-               ni_correct = 0, ESH = 0, Eaxis = 0, Compute_Errors = 0,  plot = 0, debug = 0,\
+def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2, fH2, nHP, THP,
+               truncate = 1.0e-4, Simple_CX = 1, Max_Gen = 50,  Compute_H_Source = 0,
+               No_Sawada = 0, H2_H2_EL = 0, H2_P_EL = 0, H2_H_EL = 0, H2_HP_CX = 0,
+               ni_correct = 0, ESH = 0, Eaxis = 0, Compute_Errors = 0,  plot = 0, debug = 0,
                debrief = 0, pause = 0, g = None):
+    
+    vx = mesh.vx
+    vr = mesh.vr
+    x = mesh.x
+    Tnorm = mesh.Tnorm
+    Ti = mesh.Ti
+    Te = mesh.Te
+    n = mesh.ne
+    PipeDia = mesh.PipeDia
     
     # Kinetic_H2_Output common block
     piH2_xx = g.Kinetic_H2_Output_piH2_xx

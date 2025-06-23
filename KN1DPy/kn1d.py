@@ -376,7 +376,7 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
 
             # interpolate fH data onto H2 mesh: fH -> fHM
             do_warn=5e-3
-            fHM=interp_fvrvxx(fH,kh_mesh.vr,kh_mesh.vx,kh_mesh.x,kh_mesh.Tnorm,kh2_mesh.vr,kh2_mesh.vx,kh2_mesh.x,kh2_mesh.Tnorm,do_warn=do_warn, debug=interp_debug, g=g) 
+            fHM=interp_fvrvxx(fH, kh_mesh, kh2_mesh, do_warn=do_warn, debug=interp_debug, g=g) 
 
             # Compute fH2 using Kinetic_H2
             ni_correct=1
@@ -384,9 +384,8 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
             H2compute_errors=compute_errors and H2debrief # is this accurate, how can it be equal to both? - GG 2/15
             
             
-            kh2_results = kinetic_h2(\
-                    kh2_mesh.vx, kh2_mesh.vr, kh2_mesh.x, kh2_mesh.Tnorm, mu, kh2_mesh.Ti, kh2_mesh.Te, kh2_mesh.ne, vxiM, 
-                    fh2BC, GammaxH2BC, NuLoss, kh2_mesh.PipeDia, fHM, SH2, fH2, nH2, THP, \
+            kh2_results = kinetic_h2(
+                    kh2_mesh, mu, vxiM, fh2BC, GammaxH2BC, NuLoss, fHM, SH2, fH2, nH2, THP, \
                     truncate=truncate, Simple_CX=Simple_CX, Max_Gen=max_gen, Compute_H_Source=Compute_H_Source,\
                     H2_H2_EL=H2_H2_EL,H2_P_EL=H2_P_EL,H2_H_EL=H2_H_EL,H2_HP_CX=H2_HP_CX, ni_correct=ni_correct,\
                     Compute_Errors=H2compute_errors, plot=H2plot,debug=H2debug,debrief=H2debrief,pause=H2pause, g=g) # fixed inputs - GG 2/26
@@ -397,12 +396,10 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
 
             # Interpolate H2 data onto H mesh: fH2 -> fH2A, fSH -> fSHA, nHP -> nHPA, THP -> THPA
             do_warn = 5.0E-3
-            fH2A = interp_fvrvxx(fH2,kh2_mesh.vr,kh2_mesh.vx,kh2_mesh.x,kh2_mesh.Tnorm,kh_mesh.vr,kh_mesh.vx,kh_mesh.x,kh_mesh.Tnorm,
-                                 do_warn=do_warn, debug=interp_debug, g=g) 
-            fSHA = interp_fvrvxx(fSH,kh2_mesh.vr,kh2_mesh.vx,kh2_mesh.x,kh2_mesh.Tnorm,kh_mesh.vr,kh_mesh.vx,kh_mesh.x,kh_mesh.Tnorm,
-                                 do_warn=do_warn, debug=interp_debug, g=g) 
-            nHPA = interp_scalarx(nHP,kh2_mesh.x,kh_mesh.x, do_warn=do_warn, debug=interp_debug) 
-            THPA = interp_scalarx(THP,kh2_mesh.x,kh_mesh.x, do_warn=do_warn, debug=interp_debug)     
+            fH2A = interp_fvrvxx(fH2, kh2_mesh, kh_mesh, do_warn=do_warn, debug=interp_debug, g=g) 
+            fSHA = interp_fvrvxx(fSH, kh2_mesh, kh_mesh, do_warn=do_warn, debug=interp_debug, g=g) 
+            nHPA = interp_scalarx(nHP, kh2_mesh.x, kh_mesh.x, do_warn=do_warn, debug=interp_debug) 
+            THPA = interp_scalarx(THP, kh2_mesh.x, kh_mesh.x, do_warn=do_warn, debug=interp_debug)     
 
             # Compute fH using Kinetic_H
             GammaxHBC = 0
@@ -413,8 +410,7 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
 
 
             kh_results = kinetic_h(
-                    kh_mesh.vx, kh_mesh.vr, kh_mesh.x, kh_mesh.Tnorm, mu, kh_mesh.Ti, kh_mesh.Te, kh_mesh.ne, vxiA,
-                    fHBC, GammaxHBC, kh_mesh.PipeDia, fH2A, fSHA, nHPA, THPA, fH=fH,\
+                    kh_mesh, mu, vxiA, fHBC, GammaxHBC, fH2A, fSHA, nHPA, THPA, fH=fH,\
                     truncate=truncate, Simple_CX=Simple_CX, Max_Gen=max_gen, \
                     H_H_EL=H_H_EL, H_P_EL=H2_P_EL, _H_H2_EL= H2_H2_EL, H_P_CX=H_P_CX, ni_correct=ni_correct, \
                     Compute_Errors=Hcompute_errors, plot=Hplot, debug=Hdebug, debrief=Hdebrief, pause=Hpause, g=g) # Not sure where some of the keywords are defined

@@ -5,11 +5,23 @@ from scipy import interpolate
 from .make_dvr_dvx import make_dvr_dvx
 from .locate import locate
 from .sval import sval
+from .kinetic_mesh import kinetic_mesh
 
 from .global_vars import mH, q
 
-def interp_fvrvxx(fa,Vra,Vxa,Xa,Tnorma,Vrb,Vxb,Xb,Tnormb,do_warn=None, debug=0, correct=1,g=None): # added global variable argument
+def interp_fvrvxx(fa, mesh_a : kinetic_mesh, mesh_b : kinetic_mesh, do_warn=None, debug=0, correct=1,g=None): # added global variable argument
 
+    # NOTE Passing full mesh may be unneccessary, works for this code, but would need to be refactored for other projects
+    Vra = mesh_a.vr
+    Vxa = mesh_a.vx
+    Xa = mesh_a.x
+    Tnorma = mesh_a.Tnorm
+
+    Vrb = mesh_b.vr
+    Vxb = mesh_b.vx
+    Xb = mesh_b.x
+    Tnormb = mesh_b.Tnorm
+    
     #  Input:
     #     Input Distribution function 'a'
     #	fa	- dblarr(nVra,nVxa,nXa) distribution function

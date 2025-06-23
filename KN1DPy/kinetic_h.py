@@ -3,6 +3,7 @@ import numpy as np
 from .reverse import reverse
 from .make_dvr_dvx import make_dvr_dvx
 from .create_shifted_maxwellian_include import create_shifted_maxwellian_include
+from .kinetic_mesh import kinetic_mesh
 
 from .collrad_sigmav_ion_h0 import collrad_sigmav_ion_h0
 from .jhs_coef import jhs_coef
@@ -52,10 +53,19 @@ from .global_vars import mH, q, k_boltz, Twall
 # Note: Variable names contain characters to help designate species -
 #	atomic neutral (H), molecular neutral (H2), molecular ion (HP), proton (i) or (P) 
 
-def kinetic_h(vx,vr,x,Tnorm,mu,Ti,Te,n,vxi,fHBC,GammaxHBC,PipeDia,fH2,fSH,nHP,THP,fH=None,
+def kinetic_h(mesh : kinetic_mesh, mu, vxi, fHBC, GammaxHBC, fH2, fSH, nHP, THP, fH=None,
 			  truncate=1e-4,Compute_Errors=0,plot=0,debug=0,pause=0,debrief=0,
 			  Simple_CX=1,Max_Gen=50,No_Johnson_Hinnov=0,Use_Collrad_Ionization=0,
 			  No_Recomb=0,H_H_EL=0,H_P_EL=0,_H_H2_EL=0,H_P_CX=0,ni_correct=0, g=None): # changed fH default to None and Use_Collrad_Ionization capitalization
+
+	vx = mesh.vx
+	vr = mesh.vr
+	x = mesh.x
+	Tnorm = mesh.Tnorm
+	Ti = mesh.Ti
+	Te = mesh.Te
+	n = mesh.ne
+	PipeDia = mesh.PipeDia
 
     #	Input:
     #		vx(*)	- fltarr(nvx), normalized x velocity coordinate 
