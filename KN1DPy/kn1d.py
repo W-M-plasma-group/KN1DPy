@@ -198,32 +198,17 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
 
         # replaced function inputs, split output list into variables - nh // fixed keyword inputs - GG
         kh2_mesh = create_kinetic_h2_mesh(CONST.KH2_NV, mu, x, Ti, Te, n, PipeDia, E0 = Eneut, fctr = fctr) 
-        xH2 = kh2_mesh.x
-        TiM = kh2_mesh.Ti
-        TeM = kh2_mesh.Te
-        nM = kh2_mesh.ne
-        PipeDiaM = kh2_mesh.PipeDia
-        vxM = kh2_mesh.vx
-        vrM = kh2_mesh.vr
-        TnormM = kh2_mesh.Tnorm
         
         #xH2,TiM,TeM,nM,PipeDiaM,vxM,vrM,TnormM = kh2_mesh
         
         # determine optimized vr, vx grid for kinetic_h (atoms, A)
-        #nv = 10 NOTE Replaced with Constatnts
+        #nv = 10 NOTE Replaced with Constants
         fctr = 0.3
         if GaugeH2 > 30.0 :
             fctr = fctr * 30 / GaugeH2
 
         # finished line since create_kinetic_h_mesh has been programmed - nh // fixed capitalization - GG // fixed keyword inputs - GG
         kh_mesh = create_kinetic_h_mesh(CONST.KH_NV, mu, x, Ti, Te, n, PipeDia, fctr = fctr) 
-        xH = kh_mesh.x
-        TiA = kh_mesh.Ti
-        TeA = kh_mesh.Te
-        nA = kh_mesh.ne
-        PipeDiaA = kh_mesh.PipeDia
-        vxA = kh_mesh.vx
-        vrA = kh_mesh.vr
         TnormA = kh_mesh.Tnorm
 
 
@@ -231,19 +216,19 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
 
     #   Set up molecular flux BC from inputted neutral pressure
 
-    ipM=(vxM>0).nonzero()[0]
-    inM=(vxM<0).nonzero()[0]
-    nvrM=vrM.size
-    nvxM=vxM.size
+    ipM=(kh2_mesh.vx>0).nonzero()[0]
+    inM=(kh2_mesh.vx<0).nonzero()[0]
+    nvrM=kh2_mesh.vr.size
+    nvxM=kh2_mesh.vx.size
     nxH2=kh2_mesh.x.size
     
     #   Code below uses variables defined in create_kinetic_h_mesh
     
-    ipA=(vxA>0).nonzero()[0]
-    inA=(vxA<0).nonzero()[0]
-    nvrA=vrA.size
-    nvxA=vxA.size
-    nxH=xH.size
+    ipA=(kh_mesh.vx>0).nonzero()[0]
+    inA=(kh_mesh.vx<0).nonzero()[0]
+    nvrA=kh_mesh.vr.size
+    nvxA=kh_mesh.vx.size
+    nxH=kh_mesh.x.size
     
     #  Code blocks below use common block variables, should be filled in later
     #  Initialize fH and fH2 (these may be over-written by data from and old run below)
@@ -263,7 +248,7 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
     Tmaxwell=np.full(nvxM, CONST.TWALL) # changed list to numpy array 
     vx_shift=np.zeros(nvxM) # fixed size of arrays, its unclear in the original code if this is whats supposed to be done but the for loop in create shifted_maxwellian_include wont owrk otherwise - G
     mol=2
-    Maxwell=create_shifted_maxwellian(vrM,vxM,Tmaxwell,vx_shift,mu,mol,TnormM)
+    Maxwell=create_shifted_maxwellian(kh2_mesh.vr,kh2_mesh.vx,Tmaxwell,vx_shift,mu,mol,kh2_mesh.Tnorm)
     fh2BC[ipM]=Maxwell[0,ipM] # fixed indexing - GG
 
     # Compute NuLoss:
@@ -310,7 +295,7 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
     vxiM = interpfunc(kh2_mesh.x)
 
     #interpfunc = interpolate.interp1d(x,vxi,fill_value="extrapolate") NOTE Is this Needed?
-    vxiA = interpfunc(xH)
+    vxiA = interpfunc(kh_mesh.x)
 
     iter=0
     EH_hist=np.array([0.0])
@@ -324,30 +309,30 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
     #   Starting back at line 378 from IDL code
     #   Test for v0_bar consistency in the numerics by computing it from a half maxwellian at the wall temperature
 
-    vthM=np.sqrt(2*CONST.Q*TnormM/(mu*CONST.H_MASS))
-    Vr2pidVrM,VrVr4pidVrM,dVxM=make_dvr_dvx(vrM,vxM)[0:3]
-    vthA=np.sqrt(2*CONST.Q*TnormA/(mu*CONST.H_MASS))
-    Vr2pidVrA,VrVr4pidVrA,dVxA=make_dvr_dvx(vrA,vxA)[0:3]
+    vthM=np.sqrt(2*CONST.Q*kh2_mesh.Tnorm/(mu*CONST.H_MASS))
+    Vr2pidVrM,VrVr4pidVrM,dVxM=make_dvr_dvx(kh2_mesh.vr,kh2_mesh.vx)[0:3]
+    vthA=np.sqrt(2*CONST.Q*kh_mesh.Tnorm/(mu*CONST.H_MASS))
+    Vr2pidVrA,VrVr4pidVrA,dVxA=make_dvr_dvx(kh_mesh.vr,kh_mesh.vx)[0:3]
 
     nbarHMax=np.sum(Vr2pidVrM*np.matmul(dVxM,fh2BC))
-    vbarM=2*vthM*np.sum(Vr2pidVrM*np.matmul(vxM*dVxM,fh2BC))/nbarHMax
+    vbarM=2*vthM*np.sum(Vr2pidVrM*np.matmul(kh2_mesh.vx*dVxM,fh2BC))/nbarHMax
     vbarM_error=abs(vbarM-v0_bar)/max(vbarM,v0_bar)
 
-    nvrM=vrM.size
-    nvxM=vxM.size
+    nvrM=kh2_mesh.vr.size
+    nvxM=kh2_mesh.vx.size
     vr2vx2_ran2=np.zeros((nvrM,nvxM)).T # fixed indexing - GG
 
     mwell=Maxwell[0,:,:] #  variable named 'Max' in original code; changed here to avoid sharing name with built in function
 
     nbarMax=np.sum(Vr2pidVrM*np.matmul(dVxM,mwell))
-    UxMax=vthM*np.sum(Vr2pidVrM*np.matmul(vxM*dVxM,mwell))/nbarMax
+    UxMax=vthM*np.sum(Vr2pidVrM*np.matmul(kh2_mesh.vx*dVxM,mwell))/nbarMax
     for i in range(nvrM):
-        vr2vx2_ran2[:,i]=vrM[i]**2+(vxM-UxMax/vthM)**2
+        vr2vx2_ran2[:,i]=kh2_mesh.vr[i]**2+(kh2_mesh.vx-UxMax/vthM)**2
     TMax=2*mu*CONST.H_MASS*vthM**2*np.sum(Vr2pidVrM*np.matmul(dVxM,vr2vx2_ran2*mwell))/(3*CONST.Q*nbarMax)
 
-    UxHMax=vthM*np.sum(Vr2pidVrM*np.matmul(vxM*dVxM,fh2BC))/nbarHMax
+    UxHMax=vthM*np.sum(Vr2pidVrM*np.matmul(kh2_mesh.vx*dVxM,fh2BC))/nbarHMax
     for i in range(nvrM):
-        vr2vx2_ran2[:,i]=vrM[i]**2+(vxM-UxHMax/vthM)**2
+        vr2vx2_ran2[:,i]=kh2_mesh.vr[i]**2+(kh2_mesh.vx-UxHMax/vthM)**2
     THMax=(2*mu*CONST.H_MASS)*vthM**2*np.sum(Vr2pidVrM*np.matmul(dVxM,vr2vx2_ran2*fh2BC))/(3*CONST.Q*nbarHMax)
 
     if compute_errors and debrief:
@@ -391,7 +376,7 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
 
             # interpolate fH data onto H2 mesh: fH -> fHM
             do_warn=5e-3
-            fHM=interp_fvrvxx(fH,vrA,vxA,xH,TnormA,vrM,vxM,kh2_mesh.x,TnormM,do_warn=do_warn, debug=interp_debug, g=g) 
+            fHM=interp_fvrvxx(fH,kh_mesh.vr,kh_mesh.vx,kh_mesh.x,kh_mesh.Tnorm,kh2_mesh.vr,kh2_mesh.vx,kh2_mesh.x,kh2_mesh.Tnorm,do_warn=do_warn, debug=interp_debug, g=g) 
 
             # Compute fH2 using Kinetic_H2
             ni_correct=1
@@ -400,7 +385,8 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
             
             
             kh2_results = kinetic_h2(\
-                    vxM, vrM, kh2_mesh.x, TnormM, mu, TiM, TeM, nM, vxiM, fh2BC, GammaxH2BC, NuLoss, PipeDiaM, fHM, SH2, fH2, nH2, THP, \
+                    kh2_mesh.vx, kh2_mesh.vr, kh2_mesh.x, kh2_mesh.Tnorm, mu, kh2_mesh.Ti, kh2_mesh.Te, kh2_mesh.ne, vxiM, 
+                    fh2BC, GammaxH2BC, NuLoss, kh2_mesh.PipeDia, fHM, SH2, fH2, nH2, THP, \
                     truncate=truncate, Simple_CX=Simple_CX, Max_Gen=max_gen, Compute_H_Source=Compute_H_Source,\
                     H2_H2_EL=H2_H2_EL,H2_P_EL=H2_P_EL,H2_H_EL=H2_H_EL,H2_HP_CX=H2_HP_CX, ni_correct=ni_correct,\
                     Compute_Errors=H2compute_errors, plot=H2plot,debug=H2debug,debrief=H2debrief,pause=H2pause, g=g) # fixed inputs - GG 2/26
@@ -411,10 +397,12 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
 
             # Interpolate H2 data onto H mesh: fH2 -> fH2A, fSH -> fSHA, nHP -> nHPA, THP -> THPA
             do_warn = 5.0E-3
-            fH2A = interp_fvrvxx(fH2,vrM,vxM,kh2_mesh.x,TnormM,vrA,vxA,xH,TnormA, do_warn=do_warn, debug=interp_debug, g=g) 
-            fSHA = interp_fvrvxx(fSH,vrM,vxM,kh2_mesh.x,TnormM,vrA,vxA,xH,TnormA, do_warn=do_warn, debug=interp_debug, g=g) 
-            nHPA = interp_scalarx(nHP,kh2_mesh.x,xH, do_warn=do_warn, debug=interp_debug) 
-            THPA = interp_scalarx(THP,kh2_mesh.x,xH, do_warn=do_warn, debug=interp_debug)     
+            fH2A = interp_fvrvxx(fH2,kh2_mesh.vr,kh2_mesh.vx,kh2_mesh.x,kh2_mesh.Tnorm,kh_mesh.vr,kh_mesh.vx,kh_mesh.x,kh_mesh.Tnorm,
+                                 do_warn=do_warn, debug=interp_debug, g=g) 
+            fSHA = interp_fvrvxx(fSH,kh2_mesh.vr,kh2_mesh.vx,kh2_mesh.x,kh2_mesh.Tnorm,kh_mesh.vr,kh_mesh.vx,kh_mesh.x,kh_mesh.Tnorm,
+                                 do_warn=do_warn, debug=interp_debug, g=g) 
+            nHPA = interp_scalarx(nHP,kh2_mesh.x,kh_mesh.x, do_warn=do_warn, debug=interp_debug) 
+            THPA = interp_scalarx(THP,kh2_mesh.x,kh_mesh.x, do_warn=do_warn, debug=interp_debug)     
 
             # Compute fH using Kinetic_H
             GammaxHBC = 0
@@ -425,7 +413,8 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
 
 
             kh_results = kinetic_h(
-                vxA,vrA,xH,TnormA,mu,TiA,TeA,nA,vxiA,fHBC,GammaxHBC,PipeDiaA,fH2A,fSHA,nHPA,THPA, fH=fH,\
+                    kh_mesh.vx, kh_mesh.vr, kh_mesh.x, kh_mesh.Tnorm, mu, kh_mesh.Ti, kh_mesh.Te, kh_mesh.ne, vxiA,
+                    fHBC, GammaxHBC, kh_mesh.PipeDia, fH2A, fSHA, nHPA, THPA, fH=fH,\
                     truncate=truncate, Simple_CX=Simple_CX, Max_Gen=max_gen, \
                     H_H_EL=H_H_EL, H_P_EL=H2_P_EL, _H_H2_EL= H2_H2_EL, H_P_CX=H_P_CX, ni_correct=ni_correct, \
                     Compute_Errors=Hcompute_errors, plot=Hplot, debug=Hdebug, debrief=Hdebrief, pause=Hpause, g=g) # Not sure where some of the keywords are defined
@@ -434,7 +423,7 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
 
 
             # Interpolate SideWallH data onto H2 mesh: SideWallH -> SideWallHM
-            SideWallHM= interp_scalarx(SideWallH, xH, kh2_mesh.x, do_warn=do_warn, debug=interp_debug)
+            SideWallHM= interp_scalarx(SideWallH, kh_mesh.x, kh2_mesh.x, do_warn=do_warn, debug=interp_debug)
             # Adjust SpH2 to achieve net zero hydrogen atom/molecule flux from wall
             # (See notes "Procedure to adjust the normalization of the molecular source at the 
             # limiters (SpH2) to attain a net zero atom/molecule flux from wall")
@@ -471,7 +460,7 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
             SH2=SpH2+0.5*SideWallHM
 
             if compute_errors:
-                _RxH_H2 = interp_scalarx(g.Kinetic_H2_Output_RxH_H2,kh2_mesh.x, xH, do_warn=do_warn, debug=interp_debug)
+                _RxH_H2 = interp_scalarx(g.Kinetic_H2_Output_RxH_H2,kh2_mesh.x, kh_mesh.x, do_warn=do_warn, debug=interp_debug)
                 DRx=_RxH_H2+g.Kinetic_H_Output_RxH2_H
                 nDRx=np.max(np.abs(DRx))/np.max(np.abs(np.array([_RxH_H2,g.Kinetic_H_Output_RxH2_H])))
                 if debrief:
@@ -511,8 +500,8 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
 
     
     # Compute Lyman and Balmer
-    Lyman = lyman_alpha(nA, TeA, nH, no_null = 1, g=g)
-    Balmer = balmer_alpha(nA, TeA, nH, no_null = 1, g=g)
+    Lyman = lyman_alpha(kh_mesh.ne, kh_mesh.Te, nH, no_null = 1, g=g)
+    Balmer = balmer_alpha(kh_mesh.ne, kh_mesh.Te, nH, no_null = 1, g=g)
 
     #   Update KN1D_internal common block - GG 2/15
     #   NOTE What is the purpose of this, can it be removed?
@@ -525,4 +514,4 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
 
     # The rest of the code for KN1D is for saving files and plotting which we can implement at a later date 
     return kh2_mesh.x, nH2, GammaxH2, TH2, qxH2_total, nHP, THP, SH, SP, \
-        xH, nH, GammaxH, TH, qxH_total, NetHSource, Sion, QH_total, SideWallH, Lyman, Balmer
+        kh_mesh.x, nH, GammaxH, TH, qxH_total, NetHSource, Sion, QH_total, SideWallH, Lyman, Balmer
