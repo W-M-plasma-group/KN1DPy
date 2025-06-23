@@ -8,6 +8,7 @@ TWALL = 293.0*K_BOLTZ/Q			    #room temperature (eV)
 KH_NV = 20                          #Mesh size for kinetic_h mesh creation
 KH2_NV = 6                          #Mesh size for kinetic_h2 mesh creation
 
-#Settings for determining reaction rate calculation for kinetic_h2 mesh creation
-USE_JH = 0
+
+#Settings for Kinetic Mesh Creation
+USE_JH = 0                          #
 USE_COLLRAD_IONIZATION = 1

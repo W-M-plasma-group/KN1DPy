@@ -1,4 +1,5 @@
 import numpy as np 
+from numpy.typing import NDArray
 from scipy import interpolate
 
 from .sigma.sigmav_ion_h0 import sigmav_ion_h0
@@ -15,9 +16,20 @@ from .common import constants as CONST
 
 class kinetic_mesh:
 
-    def __init__(self, mesh_type : str, nv, mu, x, Ti, Te, n, PipeDia, E0 = 0, ixE0 = 0 ,irE0 = 0,fctr = 1.0):
+    def __init__(
+            self, 
+            mesh_type  : str, #'h' for kinetic_h_mesh, 'h2' for kinetic_h2_mesh
+            nv         : int, 
+            mu         : int, 
+            x          : NDArray,
+            Ti         : NDArray,
+            Te         : NDArray, 
+            n          : NDArray, 
+            PipeDia    : NDArray,
+            E0, ixE0, irE0, fctr
+        ):
         
-        self.mesh_type = mesh_type #'h' for kinetic_h_mesh, 'h2' for kinetic_h2_mesh
+        self.mesh_type = mesh_type
 
         print("generating kinetic_" + mesh_type + "_mesh")
 
@@ -108,7 +120,7 @@ class kinetic_mesh:
                 ioniz_rate = collrad_sigmav_ion_h0(nfine, Tefine)
             else:
                 if CONST.USE_JH:
-                    ioniz_rate = jhs_coef(nfine, Tefine, no_null = True, g=g) # deleted unecessary variable - GG
+                    ioniz_rate = jhs_coef(nfine, Tefine, no_null = True) # deleted unecessary variable - GG
                 else:
                     ioniz_rate = sigmav_ion_h0(Tefine)
             RR = nfine * ioniz_rate + nfine * sigma_cx_h0(Tifine, np.array([minE0] * nxfine)) + gamma_wall # replaced size(nxfine) with nxfine
@@ -169,22 +181,40 @@ class kinetic_mesh:
         PipeDiaH = interpfunc(xH)
         vx, vr, Tnorm, ixE0, irE0 = create_vr_vx_mesh(nv, TiH) # fixed error from not assigning all outputs - GG
 
-        self.xH = xH
-        self.TiH = TiH
-        self.TeH = TeH
-        self.neH = neH
-        self.PipeDiaH = PipeDiaH
-        self.vx = vx
-        self.vr = vr
-        self.Tnorm = Tnorm
+        self.x : NDArray = xH
+        self.Ti : NDArray = TiH
+        self.Te : NDArray = TeH
+        self.ne : NDArray = neH
+        self.PipeDia : NDArray = PipeDiaH
+        self.vx : NDArray = vx
+        self.vr : NDArray = vr
+        self.Tnorm : float = Tnorm
 
         
-def create_kinetic_h_mesh(nv, mu, x, Ti, Te, n, PipeDia, E0 = 0, ixE0 = 0 ,irE0 = 0,fctr = 1):
+def create_kinetic_h_mesh(
+        nv         : int, 
+        mu         : int, 
+        x          : NDArray,
+        Ti         : NDArray,
+        Te         : NDArray, 
+        n          : NDArray, 
+        PipeDia    : NDArray,
+        E0 = 0, ixE0 = 0, irE0 = 0, fctr = 1.0
+    ) -> kinetic_mesh:
     
     mesh = kinetic_mesh('h', nv, mu, x, Ti, Te, n, PipeDia, E0, ixE0, irE0,fctr)
     return mesh
 
-def create_kinetic_h2_mesh(nv, mu, x, Ti, Te, n, PipeDia, E0 = 0, ixE0 = 0 ,irE0 = 0,fctr = 1.0):
+def create_kinetic_h2_mesh(
+        nv         : int, 
+        mu         : int, 
+        x          : NDArray,
+        Ti         : NDArray,
+        Te         : NDArray, 
+        n          : NDArray, 
+        PipeDia    : NDArray,
+        E0 = 0, ixE0 = 0, irE0 = 0, fctr = 1.0
+    ) -> kinetic_mesh:
     
     mesh = kinetic_mesh('h2', nv, mu, x, Ti, Te, n, PipeDia, E0, ixE0, irE0, fctr)
     return mesh

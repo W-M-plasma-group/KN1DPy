@@ -1,4 +1,5 @@
 import numpy as np 
+from numpy.typing import NDArray
 import os
 from scipy import interpolate
 
@@ -76,6 +77,8 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
     #
     #     ReadInput - if set, then reset all input variables to that contained in 'file'.KN1D_input
 
+
+    x = np.array(x)
     g=global_vars() # moved global_vars decleration up
     COLLISIONS = KN1D_Collisions()
 
@@ -195,11 +198,11 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
 
         # replaced function inputs, split output list into variables - nh // fixed keyword inputs - GG
         kh2_mesh = create_kinetic_h2_mesh(CONST.KH2_NV, mu, x, Ti, Te, n, PipeDia, E0 = Eneut, fctr = fctr) 
-        xH2 = kh2_mesh.xH
-        TiM = kh2_mesh.TiH
-        TeM = kh2_mesh.TeH
-        nM = kh2_mesh.neH
-        PipeDiaM = kh2_mesh.PipeDiaH
+        xH2 = kh2_mesh.x
+        TiM = kh2_mesh.Ti
+        TeM = kh2_mesh.Te
+        nM = kh2_mesh.ne
+        PipeDiaM = kh2_mesh.PipeDia
         vxM = kh2_mesh.vx
         vrM = kh2_mesh.vr
         TnormM = kh2_mesh.Tnorm
@@ -214,11 +217,11 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
 
         # finished line since create_kinetic_h_mesh has been programmed - nh // fixed capitalization - GG // fixed keyword inputs - GG
         kh_mesh = create_kinetic_h_mesh(CONST.KH_NV, mu, x, Ti, Te, n, PipeDia, fctr = fctr) 
-        xH = kh_mesh.xH
-        TiA = kh_mesh.TiH
-        TeA = kh_mesh.TeH
-        nA = kh_mesh.neH
-        PipeDiaA = kh_mesh.PipeDiaH
+        xH = kh_mesh.x
+        TiA = kh_mesh.Ti
+        TeA = kh_mesh.Te
+        nA = kh_mesh.ne
+        PipeDiaA = kh_mesh.PipeDia
         vxA = kh_mesh.vx
         vrA = kh_mesh.vr
         TnormA = kh_mesh.Tnorm
@@ -232,7 +235,7 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
     inM=(vxM<0).nonzero()[0]
     nvrM=vrM.size
     nvxM=vxM.size
-    nxH2=xH2.size
+    nxH2=kh2_mesh.x.size
     
     #   Code below uses variables defined in create_kinetic_h_mesh
     
@@ -270,7 +273,7 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
         if LC[ii]>0:
             Cs_LC[ii]=np.sqrt(CONST.Q*(Ti[ii]+Te[ii])/(mu*CONST.H_MASS))/LC[ii] # fixed notation of indexing arrays - GG
     interpfunc = interpolate.interp1d(x,Cs_LC) # fixed the way interpolation was called - GG
-    NuLoss = interpfunc(xH2)
+    NuLoss = interpfunc(kh2_mesh.x)
     
     #  Compute first guess SpH2
 
@@ -288,9 +291,9 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
     nCs_LC=n*Cs_LC
 
     interpfunc = interpolate.interp1d(x,nCs_LC,fill_value="extrapolate") # fixed the way interpolation was called - GG
-    SpH2_hat=interpfunc(xH2)
+    SpH2_hat=interpfunc(kh2_mesh.x)
 
-    SpH2_hat=SpH2_hat/integ_bl(xH2,SpH2_hat,value_only=1) # not sure if this line is correct
+    SpH2_hat=SpH2_hat/integ_bl(kh2_mesh.x,SpH2_hat,value_only=1) # not sure if this line is correct
     beta=2/3*GammaxH2BC
     if refine: # readded this section now that we have the internal common block called - GG 2/15
         if SpH2_s!=None:
@@ -304,7 +307,7 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
     #   Interpolate for vxiM and vxiA
 
     interpfunc = interpolate.interp1d(x,vxi,fill_value="extrapolate")
-    vxiM = interpfunc(xH2)
+    vxiM = interpfunc(kh2_mesh.x)
 
     #interpfunc = interpolate.interp1d(x,vxi,fill_value="extrapolate") NOTE Is this Needed?
     vxiA = interpfunc(xH)
@@ -388,7 +391,7 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
 
             # interpolate fH data onto H2 mesh: fH -> fHM
             do_warn=5e-3
-            fHM=interp_fvrvxx(fH,vrA,vxA,xH,TnormA,vrM,vxM,xH2,TnormM,do_warn=do_warn, debug=interp_debug, g=g) 
+            fHM=interp_fvrvxx(fH,vrA,vxA,xH,TnormA,vrM,vxM,kh2_mesh.x,TnormM,do_warn=do_warn, debug=interp_debug, g=g) 
 
             # Compute fH2 using Kinetic_H2
             ni_correct=1
@@ -397,7 +400,7 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
             
             
             kh2_results = kinetic_h2(\
-                    vxM, vrM, xH2, TnormM, mu, TiM, TeM, nM, vxiM, fh2BC, GammaxH2BC, NuLoss, PipeDiaM, fHM, SH2, fH2, nH2, THP, \
+                    vxM, vrM, kh2_mesh.x, TnormM, mu, TiM, TeM, nM, vxiM, fh2BC, GammaxH2BC, NuLoss, PipeDiaM, fHM, SH2, fH2, nH2, THP, \
                     truncate=truncate, Simple_CX=Simple_CX, Max_Gen=max_gen, Compute_H_Source=Compute_H_Source,\
                     H2_H2_EL=H2_H2_EL,H2_P_EL=H2_P_EL,H2_H_EL=H2_H_EL,H2_HP_CX=H2_HP_CX, ni_correct=ni_correct,\
                     Compute_Errors=H2compute_errors, plot=H2plot,debug=H2debug,debrief=H2debrief,pause=H2pause, g=g) # fixed inputs - GG 2/26
@@ -408,10 +411,10 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
 
             # Interpolate H2 data onto H mesh: fH2 -> fH2A, fSH -> fSHA, nHP -> nHPA, THP -> THPA
             do_warn = 5.0E-3
-            fH2A = interp_fvrvxx(fH2,vrM,vxM,xH2,TnormM,vrA,vxA,xH,TnormA, do_warn=do_warn, debug=interp_debug, g=g) 
-            fSHA = interp_fvrvxx(fSH,vrM,vxM,xH2,TnormM,vrA,vxA,xH,TnormA, do_warn=do_warn, debug=interp_debug, g=g) 
-            nHPA = interp_scalarx(nHP,xH2,xH, do_warn=do_warn, debug=interp_debug) 
-            THPA = interp_scalarx(THP,xH2,xH, do_warn=do_warn, debug=interp_debug)     
+            fH2A = interp_fvrvxx(fH2,vrM,vxM,kh2_mesh.x,TnormM,vrA,vxA,xH,TnormA, do_warn=do_warn, debug=interp_debug, g=g) 
+            fSHA = interp_fvrvxx(fSH,vrM,vxM,kh2_mesh.x,TnormM,vrA,vxA,xH,TnormA, do_warn=do_warn, debug=interp_debug, g=g) 
+            nHPA = interp_scalarx(nHP,kh2_mesh.x,xH, do_warn=do_warn, debug=interp_debug) 
+            THPA = interp_scalarx(THP,kh2_mesh.x,xH, do_warn=do_warn, debug=interp_debug)     
 
             # Compute fH using Kinetic_H
             GammaxHBC = 0
@@ -431,14 +434,14 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
 
 
             # Interpolate SideWallH data onto H2 mesh: SideWallH -> SideWallHM
-            SideWallHM= interp_scalarx(SideWallH, xH, xH2, do_warn=do_warn, debug=interp_debug)
+            SideWallHM= interp_scalarx(SideWallH, xH, kh2_mesh.x, do_warn=do_warn, debug=interp_debug)
             # Adjust SpH2 to achieve net zero hydrogen atom/molecule flux from wall
             # (See notes "Procedure to adjust the normalization of the molecular source at the 
             # limiters (SpH2) to attain a net zero atom/molecule flux from wall")
 
             # Compute SI, GammaH2Wall_minus, and GammaHWall_minus
-            SI = integ_bl(xH2, SpH2, value_only=True)
-            SwallI = integ_bl(xH2,0.5*SideWallHM, value_only = True)
+            SI = integ_bl(kh2_mesh.x, SpH2, value_only=True)
+            SwallI = integ_bl(kh2_mesh.x,0.5*SideWallHM, value_only = True)
             GammaH2Wall_minus = AlbedoH2*GammaxH2BC
             GammaHWall_minus=-GammaxH[0]
 
@@ -468,7 +471,7 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
             SH2=SpH2+0.5*SideWallHM
 
             if compute_errors:
-                _RxH_H2 = interp_scalarx(g.Kinetic_H2_Output_RxH_H2,xH2, xH, do_warn=do_warn, debug=interp_debug)
+                _RxH_H2 = interp_scalarx(g.Kinetic_H2_Output_RxH_H2,kh2_mesh.x, xH, do_warn=do_warn, debug=interp_debug)
                 DRx=_RxH_H2+g.Kinetic_H_Output_RxH2_H
                 nDRx=np.max(np.abs(DRx))/np.max(np.abs(np.array([_RxH_H2,g.Kinetic_H_Output_RxH2_H])))
                 if debrief:
@@ -521,5 +524,5 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
     kn1d_internal.THP_s = THP
 
     # The rest of the code for KN1D is for saving files and plotting which we can implement at a later date 
-    return xH2, nH2, GammaxH2, TH2, qxH2_total, nHP, THP, SH, SP, \
+    return kh2_mesh.x, nH2, GammaxH2, TH2, qxH2_total, nHP, THP, SH, SP, \
         xH, nH, GammaxH, TH, qxH_total, NetHSource, Sion, QH_total, SideWallH, Lyman, Balmer

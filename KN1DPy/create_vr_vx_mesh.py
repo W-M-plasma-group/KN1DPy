@@ -1,5 +1,6 @@
 #from cmath import sqrt     replaced with np.sqrt - nh
 import numpy as np
+from numpy.typing import NDArray
 
 from .reverse import * # fixed import
 
@@ -12,7 +13,8 @@ from .reverse import * # fixed import
 #
 # Gwendolyn Galleher 
 
-def create_vr_vx_mesh(nv, Ti, E0 = np.array([0.0]), Tmax = 0.0): # removed unused input parameters
+def create_vr_vx_mesh(nv : int, Ti : NDArray, E0 : NDArray = np.array([0.0]), Tmax : float = 0.0
+                      ) -> tuple[NDArray, NDArray, float, NDArray, NDArray] : # removed unused input parameters
     _Ti = np.array(Ti) 
     _Ti = np.concatenate([_Ti, E0[E0>0]]) 
     if Tmax > 0:
