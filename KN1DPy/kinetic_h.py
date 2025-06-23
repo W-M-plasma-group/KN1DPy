@@ -20,6 +20,7 @@ from .sign import sign
 from .sval import sval
 
 from .global_vars import mH, q, k_boltz, Twall
+from .common import JH_Coef
 
 # This subroutine is part of the "KN1D" atomic and molecular neutral transport code.
 
@@ -53,7 +54,7 @@ from .global_vars import mH, q, k_boltz, Twall
 # Note: Variable names contain characters to help designate species -
 #	atomic neutral (H), molecular neutral (H2), molecular ion (HP), proton (i) or (P) 
 
-def kinetic_h(mesh : kinetic_mesh, mu, vxi, fHBC, GammaxHBC, fH2, fSH, nHP, THP, fH=None,
+def kinetic_h(mesh : kinetic_mesh, mu, vxi, fHBC, GammaxHBC, fH2, fSH, nHP, THP, jh_coeffs, fH=None,
 			  truncate=1e-4,Compute_Errors=0,plot=0,debug=0,pause=0,debrief=0,
 			  Simple_CX=1,Max_Gen=50,No_Johnson_Hinnov=0,Use_Collrad_Ionization=0,
 			  No_Recomb=0,H_H_EL=0,H_P_EL=0,_H_H2_EL=0,H_P_CX=0,ni_correct=0, g=None): # changed fH default to None and Use_Collrad_Ionization capitalization
@@ -838,14 +839,14 @@ def kinetic_h(mesh : kinetic_mesh, mu, vxi, fHBC, GammaxHBC, fH2, fSH, nHP, THP,
 			sigv[1,:]=collrad_sigmav_ion_h0(n,Te) # from COLLRAD code (DEGAS-2)
 		else:
 			if JH:
-				sigv[1,:]=jhs_coef(n,Te,no_null=True, g=g) # Johnson-Hinnov, limited Te range; fixed JHS_coef capitalization
+				sigv[1,:]=jhs_coef(n, Te, jh_coeffs, no_null=True) # Johnson-Hinnov, limited Te range; fixed JHS_coef capitalization
 			else:
 				sigv[1,:]=sigmav_ion_h0(Te) # from Janev et al., up to 20keV
 
 		#	Reaction R2:  e + H(+) -> H(1s) + hv  (radiative recombination)
 
 		if JH:
-			sigv[2,:]=jhalpha_coef(n,Te,no_null=True, g=g) # fixed JHAlpha_coef capitalization
+			sigv[2,:]=jhalpha_coef(n, Te, jh_coeffs, no_null=True) # fixed JHAlpha_coef capitalization
 		else:
 			sigv[2,:]=sigmav_rec_h1s(Te)
 

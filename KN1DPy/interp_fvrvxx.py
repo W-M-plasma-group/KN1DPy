@@ -9,7 +9,7 @@ from .kinetic_mesh import kinetic_mesh
 
 from .global_vars import mH, q
 
-def interp_fvrvxx(fa, mesh_a : kinetic_mesh, mesh_b : kinetic_mesh, do_warn=None, debug=0, correct=1,g=None): # added global variable argument
+def interp_fvrvxx(fa, mesh_a : kinetic_mesh, mesh_b : kinetic_mesh, do_warn=None, debug=0, correct=1, g=None): # added global variable argument
 
     # NOTE Passing full mesh may be unneccessary, works for this code, but would need to be refactored for other projects
     Vra = mesh_a.vr

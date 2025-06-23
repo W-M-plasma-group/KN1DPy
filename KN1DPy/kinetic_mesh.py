@@ -13,6 +13,7 @@ from .jhs_coef import jhs_coef
 from .create_vr_vx_mesh import create_vr_vx_mesh
 
 from .common import constants as CONST
+from .common.JH_Coef import JH_Coef
 
 class kinetic_mesh:
 
@@ -26,7 +27,8 @@ class kinetic_mesh:
             Te         : NDArray, 
             n          : NDArray, 
             PipeDia    : NDArray,
-            E0, ixE0, irE0, fctr
+            jh_coeffs  : JH_Coef = None,
+            E0 = 0, ixE0 = 0, irE0 = 0, fctr = 1.0
         ):
         
         self.mesh_type = mesh_type
@@ -118,11 +120,13 @@ class kinetic_mesh:
             minE0 = 0.5 * CONST.H_MASS * minVr * minVr / CONST.Q
             if CONST.USE_COLLRAD_IONIZATION:
                 ioniz_rate = collrad_sigmav_ion_h0(nfine, Tefine)
+            elif CONST.USE_JH:
+                #Checks that the JH_Coef class has been passed into the function before calling jhs_coef
+                if (jh_coeffs == None):
+                    raise Exception("kinetic_h_mesh generated using JH, but no JH coefficients given")
+                ioniz_rate = jhs_coef(nfine, Tefine, jh_coeffs, no_null = True) # deleted unecessary variable - GG
             else:
-                if CONST.USE_JH:
-                    ioniz_rate = jhs_coef(nfine, Tefine, no_null = True) # deleted unecessary variable - GG
-                else:
-                    ioniz_rate = sigmav_ion_h0(Tefine)
+                ioniz_rate = sigmav_ion_h0(Tefine)
             RR = nfine * ioniz_rate + nfine * sigma_cx_h0(Tifine, np.array([minE0] * nxfine)) + gamma_wall # replaced size(nxfine) with nxfine
             
             # Compute local maximum grid spacing dx_max = 2 
@@ -199,10 +203,12 @@ def create_kinetic_h_mesh(
         Te         : NDArray, 
         n          : NDArray, 
         PipeDia    : NDArray,
+        jh_coeffs  : JH_Coef = None,
         E0 = 0, ixE0 = 0, irE0 = 0, fctr = 1.0
     ) -> kinetic_mesh:
     
-    mesh = kinetic_mesh('h', nv, mu, x, Ti, Te, n, PipeDia, E0, ixE0, irE0,fctr)
+    mesh = kinetic_mesh('h', nv, mu, x, Ti, Te, n, PipeDia, jh_coeffs = jh_coeffs,
+                        E0 = E0, ixE0 = ixE0, irE0 = irE0, fctr = fctr)
     return mesh
 
 def create_kinetic_h2_mesh(
@@ -216,5 +222,6 @@ def create_kinetic_h2_mesh(
         E0 = 0, ixE0 = 0, irE0 = 0, fctr = 1.0
     ) -> kinetic_mesh:
     
-    mesh = kinetic_mesh('h2', nv, mu, x, Ti, Te, n, PipeDia, E0, ixE0, irE0, fctr)
+    mesh = kinetic_mesh('h2', nv, mu, x, Ti, Te, n, PipeDia, 
+                        E0 = E0, ixE0 = ixE0, irE0 = irE0, fctr = fctr)
     return mesh

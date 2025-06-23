@@ -19,6 +19,7 @@ from .balmer_alpha import balmer_alpha
 
 from .common import constants as CONST
 from .common.KN1D import KN1D_Collisions, KN1D_Internal
+from .common.JH_Coef import JH_Coef
 from .global_vars import global_vars
 
 #   Computes the molecular and atomic neutral profiles for inputted profiles
@@ -155,6 +156,8 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
     max_gen = 100
     error = 1 # This i think should be moved to the keyword in the call line
 
+    #Generates JH_Coef class, Used in place of IDL version's JH_Coef Common block
+    jh_coefficients = JH_Coef()
         
     # Option: Read input parameters stored in file from previous run
     if ReadInput: 
@@ -208,9 +211,8 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
             fctr = fctr * 30 / GaugeH2
 
         # finished line since create_kinetic_h_mesh has been programmed - nh // fixed capitalization - GG // fixed keyword inputs - GG
-        kh_mesh = create_kinetic_h_mesh(CONST.KH_NV, mu, x, Ti, Te, n, PipeDia, fctr = fctr) 
+        kh_mesh = create_kinetic_h_mesh(CONST.KH_NV, mu, x, Ti, Te, n, PipeDia, jh_coeffs=jh_coefficients, fctr = fctr) 
         TnormA = kh_mesh.Tnorm
-
 
     v0_bar=np.sqrt(8.0*CONST.TWALL*CONST.Q/(np.pi*2*mu*CONST.H_MASS))
 
@@ -410,7 +412,7 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
 
 
             kh_results = kinetic_h(
-                    kh_mesh, mu, vxiA, fHBC, GammaxHBC, fH2A, fSHA, nHPA, THPA, fH=fH,\
+                    kh_mesh, mu, vxiA, fHBC, GammaxHBC, fH2A, fSHA, nHPA, THPA, jh_coefficients, fH=fH,\
                     truncate=truncate, Simple_CX=Simple_CX, Max_Gen=max_gen, \
                     H_H_EL=H_H_EL, H_P_EL=H2_P_EL, _H_H2_EL= H2_H2_EL, H_P_CX=H_P_CX, ni_correct=ni_correct, \
                     Compute_Errors=Hcompute_errors, plot=Hplot, debug=Hdebug, debrief=Hdebrief, pause=Hpause, g=g) # Not sure where some of the keywords are defined
@@ -456,7 +458,7 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
             SH2=SpH2+0.5*SideWallHM
 
             if compute_errors:
-                _RxH_H2 = interp_scalarx(g.Kinetic_H2_Output_RxH_H2,kh2_mesh.x, kh_mesh.x, do_warn=do_warn, debug=interp_debug)
+                _RxH_H2 = interp_scalarx(g.Kinetic_H2_Output_RxH_H2, kh2_mesh.x, kh_mesh.x, do_warn=do_warn, debug=interp_debug)
                 DRx=_RxH_H2+g.Kinetic_H_Output_RxH2_H
                 nDRx=np.max(np.abs(DRx))/np.max(np.abs(np.array([_RxH_H2,g.Kinetic_H_Output_RxH2_H])))
                 if debrief:

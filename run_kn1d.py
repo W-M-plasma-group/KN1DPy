@@ -22,7 +22,7 @@ sav_data = readsav(data_file)
 print("Beginning KN1D")
 start = time.time()
 results = kn1d(sav_data['x'], sav_data['x_lim'], sav_data['x_sep'], sav_data['p_wall'], sav_data['mu'], sav_data['t_i'], 
-               sav_data['t_e'], sav_data['n_e'], sav_data['vx'], sav_data['lc'], sav_data['d_pipe'])
+               sav_data['t_e'], sav_data['n_e'], sav_data['vx'], sav_data['lc'], sav_data['d_pipe'], debug = 1)
 end = time.time()
 
 print("Elapsed Time: ", end-start)
