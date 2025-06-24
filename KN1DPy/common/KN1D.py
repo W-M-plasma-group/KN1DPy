@@ -15,6 +15,21 @@ class KN1D_Collisions:
         self.H_P_CX = 1
         self.Simple_CX = 1
 
+    #Setup string conversion for printing
+    def __str__(self):
+        string = "KN1D_Collisions:\n"
+        string += "    H2_H2_EL: " + str(self.H2_H2_EL) + "\n"
+        string += "    H2_P_EL: " + str(self.H2_P_EL) + "\n"
+        string += "    H2_H_EL: " + str(self.H2_H_EL) + "\n"
+        string += "    H2_HP_CX: " + str(self.H2_HP_CX) + "\n"
+        string += "    H_H_EL: " + str(self.H_H_EL) + "\n"
+        string += "    H_P_EL: " + str(self.H_P_EL) + "\n"
+        string += "    H_P_CX: " + str(self.H_P_CX) + "\n"
+        string += "    Simple_CX: " + str(self.Simple_CX) + "\n"
+
+        return string
+    
+
 #   From the KN1D_internal common block
 class KN1D_Internal:
 
@@ -26,3 +41,15 @@ class KN1D_Internal:
         self.SpH2_s = None
         self.nHP_s = None
         self.THP_s = None
+
+    #Setup string conversion for printing
+    def __str__(self):
+        string = "KN1D_Internal:\n"
+        string += "    fH_s: " + str(self.fH_s) + "\n"
+        string += "    fH2_s: " + str(self.fH2_s) + "\n"
+        string += "    nH2_s: " + str(self.nH2_s) + "\n"
+        string += "    SpH2_s: " + str(self.SpH2_s) + "\n"
+        string += "    nHP_s: " + str(self.nHP_s) + "\n"
+        string += "    THP_s: " + str(self.THP_s) + "\n"
+
+        return string

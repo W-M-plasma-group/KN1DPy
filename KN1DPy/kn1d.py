@@ -19,6 +19,9 @@ from .jh_related.balmer_alpha import balmer_alpha
 
 from .common import constants as CONST
 from .common.KN1D import KN1D_Collisions, KN1D_Internal
+from .common.Kinetic_H2 import Kinetic_H2_Common
+from .common.Kinetic_H import Kinetic_H_Common
+from .common.SigmaV import SigmaV_Common
 from .common.JH_Coef import JH_Coef
 from .global_vars import global_vars
 
