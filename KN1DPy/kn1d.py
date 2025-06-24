@@ -41,7 +41,8 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
          truncate = 1.0e-3, refine = 0, File = '', NewFile = 0, ReadInput = 0, \
          error = 0, compute_errors = 0, plot = 0, debug = 0, debrief = 0, pause = 0, \
          Hplot = 0, Hdebug = 0, Hdebrief = 0, Hpause = 0, \
-         H2plot = 0, H2debug = 0, H2debrief = 0, H2pause = 0):  # deleted what i added before dont know what I was thinking?? - GG 2/19, corrected typos
+         H2plot = 0, H2debug = 0, H2debrief = 0, H2pause = 0) -> dict:  
+    # deleted what i added before dont know what I was thinking?? - GG 2/19, corrected typos
 
     # Input: 
     #	x	- fltarr(nx), cross-field coordinate (meters)
@@ -514,5 +515,30 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
     kn1d_internal.THP_s = THP
 
     # The rest of the code for KN1D is for saving files and plotting which we can implement at a later date 
-    return kh2_mesh.x, nH2, GammaxH2, TH2, qxH2_total, nHP, THP, SH, SP, \
-        kh_mesh.x, nH, GammaxH, TH, qxH_total, NetHSource, Sion, QH_total, SideWallH, Lyman, Balmer
+
+    # return kh2_mesh.x, nH2, GammaxH2, TH2, qxH2_total, nHP, THP, SH, SP, \
+    #     kh_mesh.x, nH, GammaxH, TH, qxH_total, NetHSource, Sion, QH_total, SideWallH, Lyman, Balmer
+
+    results = {}
+    results["xH2"] = kh2_mesh.x
+    results["nH2"] = nH2
+    results["GammaxH2"] = GammaxH2
+    results["TH2"] = TH2
+    results["qxH2_total"] = qxH2_total
+    results["nHP"] = nHP
+    results["THP"] = THP
+    results["SH"] = SH
+    results["SP"] = SP
+    results["xH"] = kh_mesh.x
+    results["nH"] = nH
+    results["GammaxH"] = GammaxH
+    results["TH"] = TH
+    results["qxH_total"] = qxH_total
+    results["NetHSource"] = NetHSource
+    results["Sion"] = Sion
+    results["QH_total"] = QH_total
+    results["SideWallH"] = SideWallH
+    results["Lyman"] = Lyman
+    results["Balmer"] = Balmer
+
+    return results

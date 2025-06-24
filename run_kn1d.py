@@ -32,60 +32,46 @@ print()
 output = open('Results/output.txt', 'w')
 sys.stdout = output
 
-print("xH2")
-print(results[0])
-print()
-
-print("nH2")
-print(results[1])
-print()
-
-print("xH")
-print(results[9])
-print()
-
-print("nH")
-print(results[10])
-print()
-
-print("Full Results")
-print(results)
+for key, value in results.items():
+    print(key)
+    print(value)
+    print()
 
 output.close()
 sys.stdout = standard_out
 
 #Create Results Plots
-plt.plot(np.arange(0, len(results[0])), results[0])
+plt.plot(np.arange(0, len(results["xH2"])), results["xH2"])
 plt.title("xH2")
 plt.savefig('Results/xH2.png')
 plt.clf()
 
-plt.plot(np.arange(0, len(results[1])), results[1])
+plt.plot(np.arange(0, len(results["nH2"])), results["nH2"])
 plt.title("nH2")
 plt.savefig('Results/nH2.png')
 plt.clf()
 
-plt.plot(np.arange(0, len(results[9])), results[9])
+plt.plot(np.arange(0, len(results["xH"])), results["xH"])
 plt.title("xH")
 plt.savefig('Results/xH.png')
 plt.clf()
 
-plt.plot(np.arange(0, len(results[10])), results[10])
+plt.plot(np.arange(0, len(results["nH"])), results["nH"])
 plt.title("nH")
 plt.savefig('Results/nH.png')
 plt.clf()
 
-plt.plot(results[0], results[1])
+plt.plot(results["nH2"], results["xH2"])
 plt.title("nH2 vs xH2")
 plt.savefig('Results/nH2_xH2.png')
 plt.clf()
 
-plt.plot(results[9], results[10])
+plt.plot(results["nH"], results["xH"])
 plt.title("nH vs xH")
 plt.savefig('Results/nH_xH.png')
 plt.clf()
 
-plt.plot(results[9], results[14])
+plt.plot(results["xH"], results["NetHSource"])
 plt.title("Net H Source")
 plt.savefig('Results/NetHSource.png')
 plt.clf()
