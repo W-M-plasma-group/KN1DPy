@@ -8,8 +8,10 @@ from .sval import sval
 from .kinetic_mesh import kinetic_mesh
 
 from .global_vars import mH, q
+from .common.INTERP_FVRVXX import INTERP_FVRVXX_internal
 
-def interp_fvrvxx(fa, mesh_a : kinetic_mesh, mesh_b : kinetic_mesh, do_warn=None, debug=0, correct=1, g=None): # added global variable argument
+def interp_fvrvxx(fa, mesh_a : kinetic_mesh, mesh_b : kinetic_mesh, internal : INTERP_FVRVXX_internal, 
+                  do_warn=None, debug=0, correct=1):
 
     # NOTE Passing full mesh may be unneccessary, works for this code, but would need to be refactored for other projects
     Vra = mesh_a.vr
@@ -56,25 +58,25 @@ def interp_fvrvxx(fa, mesh_a : kinetic_mesh, mesh_b : kinetic_mesh, do_warn=None
     prompt='INTERP_FVRVXX => '
 
     #   Calls INTERP_FVRVXX_internal1 and INTERP_FVRVXX_internal2 common blocks
-    vra1=g.INTERP_FVRVXX_internal1_vra1
-    vxa1=g.INTERP_FVRVXX_internal1_vxa1
-    Tnorma1=g.INTERP_FVRVXX_internal1_Tnorma1
-    vrb1=g.INTERP_FVRVXX_internal1_vrb1
-    vxb1=g.INTERP_FVRVXX_internal1_vxb1
-    Tnormb1=g.INTERP_FVRVXX_internal1_Tnormb1
-    weight1=g.INTERP_FVRVXX_internal1_weight1 # fixed capitalization - GG
+    vra1 = internal.segment1.vra
+    vxa1 = internal.segment1.vxa
+    Tnorma1 = internal.segment1.Tnorma
+    vrb1 = internal.segment1.vrb
+    vxb1 = internal.segment1.vxb
+    Tnormb1 = internal.segment1.Tnormb
+    weight1 = internal.segment1.weight # fixed capitalization - GG
     
-    vra2=g.INTERP_FVRVXX_internal2_vra2
-    vxa2=g.INTERP_FVRVXX_internal2_vxa2
-    Tnorma2=g.INTERP_FVRVXX_internal2_Tnorma2
-    vrb2=g.INTERP_FVRVXX_internal2_vrb2
-    vxb2=g.INTERP_FVRVXX_internal2_vxb2
-    Tnormb2=g.INTERP_FVRVXX_internal2_Tnormb2
-    weight2=g.INTERP_FVRVXX_internal2_weight2
+    vra2 = internal.segment2.vra
+    vxa2 = internal.segment2.vxa
+    Tnorma2 = internal.segment2.Tnorma
+    vrb2 = internal.segment2.vrb
+    vxb2 = internal.segment2.vxb
+    Tnormb2 = internal.segment2.Tnormb
+    weight2 = internal.segment2.weight
 
-    nvra=Vra.size
-    nvxa=Vxa.size
-    nxa=Xa.size
+    nvra = Vra.size
+    nvxa = Vxa.size
+    nxa = Xa.size
 
     mu=1
 
@@ -465,22 +467,22 @@ def interp_fvrvxx(fa, mesh_a : kinetic_mesh, mesh_b : kinetic_mesh, do_warn=None
         if w1_active:
             if debug:
                 print(prompt+'Storing Weight in Weight2')
-            g.INTERP_FVRVXX_internal2_vra2=Vra
-            g.INTERP_FVRVXX_internal2_vxa2=Vxa
-            g.INTERP_FVRVXX_internal2_Tnorma2=Tnorma
-            g.INTERP_FVRVXX_internal2_vrb2=Vrb
-            g.INTERP_FVRVXX_internal2_vxb2=Vxb
-            g.INTERP_FVRVXX_internal2_Tnormb2=Tnormb
-            g.INTERP_FVRVXX_internal2_weight2=weight
+            internal.segment2.vra = Vra
+            internal.segment2.vxa = Vxa
+            internal.segment2.Tnorma = Tnorma
+            internal.segment2.vrb = Vrb
+            internal.segment2.vxb = Vxb
+            internal.segment2.Tnormb = Tnormb
+            internal.segment2.weight = weight
         else:
             if debug:
                 print(prompt+'Storing Weight in Weight1')
-            g.INTERP_FVRVXX_internal1_vra1=Vra
-            g.INTERP_FVRVXX_internal1_vxa1=Vxa
-            g.INTERP_FVRVXX_internal1_Tnorma1=Tnorma
-            g.INTERP_FVRVXX_internal1_vrb1=Vrb
-            g.INTERP_FVRVXX_internal1_vxb1=Vxb
-            g.INTERP_FVRVXX_internal1_Tnormb1=Tnormb
-            g.INTERP_FVRVXX_internal1_weight1=weight
+            internal.segment1.vra = Vra
+            internal.segment1.vxa = Vxa
+            internal.segment1.Tnorma = Tnorma
+            internal.segment1.vrb = Vrb
+            internal.segment1.vxb = Vxb
+            internal.segment1.Tnormb = Tnormb
+            internal.segment1.weight = weight
 
     return fb

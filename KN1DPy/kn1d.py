@@ -22,6 +22,7 @@ from .common.KN1D import KN1D_Collisions, KN1D_Internal
 from .common.Kinetic_H2 import Kinetic_H2_Common
 from .common.Kinetic_H import Kinetic_H_Common
 from .common.SigmaV import SigmaV_Common
+from .common.INTERP_FVRVXX import INTERP_FVRVXX_internal
 from .common.JH_Coef import JH_Coef
 from .global_vars import global_vars
 
@@ -353,6 +354,8 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
     #   Starting back at line 429 from IDL code
 
     print("Satisfaction condition: ", truncate)
+
+    fvrvxx_internal = INTERP_FVRVXX_internal() #Common blocks for interp_fvrvxx
         
     if oldrun:
         # checks if the previous run satisfies the required conditions 
@@ -375,14 +378,14 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
                 # press_return
                 pass
 
-            # iter+=1 I dont think this line is necessary 
+            iter += 1
             if debrief:
                 print(prompt+'fH/fH2 Iteration: '+sval(iter))
             nH2s = nH2
 
             # interpolate fH data onto H2 mesh: fH -> fHM
             do_warn=5e-3
-            fHM=interp_fvrvxx(fH, kh_mesh, kh2_mesh, do_warn=do_warn, debug=interp_debug, g=g) 
+            fHM=interp_fvrvxx(fH, kh_mesh, kh2_mesh, fvrvxx_internal, do_warn=do_warn, debug=interp_debug) 
 
             # Compute fH2 using Kinetic_H2
             ni_correct=1
@@ -402,8 +405,8 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
 
             # Interpolate H2 data onto H mesh: fH2 -> fH2A, fSH -> fSHA, nHP -> nHPA, THP -> THPA
             do_warn = 5.0E-3
-            fH2A = interp_fvrvxx(fH2, kh2_mesh, kh_mesh, do_warn=do_warn, debug=interp_debug, g=g) 
-            fSHA = interp_fvrvxx(fSH, kh2_mesh, kh_mesh, do_warn=do_warn, debug=interp_debug, g=g) 
+            fH2A = interp_fvrvxx(fH2, kh2_mesh, kh_mesh, fvrvxx_internal, do_warn=do_warn, debug=interp_debug) 
+            fSHA = interp_fvrvxx(fSH, kh2_mesh, kh_mesh, fvrvxx_internal, do_warn=do_warn, debug=interp_debug) 
             nHPA = interp_scalarx(nHP, kh2_mesh.x, kh_mesh.x, do_warn=do_warn, debug=interp_debug) 
             THPA = interp_scalarx(THP, kh2_mesh.x, kh_mesh.x, do_warn=do_warn, debug=interp_debug)     
 
@@ -469,8 +472,6 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
                     print(prompt, 'Normalized H2 <-> H Momentum Transfer Error: ', sval(nDRx))
             Delta_nH2 = np.abs(nH2-nH2s)
             nDelta_nH2=np.max(Delta_nH2/np.max(nH2))
-
-            print("nDelta_nH2: ", nDelta_nH2)
     
     # fH_fH2_done code section  
 
