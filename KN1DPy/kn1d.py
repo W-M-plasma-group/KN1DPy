@@ -356,6 +356,8 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
     print("Satisfaction condition: ", truncate)
 
     fvrvxx_internal = INTERP_FVRVXX_internal() #Common blocks for interp_fvrvxx
+    KH_Common = Kinetic_H_Common() #Common block for Kinetic_H
+    KH2_Common = Kinetic_H2_Common() #Common blocks for Kinetic_H2
         
     if oldrun:
         # checks if the previous run satisfies the required conditions 
@@ -394,10 +396,10 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
             
             
             kh2_results = kinetic_h2(
-                    kh2_mesh, mu, vxiM, fh2BC, GammaxH2BC, NuLoss, fHM, SH2, fH2, nH2, THP, \
+                    kh2_mesh, mu, vxiM, fh2BC, GammaxH2BC, NuLoss, fHM, SH2, fH2, nH2, THP, KH2_Common,\
                     truncate=truncate, Simple_CX=Simple_CX, Max_Gen=max_gen, Compute_H_Source=Compute_H_Source,\
                     H2_H2_EL=H2_H2_EL,H2_P_EL=H2_P_EL,H2_H_EL=H2_H_EL,H2_HP_CX=H2_HP_CX, ni_correct=ni_correct,\
-                    Compute_Errors=H2compute_errors, plot=H2plot,debug=H2debug,debrief=H2debrief,pause=H2pause, g=g) # fixed inputs - GG 2/26
+                    Compute_Errors=H2compute_errors, plot=H2plot,debug=H2debug,debrief=H2debrief,pause=H2pause) # fixed inputs - GG 2/26
 
             fH2, nHP, THP, nH2, GammaxH2, VxH2, pH2, TH2, qxH2, qxH2_total, Sloss, \
                 QH2, RxH2, QH2_total, AlbedoH2, WallH2, fSH, SH, SP, SHP, NuE, NuDis, ESH, Eaxis, error = kh2_results
