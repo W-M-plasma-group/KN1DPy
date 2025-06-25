@@ -21,7 +21,6 @@ from .common import constants as CONST
 from .common.KN1D import KN1D_Collisions, KN1D_Internal
 from .common.Kinetic_H2 import Kinetic_H2_Common
 from .common.Kinetic_H import Kinetic_H_Common
-from .common.SigmaV import SigmaV_Common
 from .common.INTERP_FVRVXX import INTERP_FVRVXX_internal
 from .common.JH_Coef import JH_Coef
 from .global_vars import global_vars
@@ -301,7 +300,7 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
     interpfunc = interpolate.interp1d(x,vxi,fill_value="extrapolate")
     vxiM = interpfunc(kh2_mesh.x)
 
-    #interpfunc = interpolate.interp1d(x,vxi,fill_value="extrapolate") NOTE Is this Needed?
+    interpfunc = interpolate.interp1d(x,vxi,fill_value="extrapolate") #NOTE Is this Needed?
     vxiA = interpfunc(kh_mesh.x)
 
     iter=0
@@ -421,7 +420,7 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
 
 
             kh_results = kinetic_h(
-                    kh_mesh, mu, vxiA, fHBC, GammaxHBC, fH2A, fSHA, nHPA, THPA, jh_coefficients, fH=fH,\
+                    kh_mesh, mu, vxiA, fHBC, GammaxHBC, fH2A, fSHA, nHPA, THPA, jh_coefficients, KH_Common, fH=fH,\
                     truncate=truncate, Simple_CX=Simple_CX, Max_Gen=max_gen, \
                     H_H_EL=H_H_EL, H_P_EL=H2_P_EL, _H_H2_EL= H2_H2_EL, H_P_CX=H_P_CX, ni_correct=ni_correct, \
                     Compute_Errors=Hcompute_errors, plot=Hplot, debug=Hdebug, debrief=Hdebrief, pause=Hpause, g=g) # Not sure where some of the keywords are defined

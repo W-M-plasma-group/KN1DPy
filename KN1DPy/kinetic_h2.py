@@ -30,7 +30,7 @@ from .sval import sval
 from .locate import locate
 
 from .common.Kinetic_H2 import Kinetic_H2_Common
-from .global_vars import mH, q, k_boltz, Twall 
+from .common import constants as CONST
 
 # This subroutine is part of the "KN1D" atomic and molecular neutal transport code.
 
@@ -669,7 +669,7 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
     Work = np.zeros(nvr * nvx)
     fH2G = np.zeros((nvr,nvx,nx)).T
     NH2G = np.zeros((nx, Max_Gen + 1)).T 
-    Vth = np.sqrt(2 * q * Tnorm / (mu * mH))
+    Vth = np.sqrt(2 * CONST.Q * Tnorm / (mu * CONST.H_MASS))
     Vth2 = Vth * Vth
     Vth3 = Vth2 * Vth
     fH2s = np.zeros(nx)
@@ -709,7 +709,7 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
     cos_theta =  np.cos(theta)
 
     # Determine Energy Space Differentials 
-    Eaxis = Vth2 * 0.5 * mu * mH * vr ** 2 / q
+    Eaxis = Vth2 * 0.5 * mu * CONST.H_MASS * vr ** 2 / CONST.Q
     _Eaxis = np.append(Eaxis, 2 * Eaxis[nvr - 1] - Eaxis[nvr - 2]) # changed to append to stop error - GG
     Eaxis_mid = np.append(0.0, 0.5 * ( _Eaxis + np.roll(_Eaxis, -1) )) # changed to append to stop error - GG
     dEaxis = np.roll(Eaxis_mid, -1) - Eaxis_mid
@@ -821,7 +821,7 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
             VxH[k] = Vth * np.sum( Vr2pidVr * (np.dot(fH[k].T, (vx * dVx).T).T) ) / nH[k]
             for i in range(0, nvr):
                 vr2vx2_ran2[ :,i] = vr[i] ** 2 + (vx - VxH[k] / Vth) ** 2
-            TH[k] = (mu * mH) * Vth2 * np.sum(Vr2pidVr * ( (vr2vx2_ran2 * np.dot(fH[k][:][:].T, dVx.T).T) ) ) / (3 * q * nH[k])
+            TH[k] = (mu * CONST.H_MASS) * Vth2 * np.sum(Vr2pidVr * ( (vr2vx2_ran2 * np.dot(fH[k][:][:].T, dVx.T).T) ) ) / (3 * CONST.Q * nH[k])
     
     if New_Grid:
         if debrief > 1:
@@ -840,7 +840,7 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
             vr2vx_vxi2[k][:,i] = vr[i] ** 2 + (vx - vxi[k] / Vth) ** 2
 
     # Molecular hydrogen ion energy in local rest frame of plasma at each mesh point
-    EH2_P = mH * vr2vx_vxi2 * Vth2 / q
+    EH2_P = CONST.H_MASS * vr2vx_vxi2 * Vth2 / CONST.Q
     EH2_P = np.maximum(EH2_P, 0.1)      # sigmav_cx does not handle neutral energies below 0.1 eV
     EH2_P = np.minimum(EH2_P, 2.0e4)    # sigmav_cx does not handle neutral energies above 20 keV
 
@@ -855,7 +855,7 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
         if debrief > 1:
             print(prompt, 'Computing fw_hat')
         vx_shift = np.array([0.0])
-        Tmaxwell = np.array([Twall])
+        Tmaxwell = np.array([CONST.TWALL])
         mol = 2
         _maxwell = create_shifted_maxwellian(vr,vx,Tmaxwell,vx_shift,mu,mol,Tnorm)
         fw_hat = _maxwell[0]
@@ -974,7 +974,7 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
 
         # compute SIGMA_CX * v_v at all possible relative velocities
         _Sig = np.zeros((nvr*nvx*nvr*nvx, ntheta)).T
-        _Sig[:] = (v_v * sigma_cx_hh(v_v2*(mH * Vth2 / q))).reshape(_Sig.shape)
+        _Sig[:] = (v_v * sigma_cx_hh(v_v2*(CONST.H_MASS * Vth2 / CONST.Q))).reshape(_Sig.shape)
 
         # Set SIG_CX = vr' x Integral{v_v*sigma_cx} over theta=0,2pi times differential velocity space element Vr'2pidVr'*dVx'
         SIG_CX = np.zeros((nvr * nvx, nvr * nvx)).T
@@ -990,7 +990,7 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
 
         # Compute sigma_H2_H * v_v at all possible relative velocities
         _Sig = np.zeros((nvr * nvx * nvr * nvx ,ntheta)).T
-        _Sig[:] = (v_v * sigma_el_h_hh(v_v2 * (0.5 * mH * Vth2 / q))).reshape(_Sig.shape)
+        _Sig[:] = (v_v * sigma_el_h_hh(v_v2 * (0.5 * CONST.H_MASS * Vth2 / CONST.Q))).reshape(_Sig.shape)
 
         # Note: using H energy here for cross-section tabulated as H -> H2
         # Set SIG_H2_H = vr' x vx_vx x Integral{v_v * sigma_H2_H} over theta = 0, 2pi times differential velocity space element Vr'2pidVr'*dVx
@@ -1007,7 +1007,7 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
 
         # Compute sigma_H2_P * v_v at all possible relative velocities
         _Sig = np.zeros((nvr * nvx * nvr * nvx, ntheta)).T
-        _Sig[:] = (v_v * sigma_el_p_hh(v_v2 * (0.5 * mH * Vth2 / q))).reshape(_Sig.shape)
+        _Sig[:] = (v_v * sigma_el_p_hh(v_v2 * (0.5 * CONST.H_MASS * Vth2 / CONST.Q))).reshape(_Sig.shape)
 
         # Note: using H energy here for cross-section tabulated as p -> H2
 
@@ -1026,7 +1026,7 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
 
         # Compute sigma_H2_H2 * vr2_vx2 * v_v at all possible relative velocities 
         _Sig = np.zeros((nvr * nvx * nvr * nvx, ntheta)).T
-        _Sig[:] = (vr2_vx2 * sigma_el_hh_hh(v_v2 * (mH * mu * Vth2 / q), vis = 1) / 8.0).reshape(_Sig.shape)
+        _Sig[:] = (vr2_vx2 * sigma_el_hh_hh(v_v2 * (CONST.H_MASS * mu * Vth2 / CONST.Q), vis = 1) / 8.0).reshape(_Sig.shape)
 
         # Note : For viscosity, the cross section for D -> D is the same function of 
         # center of mass energy as H -> H.
@@ -1319,7 +1319,7 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
                     VxH2G[k] = Vth * np.sum(Vr2pidVr * np.dot(vx * dVx, fH2G[k,:,:])) / NH2G[igen - 1, k]
                     for i in range(0, nvr):
                         vr2vx2_ran2[:,i] = vr[i]**2 + (vx - VxH2G[k]/Vth)**2
-                    TH2G[k] = (2 * mu * mH) * Vth2 * np.sum(Vr2pidVr * (np.dot(dVx, vr2vx2_ran2 * fH2G[k,:,:])))/(3 * q * NH2G[igen - 1, k])
+                    TH2G[k] = (2 * mu * CONST.H_MASS) * Vth2 * np.sum(Vr2pidVr * (np.dot(dVx, vr2vx2_ran2 * fH2G[k,:,:])))/(3 * CONST.Q * NH2G[igen - 1, k])
                 if H2_H2_EL:
                     if debrief > 1: 
                         print(prompt, 'Computing MH2_H2')
@@ -1339,7 +1339,7 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
                         print(prompt, 'Computing MH2_P')
                     # Compute MH2_P
                     vx_shift = (2 * VxH2G + vxi)/3
-                    Tmaxwell = TH2G + (4/9) * (Ti - TH2G + mu * mH * (vxi - VxH2G)**2 / (6*q))
+                    Tmaxwell = TH2G + (4/9) * (Ti - TH2G + mu * CONST.H_MASS * (vxi - VxH2G)**2 / (6*CONST.Q))
                     mol = 2
                     Maxwell = create_shifted_maxwellian_include(vr,vx,Tnorm,vx_shift,Tmaxwell,shifted_Maxwellian_debug,mu,mol,
                                             nx,nvx,nvr,Vth,Vth2,Maxwell,vr2vx2_ran2,
@@ -1353,7 +1353,7 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
                         print(prompt, 'Computing MH2_H')
                     #Compute MH2_H
                     vx_shift = (2 * VxH2G * VxH)/3
-                    Tmaxwell = TH2G + (4/9) * (TH - TH2G + mu * mH * (VxH - VxH2G)**2 / (6*q))
+                    Tmaxwell = TH2G + (4/9) * (TH - TH2G + mu * CONST.H_MASS * (VxH - VxH2G)**2 / (6*CONST.Q))
                     mol = 2
                     Maxwell=create_shifted_maxwellian_include(vr,vx,Tnorm,vx_shift,Tmaxwell,shifted_Maxwellian_debug,mu,mol,
                                             nx,nvx,nvr,Vth,Vth2,Maxwell,vr2vx2_ran2,
@@ -1449,7 +1449,7 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
             vr2vx2_ran[k, :, i] = vr[i]**2 + (vx - _VxH2[k])**2
         # pH2 - pressure 
         for k in range(0, nx ):
-            pH2[k] = (2 * mu * mH) * Vth2 * np.sum(Vr2pidVr * np.dot(dVx, vr2vx2_ran[k] * fH2[k])) / (3 * q)
+            pH2[k] = (2 * mu * CONST.H_MASS) * Vth2 * np.sum(Vr2pidVr * np.dot(dVx, vr2vx2_ran[k] * fH2[k])) / (3 * CONST.Q)
         #TH2 - temperature 
         TH2 = pH2 / nH2   
         # Compute NuDis - Dissociation frequency 
@@ -1505,7 +1505,7 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
             VxH2G[k] = Vth * np.sum(Vr2pidVr * np.dot(vx * dVx, fH2G[k])) / NH2G[igen, k]
             for i in range(0, nvr - 1):
                 vr2vx2_ran2[:, i] = vr[i]**2 + (vx - VxH2G[k]/Vth)**2
-            TH2G = (2 * mu * mH) * Vth2 * np.sum(Vr2pidVr * np.dot( dVx, vr2vx2_ran2 * fH2G[k])) / (3 * q * NH2G[igen, k])
+            TH2G = (2 * mu * CONST.H_MASS) * Vth2 * np.sum(Vr2pidVr * np.dot( dVx, vr2vx2_ran2 * fH2G[k])) / (3 * CONST.Q * NH2G[igen, k])
         if H2_H2_EL:
             if debrief > 1: 
                 print(prompt, 'Computing MH2_H2')
@@ -1525,7 +1525,7 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
                 print(prompt, 'Computing MH2_P')
                 # Compute MH2_P
                 vx_shift = (2 * VxH2G + vxi) / 3
-                Tmaxwell = TH2G + (4/9) * (Ti - TH2G + mu * mH * (vxi - VxH2G)**2 / (6 * q))
+                Tmaxwell = TH2G + (4/9) * (Ti - TH2G + mu * CONST.H_MASS * (vxi - VxH2G)**2 / (6 * CONST.Q))
                 mol = 2
                 Maxwell=create_shifted_maxwellian_include(vr,vx,Tnorm,vx_shift,Tmaxwell,shifted_Maxwellian_debug,mu,mol,
                                       nx,nvx,nvr,Vth,Vth2,Maxwell,vr2vx2_ran2,
@@ -1539,7 +1539,7 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
                     print(prompt, 'Computing MH2_H')
             # Compute MH2_H
             vx_shift = (2 * VxH2G * VxH) / 3
-            Tmaxwell = TH2G + (4/9) * (TH - TH2G + mu * mH *(VxH - VxH2G)**2 / (6 * q))
+            Tmaxwell = TH2G + (4/9) * (TH - TH2G + mu * CONST.H_MASS *(VxH - VxH2G)**2 / (6 * CONST.Q))
             mol = 2
 
             Maxwell=create_shifted_maxwellian_include(vr,vx,Tnorm,vx_shift,Tmaxwell,shifted_Maxwellian_debug,mu,mol,
@@ -1553,49 +1553,49 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
      # Compute remaining moments
     # piH2_xx
     for k in range(0, nx - 1):
-        piH2_xx[k] = (2 * mu * mH) * Vth2 * np.sum(Vr2pidVr * np.dot(dVx * (vx - _VxH2[k])**2, fH2[k])) / q - pH2[k]
+        piH2_xx[k] = (2 * mu * CONST.H_MASS) * Vth2 * np.sum(Vr2pidVr * np.dot(dVx * (vx - _VxH2[k])**2, fH2[k])) / CONST.Q - pH2[k]
     # piH2_yy
     for k in range(0, nx - 1):
-        piH2_yy[k] = (2 * mu * mH) * Vth2 * 0.5 * np.sum((Vr2pidVr * vr**2) * np.dot(dVx, fH2[k])) / q - pH2[k]
+        piH2_yy[k] = (2 * mu * CONST.H_MASS) * Vth2 * 0.5 * np.sum((Vr2pidVr * vr**2) * np.dot(dVx, fH2[k])) / CONST.Q - pH2[k]
     # piH2_zz 
     piH2_zz = piH2_yy 
     # qxH2
     for k in range(0, nx - 1):
-        qxH2[k] = 0.5 * (2 * mu * mH) * Vth3 * np.sum(Vr2pidVr * np.dot(dVx * (vx - _VxH2[k]), vr2vx2_ran[k] * fH2[k]))
+        qxH2[k] = 0.5 * (2 * mu * CONST.H_MASS) * Vth3 * np.sum(Vr2pidVr * np.dot(dVx * (vx - _VxH2[k]), vr2vx2_ran[k] * fH2[k]))
     
     # C = RHS of Boltzman equation for total fH2
     for k in range(0, nx - 1):
         C = Vth * (fw_hat[:,:] * SH2[k] / Vth + Swall_sum[k] + Beta_CX_sum[k] - alpha_c[k] * fH2[k] + \
                    Omega_H2_P[k] * MH2_P_sum[k] + Omega_H2_H[k] * MH2_H_sum[k] + Omega_H2_H2[k] * MH2_H2_sum[k])
-        QH2[k] = 0.5 * (2 * mu * mH) * Vth * np.sum(Vr2pidVr * np.dot(dVx, vr2vx2_ran[k] * C))
-        RxH2[k] = (2 * mu * mH) * Vth * np.sum(Vr2pidVr * np.dot(dVx * (vx - _VxH2[k]), C))
+        QH2[k] = 0.5 * (2 * mu * CONST.H_MASS) * Vth * np.sum(Vr2pidVr * np.dot(dVx, vr2vx2_ran[k] * C))
+        RxH2[k] = (2 * mu * CONST.H_MASS) * Vth * np.sum(Vr2pidVr * np.dot(dVx * (vx - _VxH2[k]), C))
         Sloss[k] = np.sum(Vr2pidVr * np.dot(dVx, C)) + SH2[k]
         WallH2[k] = np.sum(Vr2pidVr * np.dot(dVx, gamma_wall[k] * fH2[k]))
         if H2_H_EL:
             CH2_H = Vth * Omega_H2_H[k] * (MH2_H_sum[k] - fH2[k])
-            RxH_H2[k] = (2 * mu * mH) * Vth * np.sum(Vr2pidVr * np.dot(dVx * (vx - _VxH2[k]), CH2_H))
-            EH_H2[k] = 0.5 * (2 * mu * mH) * Vth2 * np.sum(Vr2pidVr * np.dot(dVx, vr2vx2[k] * CH2_H))
+            RxH_H2[k] = (2 * mu * CONST.H_MASS) * Vth * np.sum(Vr2pidVr * np.dot(dVx * (vx - _VxH2[k]), CH2_H))
+            EH_H2[k] = 0.5 * (2 * mu * CONST.H_MASS) * Vth2 * np.sum(Vr2pidVr * np.dot(dVx, vr2vx2[k] * CH2_H))
         if H2_P_EL:
             CH2_P = Vth * Omega_H2_P[k] * (MH2_P_sum[k] - fH2[k])
-            RxP_H2[k] = (2 * mu *mH) * Vth * np.sum(Vr2pidVr * np.dot( dVx * (vx - _VxH2[k]), CH2_P))
-            EP_H2[k] = 0.5 * (2 *mu * mH) * Vth2 * np.sum(Vr2pidVr * np.dot(dVx, vr2vx2[k] * CH2_P))
+            RxP_H2[k] = (2 * mu *CONST.H_MASS) * Vth * np.sum(Vr2pidVr * np.dot( dVx * (vx - _VxH2[k]), CH2_P))
+            EP_H2[k] = 0.5 * (2 *mu * CONST.H_MASS) * Vth2 * np.sum(Vr2pidVr * np.dot(dVx, vr2vx2[k] * CH2_P))
         if H2_HP_CX:
             CH2_HP_CX = Vth * (Beta_CX_sum[k] - alpha_cx[k] * fH2[k])
-            RxH2CX[k] = (2 * mu * mH) * Vth * np.sum(Vr2pidVr * np.dot(dVx * (vx - _VxH2[k]), CH2_HP_CX))
-            EH2CX[k] = 0.5 * (2 * mu * mH) * np.sum(Vr2pidVr * np.dot(dVx, vr2vx2[k] * CH2_HP_CX))
+            RxH2CX[k] = (2 * mu * CONST.H_MASS) * Vth * np.sum(Vr2pidVr * np.dot(dVx * (vx - _VxH2[k]), CH2_HP_CX))
+            EH2CX[k] = 0.5 * (2 * mu * CONST.H_MASS) * np.sum(Vr2pidVr * np.dot(dVx, vr2vx2[k] * CH2_HP_CX))
         CW_H2 = Vth * (Swall_sum[k] - gamma_wall[k] * fH2[k])
-        RxW_H2[k] = (2 * mu * mH) * Vth * np.sum(Vr2pidVr * np.dot(dVx * (vx - _VxH2[k]), CW_H2))
-        EW_H2[k] = 0.5 * (2 * mu * mH) * Vth2 * np.sum(Vr2pidVr * np.dot(dVx, vr2vx2[k] * CW_H2))
+        RxW_H2[k] = (2 * mu * CONST.H_MASS) * Vth * np.sum(Vr2pidVr * np.dot(dVx * (vx - _VxH2[k]), CW_H2))
+        EW_H2[k] = 0.5 * (2 * mu * CONST.H_MASS) * Vth2 * np.sum(Vr2pidVr * np.dot(dVx, vr2vx2[k] * CW_H2))
         if H2_H2_EL:
             CH2_H2 = Vth * Omega_H2_H2[k] * (MH2_H2_sum[k] - fH2[k])
             for i in range(0, nvr - 1):
                 vr2_2vx_ran2[:, i] = vr[i]**2 - 2 * (vx - _VxH2[k])**2
-                Epara_PerpH2_H2[k] = - 0.5 * (2 * mu * mH) * Vth2 * np.sum(Vr2pidVr * np.dot( dVx, vr2_2vx_ran2 * CH2_H2))
+                Epara_PerpH2_H2[k] = - 0.5 * (2 * mu * CONST.H_MASS) * Vth2 * np.sum(Vr2pidVr * np.dot( dVx, vr2_2vx_ran2 * CH2_H2))
 
     # qxH2_total
-    qxH2_total = (0.5 * nH2 * (2 *mu * mH) * VxH2 * VxH2 + 2.5 * pH2 * q) * VxH2 + q * piH2_xx * VxH2 + qxH2
+    qxH2_total = (0.5 * nH2 * (2 *mu * CONST.H_MASS) * VxH2 * VxH2 + 2.5 * pH2 * CONST.Q) * VxH2 + CONST.Q * piH2_xx * VxH2 + qxH2
     # QH2_total
-    QH2_total = QH2_total + QH2 + RxH2 * VxH2 - 0.5 * (2 * mu * mH) * (Sloss - SH2) * VxH2 * VxH2
+    QH2_total = QH2_total + QH2 + RxH2 * VxH2 - 0.5 * (2 * mu * CONST.H_MASS) * (Sloss - SH2) * VxH2 * VxH2
     # Albedo 
     AlbedoH2 = 0.0 
     gammax_plus = Vth * np.sum(Vr2pidVr * np.dot(fH2[0, i_p], vx[i_p] * dVx[i_p]))
@@ -1677,7 +1677,7 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
             if H2_HP_CX: # H2(+) -> H2 charge exchange momentum transfer via full collision integral
                 print(prompt, 'Computing H2(+) -> H2 Charge Exchange Momentum Transfer')
                 _Sig = np.zeros((nvr*nvx*nvr*nvx,ntheta)).T
-                _Sig[k] = v_v * sigma_cx_hh(v_v2 * (mH * Vth2 / q))
+                _Sig[k] = v_v * sigma_cx_hh(v_v2 * (CONST.H_MASS * Vth2 / CONST.Q))
                 SIG_VX_CX = np.zeros(nvr*nvx,nvr*nvx)
                 SIG_VX_CX[:] = Vr2pidVrdVx * vx_vx * np.dot(_Sig, dTheta)
                 alpha_vx_cx = np.zeros(nvr,nvx,nx)
@@ -1685,7 +1685,7 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
                     Work[:] = nHP[k] * fHp_hat[k]
                     alpha_vx_cx[k] = np.dot(SIG_VX_CX, Work)
                 for k in range(0, nx - 1):
-                    RxCI_CX[k] = -(2 * mu *mH) * Vth2 * np.sum(Vr2pidVr * np.dot( alpha_vx_cx[k] * fH2[k]))
+                    RxCI_CX[k] = -(2 * mu *CONST.H_MASS) * Vth2 * np.sum(Vr2pidVr * np.dot( alpha_vx_cx[k] * fH2[k]))
                 norm = np.max(np.abs(np.array([RxH2CX, RxCI_CX])))
                 for k in range(0, nx - 1):
                     CI_CX_error[k] = np.abs(RxH2CX[k] - RxCI_CX[k]) / norm
@@ -1693,7 +1693,7 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
 
             if H2_P_EL: # P -> H2 momentum transfer via full collision integral
                 for k in range(0, nx - 1):
-                    RxCI_P_H2[k] = -(1.0 / 3.0) * (2 * mu * mH) * Vth2 * np.sum(Vr2pidVr * np.dot(Alpha_H2_P[k] * fH2[k], dVx))
+                    RxCI_P_H2[k] = -(1.0 / 3.0) * (2 * mu * CONST.H_MASS) * Vth2 * np.sum(Vr2pidVr * np.dot(Alpha_H2_P[k] * fH2[k], dVx))
                 norm = np.max(np.abs(np.array([RxP_H2, RxCI_P_H2])))
                 for k in range(0, nx -1):
                     CI_P_H2_error[k] = np.abs(RxP_H2[k] - RxCI_P_H2[k]) / norm 
@@ -1701,7 +1701,7 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
             
             if H2_H_EL: # H -> H2 momentum transfer via full collision integral
                 for k in range(0, nx - 1):
-                    RxCI_H_H2[k] = -(1.0 / 3.0) * (2 * mu * mH) * Vth2 * np.sum(Vr2pidVr * np.dot(Alpha_H2_H[k] * fH2[k], dVx))
+                    RxCI_H_H2[k] = -(1.0 / 3.0) * (2 * mu * CONST.H_MASS) * Vth2 * np.sum(Vr2pidVr * np.dot(Alpha_H2_H[k] * fH2[k], dVx))
                 norm = np.max(np.abs(np.array([RxH_H2, RxCI_H_H2])))
                 for k in range(0, nx - 1):
                     CI_H_H2_error[k] = np.abs(np.array([RxH_H2, RxCI_H_H2])) / norm
@@ -1711,7 +1711,7 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
                 for k in range(0, nx - 1):
                     Work[:] = fH2[k]
                     Alpha_H2_H2[:] = np.dot(SIG_H2_H2, Work)
-                    Epara_Perp_CI[k] = 0.5 * (2 * mu * mH) * Vth3 * np.sum(Vr2pidVr * np.dot(Alpha_H2_H2 * fH2[k], dVx)) 
+                    Epara_Perp_CI[k] = 0.5 * (2 * mu * CONST.H_MASS) * Vth3 * np.sum(Vr2pidVr * np.dot(Alpha_H2_H2 * fH2[k], dVx)) 
                 norm = np.max(np.abs(np.array([Epara_PerpH2_H2, Epara_Perp_CI]))) # Does it need to be transposed?
                 for k in range(0, nx - 1):
                     CI_H2_H2_error[k] = np.abs(Epara_PerpH2_H2[k] - Epara_Perp_CI[k]) / norm 
@@ -1756,7 +1756,7 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
         #    TH2, VxH2, and qxH2 are coded correctly.
         qxH2_total2 = np.zeros(nx)
         for k in range(0, nx - 1):
-            qxH2_total2[k] = 0.5 * (2 * mu * mH) * Vth3 * np.sum(Vr2pidVr * np.dot(vr2vx2[k] * fH2[k], vx * dVx))
+            qxH2_total2[k] = 0.5 * (2 * mu * CONST.H_MASS) * Vth3 * np.sum(Vr2pidVr * np.dot(vr2vx2[k] * fH2[k], vx * dVx))
         qxH2_total_error = np.abs(qxH2_total - qxH2_total2) / np.max(np.abs(np.array([qxH2_total, qxH2_total2])))
 
         # Compute error in QH2_total
@@ -2084,7 +2084,7 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
                 ii = nFC[Rn[jRn]]
                 Ebar = np.zeros(nx)
                 for k in range(0, nx - 1):
-                    Ebar[k] = 0.5 * (mu * mH) * Vth2 * np.sum(Vr2pidVr * np.dot(vr2vx2[k] * SFCn[ii, k], dVx)) / q
+                    Ebar[k] = 0.5 * (mu * CONST.H_MASS) * Vth2 * np.sum(Vr2pidVr * np.dot(vr2vx2[k] * SFCn[ii, k], dVx)) / CONST.Q
                 color (kp % np.size(Rn)) + 1
                 if kp == 0:
                     plt.figure()

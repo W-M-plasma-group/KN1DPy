@@ -1,9 +1,8 @@
 import numpy as np
 
-from .sval import sval
 from .make_dvr_dvx import make_dvr_dvx
 from .create_shifted_maxwellian_include import create_shifted_maxwellian_include
-from .global_vars import mH, q
+from .common import constants as CONST
 
 def create_shifted_maxwellian(vr,vx,Tmaxwell,vx_shift,mu,mol,Tnorm): # fixed function name - nh
   nx=vx_shift.size
@@ -11,7 +10,7 @@ def create_shifted_maxwellian(vr,vx,Tmaxwell,vx_shift,mu,mol,Tnorm): # fixed fun
   maxwell=np.zeros((nvr,nvx,nx)).T
   vr2vx2_ran2=np.zeros((nvr,nvx)).T
 
-  vth=np.sqrt(2*q*Tnorm/(mu*mH))
+  vth=np.sqrt(2*CONST.Q*Tnorm/(mu*CONST.H_MASS))
   vth2=vth**2
   vth3=vth**3
 

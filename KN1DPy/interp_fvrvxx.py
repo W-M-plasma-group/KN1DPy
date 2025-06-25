@@ -7,7 +7,7 @@ from .locate import locate
 from .sval import sval
 from .kinetic_mesh import kinetic_mesh
 
-from .global_vars import mH, q
+from .common import constants as CONST
 from .common.INTERP_FVRVXX import INTERP_FVRVXX_internal
 
 def interp_fvrvxx(fa, mesh_a : kinetic_mesh, mesh_b : kinetic_mesh, internal : INTERP_FVRVXX_internal, 
@@ -84,9 +84,9 @@ def interp_fvrvxx(fa, mesh_a : kinetic_mesh, mesh_b : kinetic_mesh, internal : I
 
     #   Compute Vtha, Vtha2, Vthb and Vthb2
 
-    Vtha=np.sqrt(2*q*Tnorma/(mu*mH))
+    Vtha=np.sqrt(2*CONST.Q*Tnorma/(mu*CONST.H_MASS))
     Vtha2=Vtha*Vtha # fixed capitalization
-    Vthb=np.sqrt(2*q*Tnormb/(mu*mH))
+    Vthb=np.sqrt(2*CONST.Q*Tnormb/(mu*CONST.H_MASS))
     Vthb2=Vthb*Vthb # fixed capitalization
 
     if fa[0,0,:].size!=nvra:
@@ -442,7 +442,7 @@ def interp_fvrvxx(fa, mesh_a : kinetic_mesh, mesh_b : kinetic_mesh, internal : I
                 Uxa[k]=Vtha*np.sum(Vr2pidVra*np.matmul(Vxa*dVxa,fa[k,:,:]))/na[k]
                 for i in range(nvra):
                     vr2vx2_ran2[:,i]=Vra[i]**2+(Vxa-Uxa[k]/Vtha)**2 # fixed capitalization
-                Ta[k]=mu*mH*Vtha2*np.sum(Vr2pidVra*np.matmul(dVxa,vr2vx2_ran2*fa[k,:,:]))/(3*q*na[k])
+                Ta[k]=mu*CONST.H_MASS*Vtha2*np.sum(Vr2pidVra*np.matmul(dVxa,vr2vx2_ran2*fa[k,:,:]))/(3*CONST.Q*na[k])
 
         #   nb, Uxb, Tb
 
@@ -457,7 +457,7 @@ def interp_fvrvxx(fa, mesh_a : kinetic_mesh, mesh_b : kinetic_mesh, internal : I
                 Uxb[k]=Vthb*np.sum(Vr2pidVrb*np.matmul(Vxb*dVxb,fb[k,:,:]))/nb[k] # fixed typo
                 for i in range(nvrb):
                     vr2vx2_ran2[:,i]=Vrb[i]**2+(Vxb-Uxb[k]/Vthb)**2 # fixed capitalization
-                Tb[k]=mu*mH*Vthb*np.sum(Vr2pidVrb*np.matmul(dVxb,vr2vx2_ran2*fb[k,:,:]))/(3*q*nb[k])
+                Tb[k]=mu*CONST.H_MASS*Vthb*np.sum(Vr2pidVrb*np.matmul(dVxb,vr2vx2_ran2*fb[k,:,:]))/(3*CONST.Q*nb[k])
 
         #   Plotting stuff was here in the original code
         #   May be added later, but has been left out for now

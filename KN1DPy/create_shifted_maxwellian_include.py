@@ -1,7 +1,7 @@
 import numpy as np
 
 from .sval import sval
-from .global_vars import mH, q
+from .common import constants as CONST
 
 #   This INCLUDE file is used by Kinetic_H2 and Kinetic_H
 #   The code is also written within the create_shifted_maxwellian function
@@ -53,15 +53,15 @@ def create_shifted_maxwellian_include(vr,vx,Tnorm,vx_shift,Tmaxwell,Shifted_Maxw
         vx_out1=vth*np.sum(Vr2pidVr*np.matmul((vx*dVx),maxwell[k,:,:])) # fixed matmul argument order - nh
         for i in range(nvr):
           vr2vx2_ran2[:,i]=vr[i]**2+(vx-vx_out1/vth)**2
-        T_out1=(mol*mu*mH)*vth2*np.sum(Vr2pidVr*(np.matmul(dVx,vr2vx2_ran2*maxwell[k,:,:])))/(3*q) # fixed matmul argument order - nh
-        vth_local=0.1*np.sqrt(2*Tmaxwell[k]*q/(mol*mu*mH))
+        T_out1=(mol*mu*CONST.H_MASS)*vth2*np.sum(Vr2pidVr*(np.matmul(dVx,vr2vx2_ran2*maxwell[k,:,:])))/(3*CONST.Q) # fixed matmul argument order - nh
+        vth_local=0.1*np.sqrt(2*Tmaxwell[k]*CONST.Q/(mol*mu*CONST.H_MASS))
         Terror=abs(Tmaxwell[k]-T_out1)/Tmaxwell[k]
         Verror=abs(vx_out1-vx_shift[k])/vth_local
 
       # Compute desired moments
 
       WxD=vx_shift[k]
-      ED=WxD**2+3*q*Tmaxwell[k]/(mol*mu*mH)
+      ED=WxD**2+3*CONST.Q*Tmaxwell[k]/(mol*mu*CONST.H_MASS)
 
       # Compute present moments of Maxwell, WxMax, and EMax 
 
@@ -139,7 +139,7 @@ def create_shifted_maxwellian_include(vr,vx,Tnorm,vx_shift,Tmaxwell,Shifted_Maxw
         vx_out2=vth*np.sum(Vr2pidVr*np.matmul((vx*dVx),maxwell[k,:,:])) # fixed matmul argument order - nh
         for i in range(nvr):
           vr2vx2_ran2[:,i]=vr[i]**2+(vx-vx_out2/vth)**2
-        T_out2=(mol*mu*mH)*vth2*np.sum(Vr2pidVr*np.matmul(dVx,vr2vx2_ran2*maxwell[k,:,:]))/(3*q) # fixed matmul argument order - nh
+        T_out2=(mol*mu*CONST.H_MASS)*vth2*np.sum(Vr2pidVr*np.matmul(dVx,vr2vx2_ran2*maxwell[k,:,:]))/(3*CONST.Q) # fixed matmul argument order - nh
         Terror2=abs(Tmaxwell[k]-T_out2)/Tmaxwell[k]
         Verror2=abs(vx_shift[k]-vx_out2)/vth_local
         print('CREATE_SHIFTED_MAXWELLIAN=> Terror:'+sval(Terror)+'->'+sval(Terror2)+'  Verror:'+sval(Verror)+'->'+sval(Verror2))
