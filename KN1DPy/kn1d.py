@@ -23,7 +23,6 @@ from .common.Kinetic_H2 import Kinetic_H2_Common
 from .common.Kinetic_H import Kinetic_H_Common
 from .common.INTERP_FVRVXX import INTERP_FVRVXX_internal
 from .common.JH_Coef import JH_Coef
-from .global_vars import global_vars
 
 #   Computes the molecular and atomic neutral profiles for inputted profiles
 # of Ti(x), Te(x), n(x), and molecular neutral pressure, GaugeH2, at the boundary using
@@ -84,7 +83,6 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
 
 
     x = np.array(x)
-    g=global_vars() # moved global_vars decleration up
     COLLISIONS = KN1D_Collisions()
 
     # Collision options inputted via common block KN1D_collisions (default parameter values is true for all collisions):
@@ -423,7 +421,7 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
                     kh_mesh, mu, vxiA, fHBC, GammaxHBC, fH2A, fSHA, nHPA, THPA, jh_coefficients, KH_Common, fH=fH,\
                     truncate=truncate, Simple_CX=Simple_CX, Max_Gen=max_gen, \
                     H_H_EL=H_H_EL, H_P_EL=H2_P_EL, _H_H2_EL= H2_H2_EL, H_P_CX=H_P_CX, ni_correct=ni_correct, \
-                    Compute_Errors=Hcompute_errors, plot=Hplot, debug=Hdebug, debrief=Hdebrief, pause=Hpause, g=g) # Not sure where some of the keywords are defined
+                    Compute_Errors=Hcompute_errors, plot=Hplot, debug=Hdebug, debrief=Hdebrief, pause=Hpause) # Not sure where some of the keywords are defined
             
             fH,nH,GammaxH,VxH,pH,TH,qxH,qxH_total,NetHSource,Sion,QH,RxH,QH_total,AlbedoH,SideWallH,error = kh_results
 
