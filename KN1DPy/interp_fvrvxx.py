@@ -14,15 +14,7 @@ def interp_fvrvxx(fa, mesh_a : kinetic_mesh, mesh_b : kinetic_mesh, internal : I
                   do_warn=None, debug=0, correct=1):
 
     # NOTE Passing full mesh may be unneccessary, works for this code, but would need to be refactored for other projects
-    Vra = mesh_a.vr
-    Vxa = mesh_a.vx
-    Xa = mesh_a.x
-    Tnorma = mesh_a.Tnorm
-
-    Vrb = mesh_b.vr
-    Vxb = mesh_b.vx
-    Xb = mesh_b.x
-    Tnormb = mesh_b.Tnorm
+    # NOTE If removing mesh passing, will need to change code, mesh variables have replaced several variables here
     
     #  Input:
     #     Input Distribution function 'a'
@@ -74,19 +66,19 @@ def interp_fvrvxx(fa, mesh_a : kinetic_mesh, mesh_b : kinetic_mesh, internal : I
     Tnormb2 = internal.segment2.Tnormb
     weight2 = internal.segment2.weight
 
-    nvra = Vra.size
-    nvxa = Vxa.size
-    nxa = Xa.size
+    nvra = mesh_a.vr.size
+    nvxa = mesh_a.vx.size
+    nxa = mesh_a.x.size
 
     mu=1
 
-    fV=np.sqrt(Tnormb/Tnorma)
+    fV=np.sqrt(mesh_b.Tnorm/mesh_a.Tnorm)
 
     #   Compute Vtha, Vtha2, Vthb and Vthb2
 
-    Vtha=np.sqrt(2*CONST.Q*Tnorma/(mu*CONST.H_MASS))
+    Vtha=np.sqrt(2*CONST.Q*mesh_a.Tnorm/(mu*CONST.H_MASS))
     Vtha2=Vtha*Vtha # fixed capitalization
-    Vthb=np.sqrt(2*CONST.Q*Tnormb/(mu*CONST.H_MASS))
+    Vthb=np.sqrt(2*CONST.Q*mesh_b.Tnorm/(mu*CONST.H_MASS))
     Vthb2=Vthb*Vthb # fixed capitalization
 
     if fa[0,0,:].size!=nvra:
@@ -96,31 +88,31 @@ def interp_fvrvxx(fa, mesh_a : kinetic_mesh, mesh_b : kinetic_mesh, internal : I
     if fa[:,0,0].size!=nxa:
         raise Exception('Number of elements in fa(0,0,*) and Xa do not agree!')
 
-    oki=np.bitwise_and(fV*Vrb<=max(Vra),fV*Vrb>=min(Vra)).nonzero()[0]
+    oki=np.bitwise_and(fV*mesh_b.vr<=max(mesh_a.vr),fV*mesh_b.vr>=min(mesh_a.vr)).nonzero()[0]
     if oki.size<1:
         raise Exception('No values of Vrb are within range of Vra')
     i0,i1=oki[0],oki[-1]
 
-    okj=np.bitwise_and(fV*Vxb<=max(Vxa),fV*Vxb>=min(Vxa)).nonzero()[0]
+    okj=np.bitwise_and(fV*mesh_b.vx<=max(mesh_a.vx),fV*mesh_b.vx>=min(mesh_a.vx)).nonzero()[0]
     if okj.size<1:
         raise Exception('No values of Vxb are within range of Vxa')
     j0,j1=okj[0],okj[-1]
 
-    okk=np.bitwise_and(Xb<=max(Xa), Xb>=min(Xa)).nonzero()[0] # deleted fV terms because they shouldnt be there - GG
+    okk=np.bitwise_and(mesh_b.x<=max(mesh_a.x), mesh_b.x>=min(mesh_a.x)).nonzero()[0] # deleted fV terms because they shouldnt be there - GG
     if okk.size<1:
         raise Exception('No values of Xb are within range of Xa')
     k0,k1=okk[0],okk[-1]
 
-    nvrb=Vrb.size
-    nvxb=Vxb.size
-    nxb=Xb.size
+    nvrb=mesh_b.vr.size
+    nvxb=mesh_b.vx.size
+    nxb=mesh_b.x.size
 
     fb=np.zeros((nxb,nvxb,nvrb)) # added parenthesis - GG
 
-    make_dvr_dvx_out=make_dvr_dvx(Vra,Vxa)
+    make_dvr_dvx_out=make_dvr_dvx(mesh_a.vr,mesh_a.vx)
     Vr2pidVra,VrVr4pidVra,dVxa,vraL,vraR,vxaL,vxaR=make_dvr_dvx_out[:7]
     Vra2Vxa2=make_dvr_dvx_out[11]
-    Vr2pidVrb,VrVr4pidVrb,dVxb,vrbL,vrbR,vxbL,vxbR,Vol,Vth_DVx,Vx_DVx,Vr_DVr,Vrb2Vxb2,jpa,jpb,jna,jnb=make_dvr_dvx(Vrb,Vxb)
+    Vr2pidVrb,VrVr4pidVrb,dVxb,vrbL,vrbR,vxbL,vxbR,Vol,Vth_DVx,Vx_DVx,Vr_DVr,Vrb2Vxb2,jpa,jpb,jna,jnb=make_dvr_dvx(mesh_b.vr,mesh_b.vx)
 
     #   Determine if Weight was already computed by checking vra_s,vxa_s,Tnorma_s,vrb_s,vxb_s,Tnormb_s for cases 1 and 2
 
@@ -131,14 +123,14 @@ def interp_fvrvxx(fa, mesh_a : kinetic_mesh, mesh_b : kinetic_mesh, internal : I
         w1_active=1
         test=0
 
-        test+=vra1[vra1!=Vra].size
-        test+=vxa1[vxa1!=Vxa].size
+        test+=vra1[vra1!=mesh_a.vr].size
+        test+=vxa1[vxa1!=mesh_a.vx].size
 
-        test+=Tnorma1[Tnorma1!=Tnorma].size
-        test+=Tnormb1[Tnormb1!=Tnormb].size
+        test+=Tnorma1[Tnorma1!=mesh_a.Tnorm].size
+        test+=Tnormb1[Tnormb1!=mesh_b.Tnorm].size
 
-        test+=vxb1[vxb1!=Vxb].size
-        test+=vrb1[vrb1!=Vrb].size
+        test+=vxb1[vxb1!=mesh_b.vx].size
+        test+=vrb1[vrb1!=mesh_b.vr].size
 
         if test==0:
             w1_match=1
@@ -150,14 +142,14 @@ def interp_fvrvxx(fa, mesh_a : kinetic_mesh, mesh_b : kinetic_mesh, internal : I
         w2_active=1
         test=0
 
-        test+=vra2[vra2!=Vra].size
-        test+=vxa2[vxa2!=Vxa].size
+        test+=vra2[vra2!=mesh_a.vr].size
+        test+=vxa2[vxa2!=mesh_a.vx].size
 
-        test+=Tnorma2[Tnorma1!=Tnorma].size
-        test+=Tnormb2[Tnormb1!=Tnormb].size
+        test+=Tnorma2[Tnorma1!=mesh_a.Tnorm].size
+        test+=Tnormb2[Tnormb1!=mesh_b.Tnorm].size
 
-        test+=vxb2[vxb2!=Vxb].size
-        test+=vrb2[vrb2!=Vrb].size
+        test+=vxb2[vxb2!=mesh_b.vx].size
+        test+=vrb2[vrb2!=mesh_b.vr].size
 
         if test==0:
             w2_match=1
@@ -219,18 +211,18 @@ def interp_fvrvxx(fa, mesh_a : kinetic_mesh, mesh_b : kinetic_mesh, internal : I
     for k in range(nxa):
         na[k]=np.sum(Vr2pidVra*np.matmul(dVxa,fa[k,:,:])) # fixed typo - GG
         if na[k]>0:
-            _Wxa[k]=np.sqrt(Tnorma)*np.sum(Vr2pidVra*np.matmul((Vxa*dVxa),fa[k,:,:]))/na[k]
-            _Ea[k]=Tnorma*np.sum(Vr2pidVra*np.matmul(dVxa,(Vra2Vxa2*fa[k,:,:])))/na[k]
+            _Wxa[k]=np.sqrt(mesh_a.Tnorm)*np.sum(Vr2pidVra*np.matmul((mesh_a.vx*dVxa),fa[k,:,:]))/na[k]
+            _Ea[k]=mesh_a.Tnorm*np.sum(Vr2pidVra*np.matmul(dVxa,(Vra2Vxa2*fa[k,:,:])))/na[k]
 
     wxa=np.zeros(nxb) # fixed capitalization
     Ea=np.zeros(nxb)
 
     for k in range(k0,k1+1):
-        kL=np.maximum(locate(Xa,Xb[k]),0) # fixed capitalization
-        kR=np.minimum(kL+1,Xa.size-1)
+        kL=np.maximum(locate(mesh_a.x,mesh_b.x[k]),0) # fixed capitalization
+        kR=np.minimum(kL+1,mesh_a.x.size-1)
         kL=np.minimum(kL,kR-1)
 
-        f=(Xb[k]-Xa[kL])/(Xa[kR]-Xa[kL])
+        f=(mesh_b.x[k]-mesh_a.x[kL])/(mesh_a.x[kR]-mesh_a.x[kL])
         fb[k,:,:]=np.reshape(fb_xa[kL,:]+(fb_xa[kR,:]-fb_xa[kL,:])*f,fb[k,:,:].shape) # previous version caused error
         wxa[k]=_Wxa[kL]+(_Wxa[kR]-_Wxa[kL])*f
         Ea[k]=_Ea[kL]+(_Ea[kR]-_Ea[kL])*f
@@ -261,8 +253,8 @@ def interp_fvrvxx(fa, mesh_a : kinetic_mesh, mesh_b : kinetic_mesh, internal : I
                 while goto_correct:
                     goto_correct=False
                     nb=np.sum(Vr2pidVrb*np.matmul(dVxb,fb[k,:,:]))
-                    Wxb=np.sqrt(Tnormb)*np.sum(Vr2pidVrb*np.matmul(Vxb*dVxb,fb[k,:,:]))/nb
-                    Eb=Tnormb*np.sum(Vr2pidVrb*np.matmul(dVxb,Vrb2Vxb2*fb[k,:,:]))/nb
+                    Wxb=np.sqrt(mesh_b.Tnorm)*np.sum(Vr2pidVrb*np.matmul(mesh_b.vx*dVxb,fb[k,:,:]))/nb
+                    Eb=mesh_b.Tnorm*np.sum(Vr2pidVrb*np.matmul(dVxb,Vrb2Vxb2*fb[k,:,:]))/nb
 
                     #   Compute Nij from fb, padded with zeros
 
@@ -322,16 +314,16 @@ def interp_fvrvxx(fa, mesh_a : kinetic_mesh, mesh_b : kinetic_mesh, internal : I
 
                         #   Compute TA1, TA2
 
-                        TA1=np.sqrt(Tnormb)*np.sum(np.matmul(Vxb,AN[ia,:,:]))
-                        TA2=Tnormb*np.sum(Vrb2Vxb2*AN[ia,:,:])
+                        TA1=np.sqrt(mesh_b.Tnorm)*np.sum(np.matmul(mesh_b.vx,AN[ia,:,:]))
+                        TA2=mesh_b.Tnorm*np.sum(Vrb2Vxb2*AN[ia,:,:])
                         for ib in range(2):
 
                             #   Compute TB1, TB2
 
                             if TB1[ib]==0:
-                                TB1[ib]=np.sqrt(Tnormb)*np.sum(np.matmul(Vxb,BN[ib,:,:]))
+                                TB1[ib]=np.sqrt(mesh_b.Tnorm)*np.sum(np.matmul(mesh_b.vx,BN[ib,:,:]))
                             if TB2[ib]==0:
-                                TB2[ib]=Tnormb*np.sum(Vrb2Vxb2*BN[ib,:,:])
+                                TB2[ib]=mesh_b.Tnorm*np.sum(Vrb2Vxb2*BN[ib,:,:])
 
                             denom=TA2*TB1[ib]-TA1*TB2[ib]
                             beta=0
@@ -417,7 +409,7 @@ def interp_fvrvxx(fa, mesh_a : kinetic_mesh, mesh_b : kinetic_mesh, internal : I
     for k in range(nxa):
         tot_a[k]=np.sum(Vr2pidVra*np.matmul(dVxa,fa[k,:,:]))
     tot_b=np.zeros(nxb)
-    tot_b[k0:k1+1]=interpolate.interp1d(Xa,tot_a,fill_value="extrapolate")(Xb[k0:k1+1])
+    tot_b[k0:k1+1]=interpolate.interp1d(mesh_a.x,tot_a,fill_value="extrapolate")(mesh_b.x[k0:k1+1])
     ii=np.argwhere(fb>0)
     if ii.size>0: # replaced fb with ii
         min_tot=np.min(np.array([fb[tuple(i)] for i in ii]))
@@ -439,9 +431,9 @@ def interp_fvrvxx(fa, mesh_a : kinetic_mesh, mesh_b : kinetic_mesh, internal : I
         for k in range(nxa):
             na[k]=np.sum(Vr2pidVra*np.matmul(dVxa,fa[k,:,:])) # fixed capitalization
             if na[k]>0:
-                Uxa[k]=Vtha*np.sum(Vr2pidVra*np.matmul(Vxa*dVxa,fa[k,:,:]))/na[k]
+                Uxa[k]=Vtha*np.sum(Vr2pidVra*np.matmul(mesh_a.vx*dVxa,fa[k,:,:]))/na[k]
                 for i in range(nvra):
-                    vr2vx2_ran2[:,i]=Vra[i]**2+(Vxa-Uxa[k]/Vtha)**2 # fixed capitalization
+                    vr2vx2_ran2[:,i]=mesh_a.vr[i]**2+(mesh_a.vx-Uxa[k]/Vtha)**2 # fixed capitalization
                 Ta[k]=mu*CONST.H_MASS*Vtha2*np.sum(Vr2pidVra*np.matmul(dVxa,vr2vx2_ran2*fa[k,:,:]))/(3*CONST.Q*na[k])
 
         #   nb, Uxb, Tb
@@ -454,9 +446,9 @@ def interp_fvrvxx(fa, mesh_a : kinetic_mesh, mesh_b : kinetic_mesh, internal : I
         for k in range(nxb):
             nb[k]=np.sum(Vr2pidVrb*np.matmul(dVxb,fb[k,:,:]))
             if nb[k]>0:
-                Uxb[k]=Vthb*np.sum(Vr2pidVrb*np.matmul(Vxb*dVxb,fb[k,:,:]))/nb[k] # fixed typo
+                Uxb[k]=Vthb*np.sum(Vr2pidVrb*np.matmul(mesh_b.vx*dVxb,fb[k,:,:]))/nb[k] # fixed typo
                 for i in range(nvrb):
-                    vr2vx2_ran2[:,i]=Vrb[i]**2+(Vxb-Uxb[k]/Vthb)**2 # fixed capitalization
+                    vr2vx2_ran2[:,i]=mesh_b.vr[i]**2+(mesh_b.vx-Uxb[k]/Vthb)**2 # fixed capitalization
                 Tb[k]=mu*CONST.H_MASS*Vthb*np.sum(Vr2pidVrb*np.matmul(dVxb,vr2vx2_ran2*fb[k,:,:]))/(3*CONST.Q*nb[k])
 
         #   Plotting stuff was here in the original code
@@ -467,22 +459,22 @@ def interp_fvrvxx(fa, mesh_a : kinetic_mesh, mesh_b : kinetic_mesh, internal : I
         if w1_active:
             if debug:
                 print(prompt+'Storing Weight in Weight2')
-            internal.segment2.vra = Vra
-            internal.segment2.vxa = Vxa
-            internal.segment2.Tnorma = Tnorma
-            internal.segment2.vrb = Vrb
-            internal.segment2.vxb = Vxb
-            internal.segment2.Tnormb = Tnormb
+            internal.segment2.vra = mesh_a.vr
+            internal.segment2.vxa = mesh_a.vx
+            internal.segment2.Tnorma = mesh_a.Tnorm
+            internal.segment2.vrb = mesh_b.vr
+            internal.segment2.vxb = mesh_b.vx
+            internal.segment2.Tnormb = mesh_b.Tnorm
             internal.segment2.weight = weight
         else:
             if debug:
                 print(prompt+'Storing Weight in Weight1')
-            internal.segment1.vra = Vra
-            internal.segment1.vxa = Vxa
-            internal.segment1.Tnorma = Tnorma
-            internal.segment1.vrb = Vrb
-            internal.segment1.vxb = Vxb
-            internal.segment1.Tnormb = Tnormb
+            internal.segment1.vra = mesh_a.vr
+            internal.segment1.vxa = mesh_a.vx
+            internal.segment1.Tnorma = mesh_a.Tnorm
+            internal.segment1.vrb = mesh_b.vr
+            internal.segment1.vxb = mesh_b.vx
+            internal.segment1.Tnormb = mesh_b.Tnorm
             internal.segment1.weight = weight
 
     return fb
