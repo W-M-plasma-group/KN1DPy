@@ -40,7 +40,8 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
          truncate = 1.0e-3, refine = 0, File = '', NewFile = 0, ReadInput = 0, \
          error = 0, compute_errors = 0, plot = 0, debug = 0, debrief = 0, pause = 0, \
          Hplot = 0, Hdebug = 0, Hdebrief = 0, Hpause = 0, \
-         H2plot = 0, H2debug = 0, H2debrief = 0, H2pause = 0) -> dict:  
+         H2plot = 0, H2debug = 0, H2debrief = 0, H2pause = 0) -> dict:
+
     # deleted what i added before dont know what I was thinking?? - GG 2/19, corrected typos
 
     # Input: 
@@ -203,7 +204,7 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
 
         # replaced function inputs, split output list into variables - nh // fixed keyword inputs - GG
         kh2_mesh = create_kinetic_h2_mesh(CONST.KH2_NV, mu, x, Ti, Te, n, PipeDia, E0 = Eneut, fctr = fctr) 
-        
+        print('Array', kh2_mesh.vx)
         #xH2,TiM,TeM,nM,PipeDiaM,vxM,vrM,TnormM = kh2_mesh
         
         # determine optimized vr, vx grid for kinetic_h (atoms, A)

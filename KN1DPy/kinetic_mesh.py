@@ -28,7 +28,8 @@ class kinetic_mesh:
             n          : NDArray, 
             PipeDia    : NDArray,
             jh_coeffs  : JH_Coef = None,
-            E0 = 0, ixE0 = 0, irE0 = 0, fctr = 1.0
+            E0         : NDArray = np.array([0.0]), 
+            ixE0 = 0, irE0 = 0, fctr = 1.0
         ):
         
         self.mesh_type = mesh_type
@@ -73,7 +74,6 @@ class kinetic_mesh:
         Y = np.zeros(nx) # fixed typo
         for k in range(1, nx): 
             Y[k] = Y[k-1] - (x[k] - x[k-1] ) * 0.5 * (RR[k] + RR[k-1]) / v0
-        
         if mesh_type == 'h':
             # Find x location where Y = -5, i.e. where nH should be down by exp(-5)
             interpfunc = interpolate.interp1d(Y, x, kind = 'linear', bounds_error=False, fill_value="extrapolate") # previous version caused error on next line
@@ -101,10 +101,10 @@ class kinetic_mesh:
         PipeDiafine = interpfunc(xfine)
 
         # Set up a vx, vr mesh based on raw data to get typical vx, vr values 
-        vx, vr, Tnorm, ixE0, ixE0 = create_vr_vx_mesh(nv, Tifine) # fixed error from not assigning all outputs - GG
-        
-        vth = np.sqrt( (2 * CONST.Q * Tnorm) / (mu * CONST.H_MASS))
+        vx, vr, Tnorm, ixE0, ixE0 = create_vr_vx_mesh(nv, Tifine, E0 = E0) # fixed error from not assigning all outputs - GG
 
+        vth = np.sqrt( (2 * CONST.Q * Tnorm) / (mu * CONST.H_MASS))
+        #print("VTH", vth)
         # Estimate interaction rate with side walls
         nxfine = np.size(xfine)
         gamma_wall = np.zeros(nxfine)
@@ -183,7 +183,7 @@ class kinetic_mesh:
         neH = interpfunc(xH)
         interpfunc = interpolate.interp1d(xfine, PipeDiafine)
         PipeDiaH = interpfunc(xH)
-        vx, vr, Tnorm, ixE0, irE0 = create_vr_vx_mesh(nv, TiH) # fixed error from not assigning all outputs - GG
+        vx, vr, Tnorm, ixE0, irE0 = create_vr_vx_mesh(nv, TiH, E0 = E0) # fixed error from not assigning all outputs - GG
 
         self.x : NDArray = xH
         self.Ti : NDArray = TiH
@@ -204,7 +204,8 @@ def create_kinetic_h_mesh(
         n          : NDArray, 
         PipeDia    : NDArray,
         jh_coeffs  : JH_Coef = None,
-        E0 = 0, ixE0 = 0, irE0 = 0, fctr = 1.0
+        E0         : NDArray = np.array([0.0]),
+        ixE0 = 0, irE0 = 0, fctr = 1.0
     ) -> kinetic_mesh:
     
     mesh = kinetic_mesh('h', nv, mu, x, Ti, Te, n, PipeDia, jh_coeffs = jh_coeffs,
@@ -219,7 +220,8 @@ def create_kinetic_h2_mesh(
         Te         : NDArray, 
         n          : NDArray, 
         PipeDia    : NDArray,
-        E0 = 0, ixE0 = 0, irE0 = 0, fctr = 1.0
+        E0         : NDArray = np.array([0.0]),
+        ixE0 = 0, irE0 = 0, fctr = 1.0
     ) -> kinetic_mesh:
     
     mesh = kinetic_mesh('h2', nv, mu, x, Ti, Te, n, PipeDia, 

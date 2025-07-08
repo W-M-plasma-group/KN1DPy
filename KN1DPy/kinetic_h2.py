@@ -705,7 +705,7 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
     # Theta-prime Coordinate
     ntheta = 5      # use 5 theta mesh points for theta integration
     dTheta = np.ones(ntheta) / ntheta
-    theta = np.pi * (np.arange(ntheta) / ntheta + 5 / ntheta)
+    theta = np.pi * (np.arange(ntheta) / ntheta + 0.5 / ntheta)
     cos_theta =  np.cos(theta)
 
     # Determine Energy Space Differentials 
@@ -859,6 +859,7 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
         mol = 2
         _maxwell = create_shifted_maxwellian(vr,vx,Tmaxwell,vx_shift,mu,mol,Tnorm)
         fw_hat = _maxwell[0]
+
     if New_Protons:
         # Compute fi_hat 
         if debrief > 1:
@@ -948,7 +949,7 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
                 for k in range(0, nvr):
                     for i in range(0, nvr):
                         v_v2[m][l][k][:,i] = vr[i] ** 2 + vr[k] ** 2 - 2 * vr[i] * vr[k] * cos_theta[m] + (vx[:] - vx[l]) ** 2  # not super confident 
-                        vr2_vx2[m][l][k][:,i] = vr[i] ** 2 + vr[k] ** 2 - 2 * vr[i] * vr[k] * cos_theta[m] + (vx[:] - vx[l])
+                        vr2_vx2[m][l][k][:,i] = vr[i] ** 2 + vr[k] ** 2 - 2 * vr[i] * vr[k] * cos_theta[m] + 2*(vx[:] - vx[l])**2 #NOTE Changed to match idl
         # v_v=|v-v_prime| at each double velocity space mesh point, including theta angle
         v_v = np.sqrt(v_v2)
 
