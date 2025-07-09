@@ -164,11 +164,11 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
         
     # Option: Read input parameters stored in file from previous run
     if ReadInput: 
-        input = File
-        fp = os.path.exists(input)
+        input_file = File
+        fp = os.path.exists(input_file)
         if fp:
             if debrief:
-                print(prompt, ' Reading input variables stored in ', input)
+                print(prompt, ' Reading input variables stored in ', input_file)
                 if File[ len(File) - 4 : len(File) ] == '.sav':
                     input_dict = sav_read(File, '//Users/Gwen/Desktop/test.nc')
                 elif File[ len(File) - 3 : len(File)]=='.nc': # fixed typo
@@ -205,6 +205,8 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
         # replaced function inputs, split output list into variables - nh // fixed keyword inputs - GG
         kh2_mesh = create_kinetic_h2_mesh(CONST.KH2_NV, mu, x, Ti, Te, n, PipeDia, E0 = Eneut, fctr = fctr) 
         print('Array', kh2_mesh.vx)
+        print('Length', len(kh2_mesh.vx))
+        print('Tnorm', kh2_mesh.Tnorm)
         #xH2,TiM,TeM,nM,PipeDiaM,vxM,vrM,TnormM = kh2_mesh
         
         # determine optimized vr, vx grid for kinetic_h (atoms, A)
@@ -216,6 +218,10 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
         # finished line since create_kinetic_h_mesh has been programmed - nh // fixed capitalization - GG // fixed keyword inputs - GG
         kh_mesh = create_kinetic_h_mesh(CONST.KH_NV, mu, x, Ti, Te, n, PipeDia, jh_coeffs=jh_coefficients, fctr = fctr) 
         TnormA = kh_mesh.Tnorm
+        print('Array', kh_mesh.vx)
+        print('Length', len(kh_mesh.vx))
+        print('Tnorm', kh_mesh.Tnorm)
+        input()
 
     v0_bar=np.sqrt(8.0*CONST.TWALL*CONST.Q/(np.pi*2*mu*CONST.H_MASS))
 

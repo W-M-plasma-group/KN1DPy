@@ -23,10 +23,7 @@ def create_vr_vx_mesh(nv : int, Ti : NDArray, E0 : NDArray = np.array([0.0]), Tm
         # _Ti = _Ti[_Ti<Tmax] # simplified previous lines by replacing loops - nh
     maxTi = np.max(_Ti)
     minTi = min(_Ti)
-    print("TEST", _Ti)
-    print("Length", len(Ti))
     Tnorm = np.nanmean(_Ti)
-    print("TEST", Tnorm)
     vmax = 3.5
     if maxTi - minTi <= 0.1 * maxTi: # changed < to <= like from IDL code - nh
         v = np.arange(nv+1)*vmax/nv # added *vmax/nv from IDL code - nh // deleted float type because it caused bug - GG

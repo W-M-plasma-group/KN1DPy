@@ -128,23 +128,13 @@ class kinetic_mesh:
             else:
                 ioniz_rate = sigmav_ion_h0(Tefine)
             RR = nfine * ioniz_rate + nfine * sigma_cx_h0(Tifine, np.array([minE0] * nxfine)) + gamma_wall # replaced size(nxfine) with nxfine
-            
-            # Compute local maximum grid spacing dx_max = 2 
-            big_dx = 0.02 * fctr 
-            dx_max = np.maximum(fctr * 0.8 * ( 2 * vth * min(vr) / RR), big_dx)
 
         elif mesh_type == 'h2':
             RR=nfine*sigmav_ion_hh(Tefine)+nfine*sigmav_h1s_h1s_hh(Tefine)+nfine*sigmav_h1s_h2s_hh(Tefine)+0.1*nfine*sigmav_cx_hh(Tifine,Tifine) + gamma_wall
-             #Compute local maximum grid spacing from dx_max = 2 min(vr) / RR
-            big_dx=0.02*fctr
-            dx_max=np.minimum(fctr*0.8*(2*vth*min(vr)/RR), big_dx) # fixed typo - GG
-            #TODO Check this calculation for dx_max here and above, they are the same in the idl code
-            #TODO Note the usage of minimum vs maximum
-
-        # NOTE See note in above statement, may be able to be combined here
-        # # Compute local maximum grid spacing dx_max = 2 
-        # big_dx = 0.02 * fctr 
-        # dx_max = np.maximum(fctr * 0.8 * ( 2 * vth * min(vr) / RR), big_dx)
+        
+        # Compute local maximum grid spacing dx_max = 2
+        big_dx=0.02*fctr
+        dx_max=np.minimum(fctr*0.8*(2*vth*min(vr)/RR), big_dx)
 
         # Construct xH Axis 
         xpt = xmaxH
@@ -162,7 +152,7 @@ class kinetic_mesh:
             # FS: force a preset maximum grid spacing 
 
             if mesh_type == 'h':
-                dxh_max = 0.0004 # JWH: 0.0015 should be sufficient for D3D because scale lengths are 2.5x larger
+                dxh_max = 0.0005 # JWH: 0.0015 should be sufficient for D3D because scale lengths are 2.5x larger
                 # lowered dxh_max from 5e-4 to 4e-4; original was giving mesh size errors in kinetic_h - nh
                 dxpt = min([dxpt1, dxpt2, dxh_max])
             elif mesh_type == 'h2':
@@ -170,8 +160,7 @@ class kinetic_mesh:
 
             xpt = xpt - dxpt 
             
-        # NOTE Old version, changed -2 to fit idl code xH = np.concatenate([np.array([xminH]), xH[0:np.size(xH) - 1]]) # put xminH in array to fix concatenation error
-        xH = np.concatenate([np.array([xminH]), xH[0:np.size(xH) - 2]])
+        xH = np.concatenate([np.array([xminH]), xH[0:np.size(xH) - 1]])
         # if xH[1] - xH[0] > 0.5 * big_dx:
         #   xH = np.concatenate(xH[0], xH[2:])
 
