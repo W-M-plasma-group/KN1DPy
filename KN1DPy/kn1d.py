@@ -204,9 +204,6 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
 
         # replaced function inputs, split output list into variables - nh // fixed keyword inputs - GG
         kh2_mesh = create_kinetic_h2_mesh(CONST.KH2_NV, mu, x, Ti, Te, n, PipeDia, E0 = Eneut, fctr = fctr) 
-        print('Array', kh2_mesh.vx)
-        print('Length', len(kh2_mesh.vx))
-        print('Tnorm', kh2_mesh.Tnorm)
         #xH2,TiM,TeM,nM,PipeDiaM,vxM,vrM,TnormM = kh2_mesh
         
         # determine optimized vr, vx grid for kinetic_h (atoms, A)
@@ -218,25 +215,25 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
         # finished line since create_kinetic_h_mesh has been programmed - nh // fixed capitalization - GG // fixed keyword inputs - GG
         kh_mesh = create_kinetic_h_mesh(CONST.KH_NV, mu, x, Ti, Te, n, PipeDia, jh_coeffs=jh_coefficients, fctr = fctr) 
         TnormA = kh_mesh.Tnorm
-        print('Array', kh_mesh.vx)
-        print('Length', len(kh_mesh.vx))
-        print('Tnorm', kh_mesh.Tnorm)
-        input()
 
     v0_bar=np.sqrt(8.0*CONST.TWALL*CONST.Q/(np.pi*2*mu*CONST.H_MASS))
 
     #   Set up molecular flux BC from inputted neutral pressure
 
-    ipM=(kh2_mesh.vx>0).nonzero()[0]
-    inM=(kh2_mesh.vx<0).nonzero()[0]
+    # ipM=(kh2_mesh.vx>0).nonzero()[0]
+    # inM=(kh2_mesh.vx<0).nonzero()[0]
+    ipM = np.where(kh2_mesh.vx > 0)
+    inM = np.where(kh2_mesh.vx < 0)
     nvrM=kh2_mesh.vr.size
     nvxM=kh2_mesh.vx.size
     nxH2=kh2_mesh.x.size
     
     #   Code below uses variables defined in create_kinetic_h_mesh
     
-    ipA=(kh_mesh.vx>0).nonzero()[0]
-    inA=(kh_mesh.vx<0).nonzero()[0]
+    # ipA=(kh_mesh.vx>0).nonzero()[0]
+    # inA=(kh_mesh.vx<0).nonzero()[0]
+    ipA = np.where(kh_mesh.vx > 0)
+    inA = np.where(kh_mesh.vx < 0)
     nvrA=kh_mesh.vr.size
     nvxA=kh_mesh.vx.size
     nxH=kh_mesh.x.size
@@ -244,22 +241,29 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
     #  Code blocks below use common block variables, should be filled in later
     #  Initialize fH and fH2 (these may be over-written by data from and old run below)
     
-    # NOTE Rewrite Deleted, possibly re-add later
+    # NOTE Refine Deleted, possibly re-add later
     fH = np.zeros((nvrA,nvxA,nxH)).T
     fH2 = np.zeros((nvrM,nvxM,nxH2)).T
     nH2 = np.zeros(nxH2)
     nHP = np.zeros(nxH2)
     THP = np.zeros(nxH2)
+    print("Vals", nvrA, nvxA, nxH, nvrM, nvxM, nxH2)
         
     #   Convert pressure (mtorr) to molecular density and flux
 
     fh2BC=np.zeros((nvxM,nvrM)) # fixed mistake in defining the array - GG
     DensM=3.537e19*GaugeH2
     GammaxH2BC=0.25*DensM*v0_bar
-    Tmaxwell=np.full(nvxM, CONST.TWALL) # changed list to numpy array 
-    vx_shift=np.zeros(nvxM) # fixed size of arrays, its unclear in the original code if this is whats supposed to be done but the for loop in create shifted_maxwellian_include wont owrk otherwise - G
+    #Tmaxwell=np.full(nvxM, CONST.TWALL) # changed list to numpy array 
+    Tmaxwell = np.array([CONST.TWALL])
+    #vx_shift=np.zeros(nvxM) # fixed size of arrays, its unclear in the original code if this is whats supposed to be done but the for loop in create shifted_maxwellian_include wont owrk otherwise - G
+    vx_shift = np.array([0.0])
     mol=2
     Maxwell=create_shifted_maxwellian(kh2_mesh.vr,kh2_mesh.vx,Tmaxwell,vx_shift,mu,mol,kh2_mesh.Tnorm)
+    print("Maxwell", Maxwell)
+    print(np.size(Maxwell))
+    print(Maxwell.shape)
+    input()
     fh2BC[ipM]=Maxwell[0,ipM] # fixed indexing - GG
 
     # Compute NuLoss:

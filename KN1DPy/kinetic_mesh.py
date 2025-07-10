@@ -172,6 +172,7 @@ class kinetic_mesh:
         neH = interpfunc(xH)
         interpfunc = interpolate.interp1d(xfine, PipeDiafine)
         PipeDiaH = interpfunc(xH)
+
         vx, vr, Tnorm, ixE0, irE0 = create_vr_vx_mesh(nv, TiH, E0 = E0) # fixed error from not assigning all outputs - GG
 
         self.x : NDArray = xH

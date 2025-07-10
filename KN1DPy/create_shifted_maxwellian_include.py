@@ -2,6 +2,7 @@ import numpy as np
 
 from .sval import sval
 from .common import constants as CONST
+import copy
 
 #   This INCLUDE file is used by Kinetic_H2 and Kinetic_H
 #   The code is also written within the create_shifted_maxwellian function
@@ -38,7 +39,8 @@ def create_shifted_maxwellian_include(vr,vx,Tnorm,vx_shift,Tmaxwell,Shifted_Maxw
     #   scheme is employed - similar to that used in Interp_fVrVxX
   
 
-  AN=BN=np.zeros((2,nvx,nvr)) # fixed array creation - nh
+  AN=np.zeros((2,nvx,nvr))
+  BN=np.zeros((2,nvx,nvr)) # fixed array creation - nh
   sgn=[-1,1]
   for k in range(nx):
     if Tmaxwell[k]>0:
@@ -48,7 +50,6 @@ def create_shifted_maxwellian_include(vr,vx,Tnorm,vx_shift,Tmaxwell,Shifted_Maxw
         maxwell[k,:,i]=np.e**(np.maximum(arg,-80)) # replaced < and > with np.minimum and np.maximum - nh
 
       maxwell[k,:,:]/=np.sum(Vr2pidVr*(np.matmul(dVx,maxwell[k,:,:]))) # fixed matmul argument order - nh
-
       if Shifted_Maxwellian_Debug: # fixed capitalization
         vx_out1=vth*np.sum(Vr2pidVr*np.matmul((vx*dVx),maxwell[k,:,:])) # fixed matmul argument order - nh
         for i in range(nvr):
@@ -67,38 +68,52 @@ def create_shifted_maxwellian_include(vr,vx,Tnorm,vx_shift,Tmaxwell,Shifted_Maxw
 
       WxMax=vth*np.sum(Vr2pidVr*np.matmul((vx*dVx),maxwell[k,:,:])) # fixed matmul argument order - nh
       EMax=vth2*np.sum(Vr2pidVr*np.matmul(dVx,(vr2vx2_2D*maxwell[k,:,:]))) # fixed matmul argument order - nh
+      np.set_printoptions(linewidth=np.inf)
+      print("Include Test", (vx*dVx))
+      print("Include Test", maxwell[k,:,:])
+      print("Vx", vx)
+      print("Include Test", np.matmul((vx*dVx),maxwell[k,:,:]))
+      print(vth)
+      print("Include Test", WxMax)
+      print("Include Test", EMax)
 
       # Compute Nij from Maxwell, padded with zeros
 
-      nij=np.zeros((nvr+2,nvx+2)).T
-      nij[1:nvx+1,1:nvr+1]=maxwell[k,:,:]*Vol
+      nij = np.zeros((nvr+2,nvx+2)).T
+      nij[1:nvx+1,1:nvr+1] = maxwell[k,:,:]*Vol
 
-      Nijp1_vx_Dvx=np.roll(nij*Vx_DVx,-1,0)
-      Nij_vx_Dvx  =nij*Vx_DVx
-      Nijm1_vx_Dvx=np.roll(nij*Vx_DVx,1,0)
-      Nip1j_vr_Dvr=np.roll(nij*Vr_DVr,-1,1)
-      Nij_vr_Dvr  =nij*Vr_DVr
-      Nim1j_vr_Dvr=np.roll(nij*Vr_DVr,1,1)
+      #NOTE I Think a lot of these can be removed and/or combined
+      #There are a lot of padded zeros, surely they are unnecessary?
+      Nijp1_vx_Dvx = np.roll(nij*Vx_DVx, -1, axis=0)
+      Nij_vx_Dvx   = nij*Vx_DVx
+      Nijm1_vx_Dvx = np.roll(nij*Vx_DVx, 1, axis=0)
+      Nip1j_vr_Dvr = np.roll(nij*Vr_DVr, -1, axis=1)
+      Nij_vr_Dvr   = nij*Vr_DVr
+      Nim1j_vr_Dvr = np.roll(nij*Vr_DVr, 1, axis=1)
 
       # Compute Ap, Am, Bp, and Bm (0=p 1=m)
 
-      _AN=np.roll(nij*Vth_DVx,1,0)-nij*Vth_DVx
-      AN[0,:,:]=_AN[1:nvx+1,1:nvr+1]
-      _AN=-np.roll(nij*Vth_DVx,-1,0)+nij*Vth_DVx
-      AN[0,:,:]=_AN[1:nvx+1,1:nvr+1]
+      _AN = np.roll(nij*Vth_DVx,1,0)-nij*Vth_DVx
+      AN[0,:,:] = _AN[1:nvx+1,1:nvr+1]
+      _AN = -np.roll(nij*Vth_DVx,-1,0)+nij*Vth_DVx
+      AN[1,:,:] = _AN[1:nvx+1,1:nvr+1] #NOTE Check these values later, once values hit ~-e40, round to 0, otherwise seems about right
+      print("AN", AN)
 
-      BN[0,jpa+1:jpb+1,:]=Nijm1_vx_Dvx[jpa+2:jpb+2,1:nvr+1]-Nij_vx_Dvx[jpa+2:jpb+2,1:nvr+1]
-      BN[0,jpa,:]=-Nij_vx_Dvx[jpa+2,1:nvr+1]
-      BN[0,jnb,:]=Nij_vx_Dvx[jnb+2,1:nvr+1]
-      BN[0,jna:jnb,:]=-Nijp1_vx_Dvx[jna+1:jnb+1,1:nvr+1]+Nij_vx_Dvx[jna+1:jnb+1,1:nvr+1]
-      BN[0,:,:]=BN[0,:,:]+ Nim1j_vr_Dvr[1:nvx+1,1:nvr+1]-Nij_vr_Dvr[1:nvx+1,1:nvr+1]
+      #NOTE This works, but check the positionings of the various jpa, jpb, nvr, etc for array indexing
+      BN[0,jpa+1:jpb+1,:] = Nijm1_vx_Dvx[jpa+2:jpb+2,1:nvr+1] - Nij_vx_Dvx[jpa+2:jpb+2,1:nvr+1]
+      BN[0,jpa,:] = -Nij_vx_Dvx[jpa+1,1:nvr+1]
+      BN[0,jnb,:] = Nij_vx_Dvx[jnb+1,1:nvr+1]
+      BN[0,jna:jnb,:] = -Nijp1_vx_Dvx[jna+1:jnb+1,1:nvr+1] + Nij_vx_Dvx[jna+1:jnb+1,1:nvr+1]
+      BN[0,:,:] = BN[0,:,:] + Nim1j_vr_Dvr[1:nvx+1,1:nvr+1] - Nij_vr_Dvr[1:nvx+1,1:nvr+1]
 
-      BN[1,jpa+1:jpb+1,:]=-Nijp1_vx_Dvx[jpa+2:jpb+2,1:nvr+1]+Nij_vx_Dvx[jpa+2:jpb+2,1:nvr+1]
-      BN[1,jpa,:]=-Nijp1_vx_Dvx[jpa+1,1:nvr+1]
-      BN[1,jnb,:]=Nijm1_vx_Dvx[jnb+1,1:nvr+1]
-      BN[1,jna:jnb,:]=Nijm1_vx_Dvx[jna+1:jnb+1,1:nvr+1]-Nij_vx_Dvx[jna+1:jnb+1,1:nvr+1]
-      BN[1,:,1:nvr]=BN[1,:,1:nvr] - Nip1j_vr_Dvr[1:nvx+1,2:nvr+1]+Nij_vr_Dvr[1:nvx+1,2:nvr+1]
-      BN[1,:,0]=BN[1,:,0] - Nip1j_vr_Dvr[1:nvx+1,1]
+      BN[1,jpa+1:jpb+1,:] = -Nijp1_vx_Dvx[jpa+2:jpb+2,1:nvr+1] + Nij_vx_Dvx[jpa+2:jpb+2,1:nvr+1]
+      BN[1,jpa,:] = -Nijp1_vx_Dvx[jpa+1,1:nvr+1]
+      BN[1,jnb,:] = Nijm1_vx_Dvx[jnb+1,1:nvr+1]
+      BN[1,jna:jnb,:] = Nijm1_vx_Dvx[jna+1:jnb+1,1:nvr+1] - Nij_vx_Dvx[jna+1:jnb+1,1:nvr+1]
+      BN[1,:,1:nvr] = BN[1,:,1:nvr] - Nip1j_vr_Dvr[1:nvx+1,2:nvr+1] + Nij_vr_Dvr[1:nvx+1,2:nvr+1]
+      BN[1,:,0] = BN[1,:,0] - Nip1j_vr_Dvr[1:nvx+1,1]
+
+      print("BN", BN)
 
       # Remove padded zeros in Nij
 
