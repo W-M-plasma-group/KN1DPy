@@ -260,9 +260,6 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
     vx_shift = np.array([0.0])
     mol=2
     Maxwell=create_shifted_maxwellian(kh2_mesh.vr,kh2_mesh.vx,Tmaxwell,vx_shift,mu,mol,kh2_mesh.Tnorm)
-    print("Maxwell", Maxwell)
-    print(np.size(Maxwell))
-    print(Maxwell.shape)
     input()
     fh2BC[ipM]=Maxwell[0,ipM] # fixed indexing - GG
 

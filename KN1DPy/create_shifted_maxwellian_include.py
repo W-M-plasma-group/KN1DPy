@@ -41,7 +41,7 @@ def create_shifted_maxwellian_include(vr,vx,Tnorm,vx_shift,Tmaxwell,Shifted_Maxw
 
   AN=np.zeros((2,nvx,nvr))
   BN=np.zeros((2,nvx,nvr)) # fixed array creation - nh
-  sgn=[-1,1]
+  sgn=[1,-1]
   for k in range(nx):
     if Tmaxwell[k]>0:
       for i in range(nvr):
@@ -69,13 +69,13 @@ def create_shifted_maxwellian_include(vr,vx,Tnorm,vx_shift,Tmaxwell,Shifted_Maxw
       WxMax=vth*np.sum(Vr2pidVr*np.matmul((vx*dVx),maxwell[k,:,:])) # fixed matmul argument order - nh
       EMax=vth2*np.sum(Vr2pidVr*np.matmul(dVx,(vr2vx2_2D*maxwell[k,:,:]))) # fixed matmul argument order - nh
       np.set_printoptions(linewidth=np.inf)
-      print("Include Test", (vx*dVx))
-      print("Include Test", maxwell[k,:,:])
-      print("Vx", vx)
-      print("Include Test", np.matmul((vx*dVx),maxwell[k,:,:]))
-      print(vth)
-      print("Include Test", WxMax)
-      print("Include Test", EMax)
+      # print("Include Test", (vx*dVx))
+      # print("Include Test", maxwell[k,:,:])
+      # print("Vx", vx)
+      # print("Include Test", np.matmul((vx*dVx),maxwell[k,:,:]))
+      # print(vth)
+      # print("Include Test", WxMax)
+      # print("Include Test", EMax)
 
       # Compute Nij from Maxwell, padded with zeros
 
@@ -97,7 +97,6 @@ def create_shifted_maxwellian_include(vr,vx,Tnorm,vx_shift,Tmaxwell,Shifted_Maxw
       AN[0,:,:] = _AN[1:nvx+1,1:nvr+1]
       _AN = -np.roll(nij*Vth_DVx,-1,0)+nij*Vth_DVx
       AN[1,:,:] = _AN[1:nvx+1,1:nvr+1] #NOTE Check these values later, once values hit ~-e40, round to 0, otherwise seems about right
-      print("AN", AN)
 
       #NOTE This works, but check the positionings of the various jpa, jpb, nvr, etc for array indexing
       BN[0,jpa+1:jpb+1,:] = Nijm1_vx_Dvx[jpa+2:jpb+2,1:nvr+1] - Nij_vx_Dvx[jpa+2:jpb+2,1:nvr+1]
@@ -113,15 +112,14 @@ def create_shifted_maxwellian_include(vr,vx,Tnorm,vx_shift,Tmaxwell,Shifted_Maxw
       BN[1,:,1:nvr] = BN[1,:,1:nvr] - Nip1j_vr_Dvr[1:nvx+1,2:nvr+1] + Nij_vr_Dvr[1:nvx+1,2:nvr+1]
       BN[1,:,0] = BN[1,:,0] - Nip1j_vr_Dvr[1:nvx+1,1]
 
-      print("BN", BN)
-
       # Remove padded zeros in Nij
 
       nij=nij[1:nvx+1,1:nvr+1]
 
       # Cycle through 4 possibilies of sign(a_Max),sign(b_Max)
 
-      TB1=TB2=np.zeros(2)
+      TB1=np.zeros(2)
+      TB2=np.zeros(2)
       ia=0
       while ia<2:
 
@@ -129,6 +127,7 @@ def create_shifted_maxwellian_include(vr,vx,Tnorm,vx_shift,Tmaxwell,Shifted_Maxw
 
         TA1=vth*np.sum(np.matmul(vx,AN[ia,:,:])) # fixed matmul argument order - nh
         TA2=vth2*np.sum(vr2vx2_2D*AN[ia,:,:])
+
         ib=0
         while ib<2:
 
@@ -139,12 +138,24 @@ def create_shifted_maxwellian_include(vr,vx,Tnorm,vx_shift,Tmaxwell,Shifted_Maxw
           if TB2[ib]==0:
             TB2[ib]=vth2*np.sum(vr2vx2_2D*BN[ib,:,:])
           denom=TA2*TB1[ib]-TA1*TB2[ib]
-          b_max=a_max=0
+          #print("TB1", TB1) NOTE This value is off
+
+          b_max=0
+          a_max=0
           if denom!=0 and TA1!=0:
-            b_Max=(TA2*(WxD-WxMax)-TA1*(ED-EMax))/denom
-            a_Max=(WxD-WxMax-TB1[ib]*b_Max)/TA1
+            b_max=(TA2*(WxD-WxMax)-TA1*(ED-EMax))/denom
+            a_max=(WxD-WxMax-TB1[ib]*b_max)/TA1
+            # print("a_max", a_max)
+            # print("WxD", WxD)
+            # print("WxMax", WxMax)
+            # print("TB1[ib]", TB1[ib])
+            # print("b_max", b_max)
+            # print("TA1", TA1)
+            # input()
+            # NOTE Some of these values are still off, but maxwell seems to be working for now
           if a_max*sgn[ia]>0 and b_max*sgn[ib]>0:
-            maxwell[k,:,:]=(nij+AN[ia,:,:]*a_Max+BN[ib,:,:]*b_Max)/Vol
+            maxwell[k,:,:]=(nij+AN[ia,:,:]*a_max+BN[ib,:,:]*b_max)/Vol
+            #print("maxwell", maxwell[k,:,:])
             ia=ib=2
           ib+=1
         ia+=1
@@ -159,4 +170,6 @@ def create_shifted_maxwellian_include(vr,vx,Tnorm,vx_shift,Tmaxwell,Shifted_Maxw
         Verror2=abs(vx_shift[k]-vx_out2)/vth_local
         print('CREATE_SHIFTED_MAXWELLIAN=> Terror:'+sval(Terror)+'->'+sval(Terror2)+'  Verror:'+sval(Verror)+'->'+sval(Verror2))
 
+  print("maxwell", maxwell)
+  input()
   return maxwell
