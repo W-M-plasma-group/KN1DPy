@@ -425,6 +425,11 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
     dx = x - np.roll(x, 1) ; dx = dx[1:]
     notpos = np.argwhere(dx < 0.0).T
     count = np.size(notpos)
+    # print("vr", vr)
+    # print("vx", vx)
+    # print("x", x)
+    # print("dx", dx)
+    # input()
     if count > 0:
         print(prompt, 'x[:] must be increasing with index!')
         error = 1
@@ -552,49 +557,7 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
         error = 1
         return 
 
-    _e = 'e!U-!N'
-    if mu == 1:
-        _p = 'H!U+!N'
-        _H = 'H!U0!N'
-        _H1s = 'H(1s)'
-        _H2s = 'H!U*!N(2s)'
-        _H2p = 'H!U*!N(2p)'
-        _Hn2 = 'H!U*!N(n=2)'
-        _Hn3 = 'H!U*!N(n=3)'
-        _Hn = 'H!U*!N(n>=2)'
-        _HH = 'H!D2!N'
-        _Hp = 'H!D2!U+!N'
-    else:
-        _p = 'D!U+!N'
-        _H = 'D!U0!N'
-        _H1s = 'D(1s)'
-        _H2s = 'D!U*!N(2s)'
-        _H2p = 'D!U*!N(2p)'
-        _Hn2 = 'D!U*!N(n=2)'
-        _Hn3 = 'D!U*!N(n=3)'
-        _Hn = 'D!U*!N(n>=2)'
-        _HH = 'D!D2!N'
-        _Hp = 'D!D2!U+!N'
-
-    plus = ' + '
-    arrow = ' -> '
-    elastic = ' (elastic)'
-
-    _R1 = _e + plus +_HH + arrow + _e + plus + _Hp + plus + _e
-    _R2 = _e + plus + _HH + arrow + _e + plus + _H1s + plus + _H1s
-    _R3 = _e + plus + _HH + arrow + _e + plus + _H1s + plus + _H2s
-    _R4 = _e + plus + _HH + arrow + _e + plus + _p + plus + _H1s + plus + _e
-    _R5 = _e + plus + _HH + arrow + _e + plus + _H2p + plus + _H2s
-    _R6 = _e + plus + _HH + arrow + _e + plus + _H1s + plus + _Hn3
-    _R7 = _e + plus + _Hp + arrow + _e + plus + _p + plus + _H1s
-    _R8 = _e + plus + _Hp + arrow + _e + plus + _p + plus + _Hn2
-    _R9 = _e + plus + _Hp + arrow + _e + plus + _p + plus + _p + plus + _e
-    _R10 = _e + plus + _Hp + arrow + _H1s + plus + _Hn
-    _R11 = _HH + plus + _p + arrow + _HH + plus + _p + elastic
-    _R12 = _HH + plus + _H + arrow + _HH + plus + _H + elastic
-    _R13 = _HH + plus + _HH + arrow + _HH + plus + _HH + elastic
-    _R14 = _HH + plus + _Hp + arrow + _Hp + plus + _HH
-    _Rn=[' ',_R1,_R2,_R3,_R4,_R5,_R6,_R7,_R8,_R9,_R10,_R11,_R12,_R13,_R14]
+    #NOTE Removed Plotting formatting, bring back once the program actually works
 
     i_n = np.argwhere(vx < 0 ) # fixed typo - GG
     count = np.size(i_n)
@@ -696,17 +659,34 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
     CI_H2_H2_error = np.zeros(nx)
     Maxwell = np.zeros((nvr,nvx,nx)).T
 
-    Vr2pidVr,VrVr4pidVr,dVx,VrL,VrR,VxL,VxR,vol,Vth_DeltaVx,Vx_DeltaVx,Vr_DeltaVr,Vr2Vx2,jpa,jpb,jna,jnb = make_dvr_dvx(vr, vx)
+    Vr2pidVr, VrVr4pidVr, dVx, VrL, VrR, VxL, VxR, vol, Vth_DeltaVx, Vx_DeltaVx, Vr_DeltaVr, Vr2Vx2, jpa, jpb, jna, jnb = make_dvr_dvx(vr, vx)
+
+    # print("Vr2pidVr", Vr2pidVr)
+    # print("VrVr4pidVr", VrVr4pidVr)
+    # print("dVx", dVx)
+    # print("vol", vol)
+    # print("Vth_DeltaVx", Vth_DeltaVx)
+    # print("Vx_DeltaVx", Vx_DeltaVx)
+    # print("Vr_DeltaVr", Vr_DeltaVr)
+    # print("jpa", jpa)
+    # print("jpb", jpb)
+    # print("jna", jna)
+    # print("jnb", jnb)
     
     # Vr^2-2*Vx^2
     for i in range(0, nvr):
         vr2_2vx2_2D[:, i] = (vr[i] ** 2) - 2 * (vx ** 2) # fixed indexing - GG
     
+    # print("vr2_2vx2_2D", vr2_2vx2_2D)
+    # input()
+    
     # Theta-prime Coordinate
     ntheta = 5      # use 5 theta mesh points for theta integration
     dTheta = np.ones(ntheta) / ntheta
-    theta = np.pi * (np.arange(ntheta) / ntheta + 0.5 / ntheta)
-    cos_theta =  np.cos(theta)
+    theta = np.pi * (np.arange(ntheta)/ntheta + 0.5/ntheta)
+    cos_theta = np.cos(theta)
+    # print("cos", cos_theta)
+    # input()
 
     # Determine Energy Space Differentials 
     Eaxis = Vth2 * 0.5 * mu * CONST.H_MASS * vr ** 2 / CONST.Q
@@ -714,6 +694,8 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
     Eaxis_mid = np.append(0.0, 0.5 * ( _Eaxis + np.roll(_Eaxis, -1) )) # changed to append to stop error - GG
     dEaxis = np.roll(Eaxis_mid, -1) - Eaxis_mid
     dEaxis = dEaxis[0 : nvr]
+    # print("dEaxis", dEaxis)
+    # input()
 
     # Scale input molecular distribution function to agree with desired flux
     gamma_input = 1.0
@@ -725,11 +707,17 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
         fH2BC=fH2BC_input
     for i in i_p:
         fH2[0][i] = fH2BC_input[i]
+    # print("fH2", fH2)
+    # print("shape", fH2.shape)
+    # input()
     
     # if fh is zero, then turn off elastic H2 <-> H collisions
-    H2_H_EL=H2_H_EL # fixed typo - GG
+    H2_H_EL = H2_H_EL # fixed typo - GG #NOTE ???, seems to be input? IDL thing not needed here
+    print("H2_H_EL", H2_H_EL)
     if np.sum(fH) <= 0.0:
-        H2_H_EL=0
+        H2_H_EL = 0
+    print("H2_H_EL", H2_H_EL)
+    input()
 
     # Set iteration Scheme 
     fH2_iterate = 0 
@@ -1631,6 +1619,7 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
         # Test conservation of particles for charge exchange operator
         if H2_HP_CX:
             for k in range(0, nx - 1):
+                print(alpha_cx[k] * fH2[k])
                 CX_A = np.sum(Vr2pidVr * np.dot(alpha_cx[k] * fH2[k], dVx))
                 CX_B = np.sum(Vr2pidVr * np.dot(Beta_CX_sum[k], dVx))
                 CX_error[k] = np.abs(CX_A - CX_B) / np.max(np.abs(np.array([CX_A, CX_B])))

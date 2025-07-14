@@ -43,7 +43,7 @@ class kinetic_mesh:
         nx = np.size(x)
 
         # estimate Interaction rate with side walls
-        gamma_wall = np.zeros(nx) # fixed typo - GG
+        gamma_wall = np.zeros(nx, float) # fixed typo - GG
         # for k in range( 0, nx):
         #   if PipeDia[k] > 0:
         #        gamma_wall[k] = 2*sqrt(2*Ti(k)*CONST.Q/(2*CONST.H_MASS))/PipeDia(k)
@@ -71,7 +71,7 @@ class kinetic_mesh:
         #  dGamma/dx=-nH*RR = v0 dnH/dx = -nH*RR - these two lines are commented in the original code I dont understand them
         #  d ln(nH)/dx = -RR/v0 = dY/dx
 
-        Y = np.zeros(nx) # fixed typo
+        Y = np.zeros(nx, float) # fixed typo
         for k in range(1, nx): 
             Y[k] = Y[k-1] - (x[k] - x[k-1] ) * 0.5 * (RR[k] + RR[k-1]) / v0
         if mesh_type == 'h':
@@ -107,7 +107,7 @@ class kinetic_mesh:
         #print("VTH", vth)
         # Estimate interaction rate with side walls
         nxfine = np.size(xfine)
-        gamma_wall = np.zeros(nxfine)
+        gamma_wall = np.zeros(nxfine, float)
         #print(PipeDiafine)
         for k in range(nxfine): # fixed typo on next two lines
             if PipeDiafine[k] > 0:
@@ -183,6 +183,19 @@ class kinetic_mesh:
         self.vx : NDArray = vx
         self.vr : NDArray = vr
         self.Tnorm : float = Tnorm
+
+    #Setup string conversion for printing
+    def __str__(self):
+        string = "Kinetic Mesh:\n"
+        string += "    x: " + str(self.x) + "\n"
+        string += "    Ti: " + str(self.Ti) + "\n"
+        string += "    Te: " + str(self.Te) + "\n"
+        string += "    ne: " + str(self.ne) + "\n"
+        string += "    PipeDia: " + str(self.PipeDia) + "\n"
+        string += "    vx: " + str(self.vx) + "\n"
+        string += "    vr: " + str(self.vr) + "\n"
+        string += "    Tnorm: " + str(self.Tnorm) + "\n"
+        return string
 
         
 def create_kinetic_h_mesh(

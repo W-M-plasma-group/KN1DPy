@@ -82,8 +82,9 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
     #
     #     ReadInput - if set, then reset all input variables to that contained in 'file'.KN1D_input
 
-
-    x = np.array(x)
+    #NOTE Debugging option, remove later
+    np.set_printoptions(linewidth=np.inf)
+    x = np.array(x, dtype=np.float64)
     COLLISIONS = KN1D_Collisions()
 
     # Collision options inputted via common block KN1D_collisions (default parameter values is true for all collisions):
@@ -216,7 +217,7 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
         kh_mesh = create_kinetic_h_mesh(CONST.KH_NV, mu, x, Ti, Te, n, PipeDia, jh_coeffs=jh_coefficients, fctr = fctr) 
         TnormA = kh_mesh.Tnorm
 
-    v0_bar=np.sqrt(8.0*CONST.TWALL*CONST.Q/(np.pi*2*mu*CONST.H_MASS))
+    v0_bar = np.sqrt(8.0*CONST.TWALL*CONST.Q/(np.pi*2*mu*CONST.H_MASS))
 
     #   Set up molecular flux BC from inputted neutral pressure
 
@@ -224,9 +225,9 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
     # inM=(kh2_mesh.vx<0).nonzero()[0]
     ipM = np.where(kh2_mesh.vx > 0)
     inM = np.where(kh2_mesh.vx < 0)
-    nvrM=kh2_mesh.vr.size
-    nvxM=kh2_mesh.vx.size
-    nxH2=kh2_mesh.x.size
+    nvrM = kh2_mesh.vr.size
+    nvxM = kh2_mesh.vx.size
+    nxH2 = kh2_mesh.x.size
     
     #   Code below uses variables defined in create_kinetic_h_mesh
     
@@ -234,9 +235,9 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
     # inA=(kh_mesh.vx<0).nonzero()[0]
     ipA = np.where(kh_mesh.vx > 0)
     inA = np.where(kh_mesh.vx < 0)
-    nvrA=kh_mesh.vr.size
-    nvxA=kh_mesh.vx.size
-    nxH=kh_mesh.x.size
+    nvrA = kh_mesh.vr.size
+    nvxA = kh_mesh.vx.size
+    nxH = kh_mesh.x.size
     
     #  Code blocks below use common block variables, should be filled in later
     #  Initialize fH and fH2 (these may be over-written by data from and old run below)
@@ -251,26 +252,30 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
         
     #   Convert pressure (mtorr) to molecular density and flux
 
-    fh2BC=np.zeros((nvxM,nvrM)) # fixed mistake in defining the array - GG
-    DensM=3.537e19*GaugeH2
-    GammaxH2BC=0.25*DensM*v0_bar
+    fh2BC = np.zeros((nvxM,nvrM)) # fixed mistake in defining the array - GG
+    DensM = 3.537e19*GaugeH2
+    GammaxH2BC = 0.25*DensM*v0_bar
     #Tmaxwell=np.full(nvxM, CONST.TWALL) # changed list to numpy array 
     Tmaxwell = np.array([CONST.TWALL])
     #vx_shift=np.zeros(nvxM) # fixed size of arrays, its unclear in the original code if this is whats supposed to be done but the for loop in create shifted_maxwellian_include wont owrk otherwise - G
     vx_shift = np.array([0.0])
-    mol=2
-    Maxwell=create_shifted_maxwellian(kh2_mesh.vr,kh2_mesh.vx,Tmaxwell,vx_shift,mu,mol,kh2_mesh.Tnorm)
-    input()
-    fh2BC[ipM]=Maxwell[0,ipM] # fixed indexing - GG
+    mol = 2
+    Maxwell = create_shifted_maxwellian(kh2_mesh.vr, kh2_mesh.vx, Tmaxwell, vx_shift, mu, mol, kh2_mesh.Tnorm)
+    fh2BC[ipM] = Maxwell[0,ipM] # fixed indexing - GG
+    # print("fh2BC", fh2BC[ipM])
+    # input()
+
 
     # Compute NuLoss:
         # NuLoss = Cs/LC
-    Cs_LC=np.zeros(LC.size)
+    Cs_LC = np.zeros(LC.size)
     for ii in range(LC.size):
-        if LC[ii]>0:
-            Cs_LC[ii]=np.sqrt(CONST.Q*(Ti[ii]+Te[ii])/(mu*CONST.H_MASS))/LC[ii] # fixed notation of indexing arrays - GG
-    interpfunc = interpolate.interp1d(x,Cs_LC) # fixed the way interpolation was called - GG
+        if LC[ii] > 0:
+            Cs_LC[ii] = np.sqrt(CONST.Q*(Ti[ii] + Te[ii])/(mu*CONST.H_MASS))/LC[ii] # fixed notation of indexing arrays - GG
+    interpfunc = interpolate.interp1d(x, Cs_LC) # fixed the way interpolation was called - GG
     NuLoss = interpfunc(kh2_mesh.x)
+    # print("NuLoss", NuLoss)
+    # input()
     
     #  Compute first guess SpH2
 
@@ -285,34 +290,39 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
     
     #	Integral{SpH2}dx =  (2/3) GammaxH2BC = beta Integral{n Cs/LC}dx
     
-    nCs_LC=n*Cs_LC
+    nCs_LC = n*Cs_LC
 
-    interpfunc = interpolate.interp1d(x,nCs_LC,fill_value="extrapolate") # fixed the way interpolation was called - GG
-    SpH2_hat=interpfunc(kh2_mesh.x)
+    interpfunc = interpolate.interp1d(x, nCs_LC, fill_value="extrapolate") # fixed the way interpolation was called - GG
+    SpH2_hat = interpfunc(kh2_mesh.x)
 
-    SpH2_hat=SpH2_hat/integ_bl(kh2_mesh.x,SpH2_hat,value_only=1) # not sure if this line is correct
-    beta=2/3*GammaxH2BC
+    SpH2_hat = SpH2_hat/integ_bl(kh2_mesh.x, SpH2_hat, value_only=1) # not sure if this line is correct
+    beta = (2/3)*GammaxH2BC
     if refine: # readded this section now that we have the internal common block called - GG 2/15
-        if SpH2_s!=None:
-            SpH2=SpH2_s # from kn1d_internal common block
+        if SpH2_s != None:
+            SpH2 = SpH2_s # from kn1d_internal common block
         else:
-            SpH2=beta*SpH2_hat
+            SpH2 = beta*SpH2_hat
     else:
-        SpH2=beta*SpH2_hat
-    SH2=SpH2
+        SpH2 = beta*SpH2_hat
+    SH2 = SpH2
+    # print("SH2", SH2)
+    # input()
 
     #   Interpolate for vxiM and vxiA
 
-    interpfunc = interpolate.interp1d(x,vxi,fill_value="extrapolate")
+    interpfunc = interpolate.interp1d(x, vxi, fill_value="extrapolate")
     vxiM = interpfunc(kh2_mesh.x)
 
-    interpfunc = interpolate.interp1d(x,vxi,fill_value="extrapolate") #NOTE Is this Needed?
+    #interpfunc = interpolate.interp1d(x,vxi,fill_value="extrapolate") #NOTE Is this Needed?
     vxiA = interpfunc(kh_mesh.x)
+    # print("vxiM", vxiM)
+    # print("vxiA", vxiA)
+    # input()
 
-    iter=0
-    EH_hist=np.array([0.0])
-    SI_hist=np.array([0.0])
-    oldrun=0
+    iter = 0
+    EH_hist = np.array([0.0])
+    SI_hist = np.array([0.0])
+    oldrun = 0
 
     #   Option: Read results from previous run
 
@@ -321,31 +331,56 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
     #   Starting back at line 378 from IDL code
     #   Test for v0_bar consistency in the numerics by computing it from a half maxwellian at the wall temperature
 
-    vthM=np.sqrt(2*CONST.Q*kh2_mesh.Tnorm/(mu*CONST.H_MASS))
-    Vr2pidVrM,VrVr4pidVrM,dVxM=make_dvr_dvx(kh2_mesh.vr,kh2_mesh.vx)[0:3]
-    vthA=np.sqrt(2*CONST.Q*kh_mesh.Tnorm/(mu*CONST.H_MASS))
-    Vr2pidVrA,VrVr4pidVrA,dVxA=make_dvr_dvx(kh_mesh.vr,kh_mesh.vx)[0:3]
+    vthM = np.sqrt(2*CONST.Q*kh2_mesh.Tnorm/(mu*CONST.H_MASS))
+    Vr2pidVrM,VrVr4pidVrM,dVxM = make_dvr_dvx(kh2_mesh.vr, kh2_mesh.vx)[0:3] #NOTE Get a better way to return these values, object maybe?
+    # print("Vr2pidVrM", Vr2pidVrM)
+    # print("dVxM", dVxM)
+    # input()
+    vthA = np.sqrt(2*CONST.Q*kh_mesh.Tnorm/(mu*CONST.H_MASS))
+    Vr2pidVrA,VrVr4pidVrA,dVxA = make_dvr_dvx(kh_mesh.vr, kh_mesh.vx)[0:3]
+    # print("Vr2pidVrA", Vr2pidVrA)
+    # print("dVxA", dVxA)
+    # input()
 
-    nbarHMax=np.sum(Vr2pidVrM*np.matmul(dVxM,fh2BC))
-    vbarM=2*vthM*np.sum(Vr2pidVrM*np.matmul(kh2_mesh.vx*dVxM,fh2BC))/nbarHMax
-    vbarM_error=abs(vbarM-v0_bar)/max(vbarM,v0_bar)
+    nbarHMax = np.sum(Vr2pidVrM*np.matmul(dVxM,fh2BC))
+    vbarM = 2*vthM*np.sum(Vr2pidVrM*np.matmul(kh2_mesh.vx*dVxM, fh2BC))/nbarHMax
+    vbarM_error = abs(vbarM - v0_bar)/max(vbarM, v0_bar)
+    # print("nbarHMax", nbarHMax)
+    # print("vbarM", vbarM)
+    # print("vbarM_error", vbarM_error)
+    # input()
 
-    nvrM=kh2_mesh.vr.size
-    nvxM=kh2_mesh.vx.size
-    vr2vx2_ran2=np.zeros((nvrM,nvxM)).T # fixed indexing - GG
+    nvrM = kh2_mesh.vr.size
+    nvxM = kh2_mesh.vx.size
+    vr2vx2_ran2 = np.zeros((nvrM,nvxM)).T # fixed indexing - GG
 
-    mwell=Maxwell[0,:,:] #  variable named 'Max' in original code; changed here to avoid sharing name with built in function
+    mwell = Maxwell[0,:,:] #  variable named 'Max' in original code; changed here to avoid sharing name with built in function
+    # print("mwell", mwell)
+    # input()
 
-    nbarMax=np.sum(Vr2pidVrM*np.matmul(dVxM,mwell))
-    UxMax=vthM*np.sum(Vr2pidVrM*np.matmul(kh2_mesh.vx*dVxM,mwell))/nbarMax
+    nbarMax = np.sum(Vr2pidVrM*np.matmul(dVxM,mwell))
+    UxMax = vthM*np.sum(Vr2pidVrM*np.matmul(kh2_mesh.vx*dVxM, mwell))/nbarMax
+    # print("1", kh2_mesh.vx)
+    # print("2", dVxM)
+    # print("3", vthM)
+    # print("4", Vr2pidVrM)
     for i in range(nvrM):
-        vr2vx2_ran2[:,i]=kh2_mesh.vr[i]**2+(kh2_mesh.vx-UxMax/vthM)**2
-    TMax=2*mu*CONST.H_MASS*vthM**2*np.sum(Vr2pidVrM*np.matmul(dVxM,vr2vx2_ran2*mwell))/(3*CONST.Q*nbarMax)
+        vr2vx2_ran2[:,i] = kh2_mesh.vr[i]**2 + (kh2_mesh.vx - UxMax/vthM)**2
+    TMax = 2*mu*CONST.H_MASS*(vthM**2)*np.sum(Vr2pidVrM*np.matmul(dVxM, vr2vx2_ran2*mwell))/(3*CONST.Q*nbarMax)
+    # print("nbarMax", nbarMax)
+    # print("UxMax", UxMax)
+    # print("vr2vx2_ran2", vr2vx2_ran2)
+    # print("Tmax", TMax)
+    # input()
 
-    UxHMax=vthM*np.sum(Vr2pidVrM*np.matmul(kh2_mesh.vx*dVxM,fh2BC))/nbarHMax
+    UxHMax = vthM*np.sum(Vr2pidVrM*np.matmul(kh2_mesh.vx*dVxM, fh2BC))/nbarHMax
     for i in range(nvrM):
-        vr2vx2_ran2[:,i]=kh2_mesh.vr[i]**2+(kh2_mesh.vx-UxHMax/vthM)**2
-    THMax=(2*mu*CONST.H_MASS)*vthM**2*np.sum(Vr2pidVrM*np.matmul(dVxM,vr2vx2_ran2*fh2BC))/(3*CONST.Q*nbarHMax)
+        vr2vx2_ran2[:,i] = kh2_mesh.vr[i]**2 + (kh2_mesh.vx - UxHMax/vthM)**2
+    THMax = (2*mu*CONST.H_MASS)*(vthM**2)*np.sum(Vr2pidVrM*np.matmul(dVxM, vr2vx2_ran2*fh2BC))/(3*CONST.Q*nbarHMax)
+    # print("UxHMax", UxHMax)
+    # print("vr2vx2_ran2", vr2vx2_ran2)
+    # print("THMax", THMax)
+    # input()
 
     if compute_errors and debrief:
         print(prompt+'VbarM_error: '+sval(vbarM_error))
@@ -391,15 +426,19 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
             nH2s = nH2
 
             # interpolate fH data onto H2 mesh: fH -> fHM
-            do_warn=5e-3
-            fHM=interp_fvrvxx(fH, kh_mesh, kh2_mesh, fvrvxx_internal, do_warn=do_warn, debug=interp_debug) 
+            do_warn = 5e-3
+            fHM = interp_fvrvxx(fH, kh_mesh, kh2_mesh, fvrvxx_internal, do_warn=do_warn, debug=interp_debug) 
+            # print("fHM", fHM.shape)
+            # input()
 
             # Compute fH2 using Kinetic_H2
             ni_correct=1
             Compute_H_Source=1
             H2compute_errors=compute_errors and H2debrief # is this accurate, how can it be equal to both? - GG 2/15
             
-            
+            # print("fH2", fH2)
+            # print("shape", fH2.shape)
+            # input()
             kh2_results = kinetic_h2(
                     kh2_mesh, mu, vxiM, fh2BC, GammaxH2BC, NuLoss, fHM, SH2, fH2, nH2, THP, KH2_Common,\
                     truncate=truncate, Simple_CX=Simple_CX, Max_Gen=max_gen, Compute_H_Source=Compute_H_Source,\
@@ -408,6 +447,19 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
 
             fH2, nHP, THP, nH2, GammaxH2, VxH2, pH2, TH2, qxH2, qxH2_total, Sloss, \
                 QH2, RxH2, QH2_total, AlbedoH2, WallH2, fSH, SH, SP, SHP, NuE, NuDis, ESH, Eaxis, error = kh2_results
+            
+            print("fH2", fH2)
+            print("nHP", nHP)
+            print("THP", THP)
+            print("nH2", nH2)
+            print("GammaxH2", GammaxH2)
+            print("TH2", TH2)
+            print("qxH2_total", qxH2_total)
+            print("AlbedoH2", AlbedoH2)
+            print("fSH", fSH)
+            print("SH", SH)
+            print("SP", SP)
+            input()
             
 
             # Interpolate H2 data onto H mesh: fH2 -> fH2A, fSH -> fSHA, nHP -> nHPA, THP -> THPA
