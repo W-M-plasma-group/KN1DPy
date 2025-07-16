@@ -6,71 +6,118 @@
 # Gwendolyn Galleher 
 
 import numpy as np
+from numpy.typing import NDArray
+import copy
 
-def make_dvr_dvx(Vr, Vx): # For this to work inputs must be np arrays so I might need to ammend this later to make sure all inputs are arrays
+''' 
+Authors: Julio Balbin, Carlo Becerra
+Date: August 17th, 2024
+'''
 
-    Vr=np.array(Vr)
-    Vx=np.array(Vx) # sets inputs to np.array if they aren't already; resolves earlier comment - nh
-    
-    # Determine velocity space differentials 
-    nVr = np.size(Vr)
-    nVx = np.size(Vx)
+def make_dvr_dvx(vr : NDArray, vx : NDArray):
 
-    # for Vr first 
-    _Vr = np.concatenate([Vr, [2 * Vr[nVr-1] - Vr[nVr-2]]])  # this is an array and Vr(nVr-1) is calling the last cell of Vr
-    Vr_mid = np.concatenate([[0.0], 0.5 * (_Vr + np.roll(_Vr, -1))]) # changed to np.concatenate - nh
-    
-    VrR = np.roll(Vr_mid, -1)
-    VrL = Vr_mid
+    """
+    Constructs velocity space differentials for distribution functions.
 
-    Vr2pidVr = np.pi * ((VrR ** 2) - (VrL ** 2))
-    Vr2pidVr = Vr2pidVr[0 : nVr]  # makes it the same length as Vr 
+    Parameters:
+    -----------
+    vr : np.ndarray
+        Array of radial velocities.
+    vx : np.ndarray
+        Array of axial velocities.
 
-    VrVr4pidVr = (4/3) * np.pi * ((VrR ** 3) - (VrL ** 3))
-    VrVr4pidVr = VrVr4pidVr[0 : nVr]
-    VrR = VrR[0 : nVr]
-    VrL = VrL[0 : nVr] 
+    Returns:
+    --------
+    Vr2pidVr : np.ndarray
+        Differential volume element for radial velocities.
+    VrVr4pidVr : np.ndarray
+        Differential volume element for radial velocities (higher order).
+    dVx : np.ndarray
+        Differential for axial velocities.
+    vrL, vrR : np.ndarray
+        Left and right boundaries for radial velocities.
+    vxL, vxR : np.ndarray
+        Left and right boundaries for axial velocities.
+    vol : np.ndarray
+        Volume elements in velocity space.
+    vth_Deltavx, vx_Deltavx, vr_Deltavr : np.ndarray
+        Auxiliary quantities for kinetic equations.
+    vr2vx2 : np.ndarray
+        Squared magnitude of the velocity.
+    jpa, jpb, jna, jnb : int
+        Indices for positive and negative axial velocities.
+    """
 
-    # now for Vx
-    _Vx = np.concatenate([[2 * Vx[0] - Vx[1]], Vx, [2 * Vx[nVx - 1] - Vx[nVx - 2]]]) # changed to np.concatenate - nh
-    VxR = 0.5 * (np.roll(_Vx, -1) + _Vx)
-    VxL = 0.5 * (np.roll(_Vx, 1) + _Vx)
-    dVx = VxR[1: nVx+1] - VxL[1:nVx+1]
-    VxR = VxR[1: nVx+1]
-    VxL = VxL[1 : nVx+1]
+    # nvr & nvx are taking the shape of vr & vx respectively
+    nvr = vr.size
+    nvx = vx.size
 
-    # compute volume elements 
-    vol = np.zeros((nVx, nVr), float)
-    for i in range(0, nVr):
-        vol[:,i] = Vr2pidVr[i] * dVx # fixed minor indexing bugs - nh
+    # Calculations for r-dimension
+    _vr    = np.append(vr, 2 * vr[-1] - vr[-2])
+    vr_mid = np.concatenate(([0.0], 0.5 * (_vr + np.roll(_vr, -1))))
 
-    #compute DeltaVx, DeltaVr
-    DeltaVx = VxR - VxL
-    DeltaVr = VrR - VrL
+    vrR = np.roll(vr_mid, -1)[0:nvr]
+    vrL = copy.copy(vr_mid)[0:nvr]
 
-    # compute vth_Deltavx, vx_Deltavx, vr_Deltavr, padded with zeros
-    Vth_DeltaVx = np.zeros((nVx + 2, nVr + 2), float)
-    Vx_DeltaVx = np.zeros((nVx + 2, nVr + 2), float)
-    Vr_DeltaVr = np.zeros((nVx + 2, nVr + 2), float) # replaced np.array with np.zeros - nh
-    for i in range(1, nVr+1):
-        Vth_DeltaVx[1 : nVx+1,i] = 1.0/DeltaVx
-        Vx_DeltaVx[1 : nVx+1,i] = Vx/DeltaVx
-    for j in range(1, nVx+1):
-        Vr_DeltaVr[j,1 : nVr+1] = Vr/DeltaVr 
-    
-    #compute v^2
-    Vr2Vx2 = np.zeros((nVx, nVr), float)
-    for i in range(0, nVr):
-        Vr2Vx2[:,i] = (Vr[i] ** 2) + (Vx ** 2)
+    Vr2pidVr    =         np.pi * (vrR**2 - vrL**2)
+    VrVr4pidVr  = (4/3) * np.pi * (vrR**3 - vrL**3)
 
-    # Determine indice range of positive and negative Vx 
-    jpa=jpb=jna=jnb=-1
-    jp = np.argwhere(Vx > 0)
-    if jp.size>0:
-        jpa = jp[0][0]; jpb = jp[np.size(jp) - 1][0]
-    jn = np.argwhere(Vx < 0)
-    if jn.size>0:
-        jna = jn[0][0]; jnb = jn[np.size(jn) - 1][0] # modified section to return -1 if jp or jn is empty (previously this raised an error) - nh
-    
-    # changed return line to provide an output as a list - nh
-    return Vr2pidVr,VrVr4pidVr,dVx,VrL,VrR,VxL,VxR,vol,Vth_DeltaVx,Vx_DeltaVx,Vr_DeltaVr,Vr2Vx2,jpa,jpb,jna,jnb
+    # Calculations for x-dimension
+    _vx = np.concatenate(([2 * vx[0] - vx[1]], vx, [2 * vx[-1] - vx[-2]]))
+
+    vxR = 0.5 * (np.roll(_vx, -1) + _vx)[1:nvx+1]
+    vxL = 0.5 * (np.roll(_vx,  1) + _vx)[1:nvx+1]
+
+    dVx = vxR - vxL
+
+    # Calc. volume
+    # --------------------------------------------------------------------
+    vol = np.zeros((nvr, nvx), dtype=np.float64)
+    # # for i in tqdm(range(nvr), desc=f"Make_dVr_dVx: calc. vol"): 
+    # for i in range(nvr):     
+    #     vol[i, :] = Vr2pidVr[i] * dVx
+    vol = Vr2pidVr[:, np.newaxis] * dVx
+    # --------------------------------------------------------------------
+    Deltavx = vxR - vxL
+    Deltavr = vrR - vrL
+    # --------------------------------------------------------------------
+    vth_Deltavx = np.zeros((nvr+2,nvx+2))
+    vx_Deltavx  = np.zeros((nvr+2,nvx+2))
+    vr_Deltavr  = np.zeros((nvr+2,nvx+2))
+    # for j in tqdm(range(1,nvr+1),desc=f"Make_dVr_dVx: calc. vth & vx"):
+    # for j in range(1,nvr+1):
+        # vth_Deltavx[j,1:nvx+1] = 1.0/Deltavx     # vth_Deltavx(i,1:nvx)=1.0/Deltavx
+        # vx_Deltavx[ j,1:nvx+1] =  vx/Deltavx     #  vx_Deltavx(i,1:nvx)= vx/Deltavx
+    # for k in tqdm(range(1,nvx+1),desc=f"Make_dVr_dVx: calc. vr"):
+    # for k in range(1,nvx+1):
+    #     vr_Deltavr[ 1:nvr+1,k] =  vr/Deltavr     #  vr_Deltavr(1:nvr,j)=vr/Deltavr
+    vth_Deltavx[1:nvr+1, 1:nvx+1] = 1.0 / Deltavx
+    vx_Deltavx[ 1:nvr+1, 1:nvx+1] = vx  / Deltavx 
+    vr_Deltavr[ 1:nvr+1, 1:nvx+1] = vr[:, np.newaxis] / Deltavr[:, np.newaxis]
+    # --------------------------------------------------------------------
+
+    # Compute v^2
+    vr2vx2=np.zeros((nvr,nvx), dtype=np.float64)
+    # for l in range(0,nvr):
+    #     vr2vx2[l,:] = vr[l]**2 + vx**2
+    vr2vx2 = vr[:, np.newaxis]**2 + vx**2 
+
+    # vx's positive index
+    jp = np.where(vx>0)[0]   # This saves the positives index of vx
+    jpa = int(jp[0])                    # This saves the first index of jp
+    jpb = int(jp[len(jp)-1])            # This saves the last index of jp
+
+    # vx's negative index   
+    jn = np.where(vx<0)[0]   # This saves the negatives index of vx
+    jna = int(jn[0])                    # This saves the first index of jp
+    jnb = int(jn[len(jn)-1])            # This saves the last index of jp
+
+    # # In case there are only positive or negative values, we can use this option
+    jpa = int(jp[ 0]) if len(jp) > 0 else None
+    jpb = int(jp[-1]) if len(jp) > 0 else None
+    jna = int(jn[ 0]) if len(jn) > 0 else None
+    jnb = int(jn[-1]) if len(jn) > 0 else None
+
+    return Vr2pidVr,VrVr4pidVr,dVx,vrL,vrR,vxL,vxR,\
+           vol,vth_Deltavx,vx_Deltavx,vr_Deltavr,vr2vx2,\
+           jpa,jpb,jna,jnb

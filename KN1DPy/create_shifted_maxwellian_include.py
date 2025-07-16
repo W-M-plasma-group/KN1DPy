@@ -2,7 +2,9 @@ import numpy as np
 
 from .sval import sval
 from .common import constants as CONST
+from .make_dvr_dvx import make_dvr_dvx
 import copy
+from tqdm import tqdm
 
 #   This INCLUDE file is used by Kinetic_H2 and Kinetic_H
 #   The code is also written within the create_shifted_maxwellian function
@@ -39,19 +41,32 @@ def create_shifted_maxwellian_include(vr,vx,Tnorm,vx_shift,Tmaxwell,Shifted_Maxw
     #   scheme is employed - similar to that used in Interp_fVrVxX
   
 
-  AN=np.zeros((2,nvx,nvr), float)
-  BN=np.zeros((2,nvx,nvr), float) # fixed array creation - nh
+  Vr2pidVr, VrVr4pidVr,dVx,vrL,vrR,vxL,vxR,Vol,Vth_DVx,Vx_DVx,Vr_DVr,vr2vx2_2D,jpa,jpb,jna,jnb = make_dvr_dvx(vr,vx)
+
+  AN=np.zeros((nvr,nvx,2), float)
+  BN=np.zeros((nvr,nvx,2), float) # fixed array creation - nh
   sgn=[1,-1]
-  print(nx)
-  for k in range(nx):
-    if Tmaxwell[k]>0:
-      for i in range(nvr):
-        arg = -(vr[i]**2 + (vx - vx_shift[k]/vth)**2)*mol*Tnorm/Tmaxwell[k]
-        arg = np.minimum(arg,0)
-        maxwell[k,:,i] = np.e**(np.maximum(arg,-80)) # replaced < and > with np.minimum and np.maximum - nh
+  maxwell = np.zeros((nvr,nvx,nx),dtype=np.float32)
+  # print("nx", nx)
+  # print("Tmaxwell", Tmaxwell)
+  # input()
+  for k in tqdm(range(nx),desc=f'k'):
+    if Tmaxwell[k] > 0:
+      arg = -((vr[:, np.newaxis]**2 + (vx - (vx_shift[k] / vth))**2) * mol * Tnorm / Tmaxwell[k])
+      # print("arg", arg)
+      # input()
+      arg = np.where(np.logical_and((-80 < arg), (arg < 0.0)), arg, -80)
+      maxwell[:, :, k] = np.exp(arg)
+      # input()
 
-      maxwell[k,:,:] /= np.sum(Vr2pidVr*(np.matmul(dVx,maxwell[k,:,:]))) # fixed matmul argument order - nh
-
+      # print("Vr2pidVr", Vr2pidVr)
+      # print("dVx", dVx)
+      # print("maxwell", maxwell.T)
+      # print("maxwell#dvx", np.matmul(maxwell[:,:,k],dVx))
+      # input()
+      variable = np.matmul(maxwell[:, :, k], dVx)
+      maxwell[:, :, k] = maxwell[:, :, k] / np.nansum(Vr2pidVr * variable)
+      
       if Shifted_Maxwellian_Debug: # fixed capitalization
         vx_out1=vth*np.sum(Vr2pidVr*np.matmul((vx*dVx),maxwell[k,:,:])) # fixed matmul argument order - nh
         for i in range(nvr):
@@ -63,13 +78,14 @@ def create_shifted_maxwellian_include(vr,vx,Tnorm,vx_shift,Tmaxwell,Shifted_Maxw
 
       # Compute desired moments
 
-      WxD=vx_shift[k]
-      ED=WxD**2+3*CONST.Q*Tmaxwell[k]/(mol*mu*CONST.H_MASS)
+      WxD = copy.copy(vx_shift[k])
+      ED = (WxD**2)+3*CONST.Q*Tmaxwell[k]/(mol*mu*CONST.H_MASS)
 
       # Compute present moments of Maxwell, WxMax, and EMax 
 
-      WxMax=vth*np.sum(Vr2pidVr*np.matmul((vx*dVx),maxwell[k,:,:])) # fixed matmul argument order - nh
-      EMax=vth2*np.sum(Vr2pidVr*np.matmul(dVx,(vr2vx2_2D*maxwell[k,:,:]))) # fixed matmul argument order - nh
+      max_2d_xd = np.matmul(maxwell[:, :, k],(vx * dVx))            
+      WxMax       = vth  * (np.nansum(Vr2pidVr * (max_2d_xd) ))
+      EMax        = vth2 * (np.nansum(Vr2pidVr*(np.matmul((vr2vx2_2D*maxwell[:,:,k]),dVx))))
       # print("Include Test", (vx*dVx))
       # print("Include Test", maxwell[k,:,:])
       # print("Vx", vx)
@@ -77,45 +93,51 @@ def create_shifted_maxwellian_include(vr,vx,Tnorm,vx_shift,Tmaxwell,Shifted_Maxw
       # print(vth)
       # print("Include Test", WxMax)
       # print("Include Test", EMax)
+      # input()
 
       # Compute Nij from Maxwell, padded with zeros
-
-      nij = np.zeros((nvr+2,nvx+2), float).T
-      nij[1:nvx+1,1:nvr+1] = maxwell[k,:,:]*Vol
-
-      #NOTE I Think a lot of these can be removed and/or combined
-      #There are a lot of padded zeros, surely they are unnecessary?
-      Nijp1_vx_Dvx = np.roll(nij*Vx_DVx, -1, axis=0)
-      Nij_vx_Dvx   = nij*Vx_DVx
-      Nijm1_vx_Dvx = np.roll(nij*Vx_DVx, 1, axis=0)
-      Nip1j_vr_Dvr = np.roll(nij*Vr_DVr, -1, axis=1)
-      Nij_vr_Dvr   = nij*Vr_DVr
-      Nim1j_vr_Dvr = np.roll(nij*Vr_DVr, 1, axis=1)
-
+      Nij = np.zeros((nvr+2,nvx+2), dtype=np.float64)  # The order of the error is maintained with float64, but not for float 32
+      Nij[1:nvr+1, 1:nvx+1]   = maxwell[:,:,k]*Vol
+      auxNij                  = Nij*Vx_DVx
+      Nijp1_vx_Dvx            = np.roll(auxNij,  shift=-1, axis=1)
+      Nij_vx_Dvx              = Nij*Vx_DVx
+      Nijm1_vx_Dvx            = np.roll(auxNij,  shift= 1, axis=1)
+      auxNij2                 = Nij*Vr_DVr
+      Nip1j_vr_Dvr            = np.roll(auxNij2, shift=-1, axis=0)
+      Nij_vr_Dvr              = Nij*Vr_DVr
+      Nim1j_vr_Dvr            = np.roll(auxNij2, shift= 1, axis=0)
       # Compute Ap, Am, Bp, and Bm (0=p 1=m)
+      aux_AN = np.zeros((nvx+2,nvr+2),dtype=np.float64)
+      aux_AN = Nij*Vth_DVx
 
-      _AN = np.roll(nij*Vth_DVx,1,0)-nij*Vth_DVx
-      AN[0,:,:] = _AN[1:nvx+1,1:nvr+1]
-      _AN = -np.roll(nij*Vth_DVx,-1,0)+nij*Vth_DVx
-      AN[1,:,:] = _AN[1:nvx+1,1:nvr+1] #NOTE Check these values later, once values hit ~-e40, round to 0, otherwise seems about right
+      _AN         = np.zeros((nvx+2,nvr+2), dtype=np.float64)
+      _AN         = np.roll(aux_AN, shift=1, axis=1) - aux_AN
+      AN[:,:,0]   = copy.copy(_AN[1:nvr+1,1:nvx+1])
+      
+      _AN         = np.zeros((nvx+2,nvr+2), dtype=np.float64)
+      _AN         = -np.roll(aux_AN, shift=-1, axis=1) + aux_AN
+      AN[:,:,1]   = copy.copy(_AN[1:nvr+1,1:nvx+1])
 
-      #NOTE This works, but check the positionings of the various jpa, jpb, nvr, etc for array indexing
-      BN[0,jpa+1:jpb+1,:] = Nijm1_vx_Dvx[jpa+2:jpb+2,1:nvr+1] - Nij_vx_Dvx[jpa+2:jpb+2,1:nvr+1]
-      BN[0,jpa,:] = -Nij_vx_Dvx[jpa+1,1:nvr+1]
-      BN[0,jnb,:] = Nij_vx_Dvx[jnb+1,1:nvr+1]
-      BN[0,jna:jnb,:] = -Nijp1_vx_Dvx[jna+1:jnb+1,1:nvr+1] + Nij_vx_Dvx[jna+1:jnb+1,1:nvr+1]
-      BN[0,:,:] = BN[0,:,:] + Nim1j_vr_Dvr[1:nvx+1,1:nvr+1] - Nij_vr_Dvr[1:nvx+1,1:nvr+1]
+      BN[:,jpa+1:jpb+1,0] =  Nijm1_vx_Dvx[1:nvr+1,jpa+2:jpb+2] - Nij_vx_Dvx[1:nvr+1,jpa+2:jpb+2]
+      BN[:,jpa,0]         = -Nij_vx_Dvx[1:nvr+1,jpa+1]
+      BN[:,jnb,0]         =  Nij_vx_Dvx[1:nvr+1,jnb+1]
+      BN[:,jna:jnb,0]     = -Nijp1_vx_Dvx[1:nvr+1,jna+1:jnb+1] + Nij_vx_Dvx[1:nvr+1,jna+1:jnb+1]
+      BN[:,:,0]           =  BN[:,:,0] + Nim1j_vr_Dvr[1:nvr+1,1:nvx+1] - Nij_vr_Dvr[1:nvr+1,1:nvx+1]
 
-      BN[1,jpa+1:jpb+1,:] = -Nijp1_vx_Dvx[jpa+2:jpb+2,1:nvr+1] + Nij_vx_Dvx[jpa+2:jpb+2,1:nvr+1]
-      BN[1,jpa,:] = -Nijp1_vx_Dvx[jpa+1,1:nvr+1]
-      BN[1,jnb,:] = Nijm1_vx_Dvx[jnb+1,1:nvr+1]
-      BN[1,jna:jnb,:] = Nijm1_vx_Dvx[jna+1:jnb+1,1:nvr+1] - Nij_vx_Dvx[jna+1:jnb+1,1:nvr+1]
-      BN[1,:,1:nvr] = BN[1,:,1:nvr] - Nip1j_vr_Dvr[1:nvx+1,2:nvr+1] + Nij_vr_Dvr[1:nvx+1,2:nvr+1]
-      BN[1,:,0] = BN[1,:,0] - Nip1j_vr_Dvr[1:nvx+1,1]
+      BN[:,jpa+1:jpb+1,1] = -Nijp1_vx_Dvx[1:nvr+1,jpa+2:jpb+2] + Nij_vx_Dvx[1:nvr+1,jpa+2:jpb+2]
+      BN[:,jpa,1]         = -Nijp1_vx_Dvx[1:nvr+1,jpa+1]
+      BN[:,jnb,1]         =  Nijm1_vx_Dvx[1:nvr+1,jnb+1]
+      BN[:,jna:jnb,1]     =  Nijm1_vx_Dvx[1:nvr+1,jna+1:jnb+1] - Nij_vx_Dvx[1:nvr+1,jna+1:jnb+1]
+      BN[1:nvr,:,1]       =  BN[1:nvr,:,1] - Nip1j_vr_Dvr[2:nvr+1,1:nvx+1] + Nij_vr_Dvr[2:nvr+1,1:nvx+1]
+      BN[0,:,1]           =  BN[0,:,1] - Nip1j_vr_Dvr[1,1:nvx+1]
+
+      # print("AN", AN.T)
+      # print("BN", BN.T)
+      # input()
 
       # Remove padded zeros in Nij
 
-      nij=nij[1:nvx+1,1:nvr+1]
+      Nij = Nij[1:nvr+1,1:nvx+1]
 
       # Cycle through 4 possibilies of sign(a_Max),sign(b_Max)
 
@@ -126,8 +148,9 @@ def create_shifted_maxwellian_include(vr,vx,Tnorm,vx_shift,Tmaxwell,Shifted_Maxw
 
         # Compute TA1, TA2
 
-        TA1=vth*np.sum(np.matmul(vx,AN[ia,:,:])) # fixed matmul argument order - nh
-        TA2=vth2*np.sum(vr2vx2_2D*AN[ia,:,:])
+        aux_TA1 = np.sum(np.matmul(AN[:, :, ia], vx))
+        TA1 = vth*aux_TA1
+        TA2 = vth2*np.sum(vr2vx2_2D*AN[:,:,ia])
         # print("maxwell", maxwell)
         # print("TA1", TA1)
         # print("TA2", TA2)
@@ -137,9 +160,10 @@ def create_shifted_maxwellian_include(vr,vx,Tnorm,vx_shift,Tmaxwell,Shifted_Maxw
           # Compute TB1, TB2
 
           if TB1[ib]==0:
-            TB1[ib]=vth*np.sum(np.matmul(vx,BN[ib,:,:])) # fixed matmul argument order - nh
+            aux_TB1 = np.sum(np.matmul(BN[:, :, ib], vx))
+            TB1[ib] = vth*aux_TB1
           if TB2[ib]==0:
-            TB2[ib]=vth2*np.sum(vr2vx2_2D*BN[ib,:,:])
+            TB2[ib] = vth2*np.sum(vr2vx2_2D*BN[:,:,ib])
           denom=TA2*TB1[ib]-TA1*TB2[ib]
           #print("TB1", TB1) NOTE This value is off
 
@@ -157,12 +181,16 @@ def create_shifted_maxwellian_include(vr,vx,Tnorm,vx_shift,Tmaxwell,Shifted_Maxw
             # input()
             # NOTE Some of these values are still off, but maxwell seems to be working for now
           if a_max*sgn[ia]>0 and b_max*sgn[ib]>0:
-            maxwell[k,:,:]=(nij+AN[ia,:,:]*a_max+BN[ib,:,:]*b_max)/Vol
+            maxwell[:,:,k] = (Nij + AN[:,:,ia]*a_max + BN[:,:,ib]*b_max)/Vol
             #print("maxwell", maxwell[k,:,:])
-            ia=ib=2
+            ia=2
+            ib=2
           ib+=1
         ia+=1
-      maxwell[k,:,:]=maxwell[k,:,:]/np.sum(Vr2pidVr*np.matmul(dVx,maxwell[k,:,:])) # fixed matmul argument order - nh
+      aux_maxwell = np.sum(Vr2pidVr * (np.matmul(maxwell[:, :, k], dVx)))
+      maxwell[:,:,k] = maxwell[:,:,k]/aux_maxwell
+      
+      # print("Maxwell iter", maxwell.T)
 
       if Shifted_Maxwellian_Debug: # fixed capitalization
         vx_out2=vth*np.sum(Vr2pidVr*np.matmul((vx*dVx),maxwell[k,:,:])) # fixed matmul argument order - nh
@@ -173,6 +201,6 @@ def create_shifted_maxwellian_include(vr,vx,Tnorm,vx_shift,Tmaxwell,Shifted_Maxw
         Verror2=abs(vx_shift[k]-vx_out2)/vth_local
         print('CREATE_SHIFTED_MAXWELLIAN=> Terror:'+sval(Terror)+'->'+sval(Terror2)+'  Verror:'+sval(Verror)+'->'+sval(Verror2))
 
-  # print("maxwell", maxwell)
+  # print("maxwell final", maxwell.T)
   # input()
-  return maxwell
+  return maxwell.T

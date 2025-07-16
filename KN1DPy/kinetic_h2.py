@@ -70,6 +70,20 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
                ni_correct = 0, ESH = 0, Eaxis = 0, Compute_Errors = 0,  plot = 0, debug = 0,
                debrief = 0, pause = 0):
     
+    #Print Inputs
+    # print(mesh)
+    # print("mu", mu)
+    # print("vxi", vxi)
+    # print("fH2BC", fH2BC)
+    # print("GammaxH2BC", GammaxH2BC)
+    # print("NuLoss", NuLoss)
+    # print("fH", fH)
+    # print("SH2", SH2)
+    # print("fH2", fH2)
+    # print("nHP", nHP)
+    # print("THP", THP)
+    # input()
+    
     vx = mesh.vx
     vr = mesh.vr
     x = mesh.x
@@ -713,11 +727,11 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
     
     # if fh is zero, then turn off elastic H2 <-> H collisions
     H2_H_EL = H2_H_EL # fixed typo - GG #NOTE ???, seems to be input? IDL thing not needed here
-    print("H2_H_EL", H2_H_EL)
+    # print("H2_H_EL", H2_H_EL)
     if np.sum(fH) <= 0.0:
         H2_H_EL = 0
-    print("H2_H_EL", H2_H_EL)
-    input()
+    # print("H2_H_EL", H2_H_EL)
+    # input()
 
     # Set iteration Scheme 
     fH2_iterate = 0 
@@ -769,22 +783,31 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
         if np.size(ii) <= 0:
             New_H2_Seed = 0
     New_HP_Seed=1
-    if nHP_s is None:
+    if nHP_s is not None:
         test = 0
         ii = np.argwhere(nHP_s != nHP) ; test = test + np.size(ii)
         ii = np.argwhere(THP_s != THP) ; test = test + np.size(ii)
         if test <= 0:
             New_HP_Seed = 0
     New_ni_correct=1
-    if ni_correct_s is None:
+    if ni_correct_s is not None:
         ii = np.argwhere(ni_correct_s != ni_correct)
         if np.size(ii) <= 0:
             New_ni_correct = 0 
+    
+    print("New_Grid", New_Grid)
+    print("New_Protons", New_Protons)
+    print("New_Electrons", New_Electrons)
+    print("New_fH", New_fH)
+    print("New_Simple_CX", New_Simple_CX)
+    print("New_H2_Seed", New_H2_Seed)
+    print("New_HP_Seed", New_HP_Seed)
+    print("New_ni_correct", New_ni_correct)
+    # input()
 
     Do_sigv = New_Grid | New_Electrons
     Do_fH_moments = (New_Grid | New_fH) & (np.sum(fH) > 0.0)
     Do_Alpha_CX =   (New_Grid | (Alpha_CX is None) | New_HP_Seed | New_Simple_CX) & H2_HP_CX
-
     # Do_Alpha_CX is updated in fH2_iteration loop
     Do_SIG_CX =     (New_Grid | (SIG_CX is None) | New_Simple_CX) & (Simple_CX == 0) & Do_Alpha_CX
     Do_Alpha_H2_H = (New_Grid | (Alpha_H2_H is None) | New_fH) & H2_H_EL
@@ -794,6 +817,17 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
     # Do_Alpha_H2_P is updated in fH2_iteration loop
     Do_SIG_H2_P =   (New_Grid | (SIG_H2_P is None)) & Do_Alpha_H2_P
     Do_v_v2 =      (New_Grid or (v_v2 is None)) & (CI_Test | Do_SIG_CX | Do_SIG_H2_H | Do_SIG_H2_H2 | Do_SIG_H2_P)
+    print("Do_sigv", Do_sigv)
+    print("Do_fH_moments", Do_fH_moments)
+    print("Do_Alpha_CX", Do_Alpha_CX)
+    print("Do_SIG_CX", Do_SIG_CX)
+    print("Do_Alpha_H2_H", Do_Alpha_H2_H)
+    print("Do_SIG_H2_H", Do_SIG_H2_H)
+    print("Do_SIG_H2_H2", Do_SIG_H2_H2)
+    print("Do_Alpha_H2_P", Do_Alpha_H2_P)
+    print("Do_SIG_H2_P", Do_SIG_H2_P)
+    print("Do_v_v2", Do_v_v2)
+    input()
 
     nH = np.zeros(nx)
     VxH = np.zeros(nx)
@@ -801,52 +835,58 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
     if Do_fH_moments:
         if debrief > 1:
             print(prompt, 'Computing vx and T moments of fH')
-    
-    # Compute x flow velocity and temperature of atomic species
-    for k in range(0, nx):
-        nH[k] = np.sum(Vr2pidVr * ( np.dot(fH[k].T, dVx.T).T))
-        if nH[k] > 0:
-            VxH[k] = Vth * np.sum( Vr2pidVr * (np.dot(fH[k].T, (vx * dVx).T).T) ) / nH[k]
-            for i in range(0, nvr):
-                vr2vx2_ran2[ :,i] = vr[i] ** 2 + (vx - VxH[k] / Vth) ** 2
-            TH[k] = (mu * CONST.H_MASS) * Vth2 * np.sum(Vr2pidVr * ( (vr2vx2_ran2 * np.dot(fH[k][:][:].T, dVx.T).T) ) ) / (3 * CONST.Q * nH[k])
+        #NOTE Not Tested, not run with test_kn1d file
+        # Compute x flow velocity and temperature of atomic species
+        for k in range(0, nx):
+            nH[k] = np.sum(Vr2pidVr * ( np.dot(fH[k].T, dVx.T).T))
+            if nH[k] > 0:
+                VxH[k] = Vth * np.sum( Vr2pidVr * (np.dot(fH[k].T, (vx * dVx).T).T) ) / nH[k]
+                for i in range(0, nvr):
+                    vr2vx2_ran2[ :,i] = vr[i] ** 2 + (vx - VxH[k] / Vth) ** 2
+                TH[k] = (mu * CONST.H_MASS) * Vth2 * np.sum(Vr2pidVr * ( (vr2vx2_ran2 * np.dot(fH[k][:][:].T, dVx.T).T) ) ) / (3 * CONST.Q * nH[k])
     
     if New_Grid:
         if debrief > 1:
             print(prompt, 'Computing vr2vx2, vr2vx_vxi2, EH2_P')
     
-    # Magnitude of total normalized v^2 at each mesh point
-    vr2vx2 = np.zeros((nvr,nvx,nx)).T
-    for i in range(0, nvr):
-        for k in range(0, nx):
-            vr2vx2[k][:,i] = vr[i] ** 2 + vx ** 2
+        # Magnitude of total normalized v^2 at each mesh point
+        vr2vx2 = np.zeros((nvr,nvx,nx)).T
+        for i in range(0, nvr):
+            for k in range(0, nx):
+                vr2vx2[k][:,i] = vr[i] ** 2 + vx ** 2
 
-    # Magnitude of total normalized (v-vxi)^2 at each mesh point
-    vr2vx_vxi2 = np.zeros((nvr,nvx,nx)).T
-    for i in range(0, nvr):
-        for k in range(0, nx):
-            vr2vx_vxi2[k][:,i] = vr[i] ** 2 + (vx - vxi[k] / Vth) ** 2
+        # Magnitude of total normalized (v-vxi)^2 at each mesh point
+        vr2vx_vxi2 = np.zeros((nvr,nvx,nx)).T
+        for i in range(0, nvr):
+            for k in range(0, nx):
+                vr2vx_vxi2[k][:,i] = vr[i] ** 2 + (vx - vxi[k] / Vth) ** 2
 
-    # Molecular hydrogen ion energy in local rest frame of plasma at each mesh point
-    EH2_P = CONST.H_MASS * vr2vx_vxi2 * Vth2 / CONST.Q
-    EH2_P = np.maximum(EH2_P, 0.1)      # sigmav_cx does not handle neutral energies below 0.1 eV
-    EH2_P = np.minimum(EH2_P, 2.0e4)    # sigmav_cx does not handle neutral energies above 20 keV
+        # Molecular hydrogen ion energy in local rest frame of plasma at each mesh point
+        EH2_P = CONST.H_MASS * vr2vx_vxi2 * Vth2 / CONST.Q
+        EH2_P = np.maximum(EH2_P, 0.1)      # sigmav_cx does not handle neutral energies below 0.1 eV
+        EH2_P = np.minimum(EH2_P, 2.0e4)    # sigmav_cx does not handle neutral energies above 20 keV
 
-    # Compute Maxwellian H2 distribution at the wall temperature
-    fw_hat = np.zeros((nvr,nvx)).T
-    
-    # note: Molecular ions have 'normalizing temperature' of 2 Tnorm, i.e., in order to
-    # achieve the same thermal velocity^2, a molecular ion distribution has to have twice the temperature 
-    # as an atomic ion distribution
+        # Compute Maxwellian H2 distribution at the wall temperature
+        fw_hat = np.zeros((nvr,nvx)).T
+        
+        # note: Molecular ions have 'normalizing temperature' of 2 Tnorm, i.e., in order to
+        # achieve the same thermal velocity^2, a molecular ion distribution has to have twice the temperature 
+        # as an atomic ion distribution
 
-    if (np.sum(SH2) > 0) | (np.sum(PipeDia) > 0): # come back and double check if it should be a bitwise or logical opperator 
-        if debrief > 1:
-            print(prompt, 'Computing fw_hat')
-        vx_shift = np.array([0.0])
-        Tmaxwell = np.array([CONST.TWALL])
-        mol = 2
-        _maxwell = create_shifted_maxwellian(vr,vx,Tmaxwell,vx_shift,mu,mol,Tnorm)
-        fw_hat = _maxwell[0]
+        if (np.sum(SH2) > 0) | (np.sum(PipeDia) > 0): # come back and double check if it should be a bitwise or logical opperator 
+            if debrief > 1:
+                print(prompt, 'Computing fw_hat')
+            vx_shift = np.array([0.0])
+            Tmaxwell = np.array([CONST.TWALL])
+            mol = 2
+            _maxwell = create_shifted_maxwellian(vr,vx,Tmaxwell,vx_shift,mu,mol,Tnorm)
+            fw_hat = _maxwell[0]
+        
+        # print("EH2_P", EH2_P)
+        # print("vr2vx2", vr2vx2)
+        # print("vr2vx_vxi2", vr2vx_vxi2)
+        # print("fw_hat", fw_hat)
+        # input()
 
     if New_Protons:
         # Compute fi_hat 
@@ -859,6 +899,8 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
                                           Vth, Vth2, Maxwell, vr2_2vx_ran2, Vr2pidVr, dVx, vol, \
                                           Vth_DeltaVx, Vx_DeltaVx, Vr_DeltaVr, vr2_2vx2_2D, jpa, jpb, jna, jnb)
         fi_hat = Maxwell
+        print("fi_hat", fi_hat)
+        input()
 
     if Do_sigv:
         if debrief > 1:
