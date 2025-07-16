@@ -83,7 +83,7 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
     #     ReadInput - if set, then reset all input variables to that contained in 'file'.KN1D_input
 
     #NOTE Debugging option, remove later
-    np.set_printoptions(linewidth=np.inf)
+    np.set_printoptions(linewidth=250)
     x = np.array(x, dtype=np.float64)
     COLLISIONS = KN1D_Collisions()
 

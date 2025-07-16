@@ -821,6 +821,7 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
     print("Do_fH_moments", Do_fH_moments)
     print("Do_Alpha_CX", Do_Alpha_CX)
     print("Do_SIG_CX", Do_SIG_CX)
+    print("Simple_CX", Simple_CX)
     print("Do_Alpha_H2_H", Do_Alpha_H2_H)
     print("Do_SIG_H2_H", Do_SIG_H2_H)
     print("Do_SIG_H2_H2", Do_SIG_H2_H2)
@@ -899,8 +900,8 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
                                           Vth, Vth2, Maxwell, vr2_2vx_ran2, Vr2pidVr, dVx, vol, \
                                           Vth_DeltaVx, Vx_DeltaVx, Vr_DeltaVr, vr2_2vx2_2D, jpa, jpb, jna, jnb)
         fi_hat = Maxwell
-        print("fi_hat", fi_hat)
-        input()
+        # print("fi_hat", fi_hat)
+        # input()
 
     if Do_sigv:
         if debrief > 1:
@@ -962,7 +963,11 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
         
         # Total H2 destruction rate (normalized by vth) = sum of reactions 1-6
         Alpha_Loss = np.zeros(nx)
-        Alpha_Loss[:] = n * np.sum(sigv[1:6], axis = 0) / Vth
+        Alpha_Loss[:] = n * np.sum(sigv[1:7], axis = 0) / Vth
+
+        # print("sigv", sigv)
+        # print("Alpha_Loss", Alpha_Loss)
+        # input()
 
     # Set up arrays for charge exchange and elastic collision computations, if needed 
     if Do_v_v2 == 1:
@@ -978,25 +983,31 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
             for l in range(0, nvx):
                 for k in range(0, nvr):
                     for i in range(0, nvr):
-                        v_v2[m][l][k][:,i] = vr[i] ** 2 + vr[k] ** 2 - 2 * vr[i] * vr[k] * cos_theta[m] + (vx[:] - vx[l]) ** 2  # not super confident 
-                        vr2_vx2[m][l][k][:,i] = vr[i] ** 2 + vr[k] ** 2 - 2 * vr[i] * vr[k] * cos_theta[m] + 2*(vx[:] - vx[l])**2 #NOTE Changed to match idl
+                        v_v2[m][l][k][:,i] = vr[i]**2 + vr[k]**2 - 2*vr[i]*vr[k]*cos_theta[m] + (vx[:] - vx[l])**2  # not super confident 
+                        vr2_vx2[m][l][k][:,i] = vr[i]**2 + vr[k]**2 - 2*vr[i]*vr[k]*cos_theta[m] + 2*(vx[:] - vx[l])**2 #NOTE Changed to match idl
         # v_v=|v-v_prime| at each double velocity space mesh point, including theta angle
         v_v = np.sqrt(v_v2)
+        # print("V_V", v_v)
+        # input()
 
         # vx_vx=(vx-vx_prime) at each double velocity space mesh point
         vx_vx = np.zeros((nvr,nvx,nvr,nvx)).T
         for j in range(0,nvx):
             for l in range(0, nvx):
                 vx_vx[l,:,j,:] = vx[j] - vx[l]  
+        # print("vx_vx", vx_vx)
+        # input()
 
         # Set Vr'2pidVr'*dVx' for each double velocity space mesh point
         Vr2pidVrdVx = np.zeros((nvr,nvx,nvr,nvx)).T
         for k in range(0, nvr):
             Vr2pidVrdVx[:,k,:,:] = Vr2pidVr[k]
-        for l in range(0, nvr):
+        for l in range(0, nvx):
             Vr2pidVrdVx[l] = Vr2pidVrdVx[l] * dVx[l]
+        # print("Vr2pidVrdVx", Vr2pidVrdVx)
+        # input()
     
-    if Simple_CX == 0 and Do_SIG_CX == 1:
+    if Simple_CX == 0 and Do_SIG_CX == 1: #NOTE Not Tested Yet
         if debrief > 1:
             print(prompt, 'Computing SIG_CX')
         #  Option (A) was selected: Compute SigmaV_CX from sigma directly.
@@ -1013,7 +1024,7 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
 
         # SIG_CX is now vr' * sigma_cx(v_v) * v_v (intergated over theta) for all possible ([vr,vx],[vr',vx'])
 
-    if Do_SIG_H2_H == 1:
+    if Do_SIG_H2_H == 1: #NOTE Not Tested Yet
         if debrief > 1:
             print(prompt, 'Computing SIG_H2_P')
         # Compute SIG_H2_P for present velocity space grid, if it is needed and has not 
@@ -1046,6 +1057,9 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
         SIG_H2_P = np.zeros((nvr * nvx, nvr * nvx)).T
         SIG_H2_P[:] = (Vr2pidVrdVx * vx_vx * np.dot(dTheta,_Sig).reshape(vx_vx.shape)).reshape(SIG_H2_P.shape)
 
+        print("SIG_H2_P", SIG_H2_P)
+        input()
+
         # SIG_H2_P is now vr' * vx_vx * sigma_h2_P(v_v) * v_v (integrated over theta) for all possible ([vr, vx], [vr', vx'])
 
     if Do_SIG_H2_H2 == 1:
@@ -1056,19 +1070,24 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
         # already been computed with the present input parameters
 
         # Compute sigma_H2_H2 * vr2_vx2 * v_v at all possible relative velocities 
-        _Sig = np.zeros((nvr * nvx * nvr * nvx, ntheta)).T
-        _Sig[:] = (vr2_vx2 * sigma_el_hh_hh(v_v2 * (CONST.H_MASS * mu * Vth2 / CONST.Q), vis = 1) / 8.0).reshape(_Sig.shape)
+        _Sig = np.zeros((nvr*nvx*nvr*nvx, ntheta)).T
+        _Sig[:] = (vr2_vx2*v_v*sigma_el_hh_hh(v_v2 * (CONST.H_MASS * mu * Vth2 / CONST.Q), vis = 1) / 8.0).reshape(_Sig.shape)
+        print("_SIG", _Sig[:,0])
+        input()
 
         # Note : For viscosity, the cross section for D -> D is the same function of 
         # center of mass energy as H -> H.
 
         # Set SIG_H2_H2 = vr' x Integral{vr2_vx2*v_v*sigma_H2_H2} over theta=0,2pi times differential velocity space element Vr'2pidVr'*dVx'
         SIG_H2_H2 = np.zeros((nvr * nvx, nvr * nvx)).T
-        SIG_H2_H2[:] = (Vr2pidVrdVx * (np.dot(dTheta,_Sig).reshape(Vr2pidVrdVx.shape))).reshape(SIG_H2_H2.shape)
+        SIG_H2_H2[:] = (Vr2pidVrdVx * (np.dot(_Sig, dTheta).reshape(Vr2pidVrdVx.shape))).reshape(SIG_H2_H2.shape)
+
+        print("SIG_H2_H2", SIG_H2_H2[:,0])
+        input()
 
         # SIG_H2_H2 is now vr' * sigma_H2_H2(v_v) * vr2_vx2 * v_v (intergated over theta) for all possible ([vr,vx],[vr',vx'])
     
-    if Do_Alpha_H2_H == 1:
+    if Do_Alpha_H2_H == 1: #NOTE Not Tested Yet
         if debrief > 1:
             print(prompt, 'Computing Alpha_H2_H')
         
@@ -1079,6 +1098,10 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
         for k in range(0, nx):
             Work[:] = fH[k,:,:].reshape(Work.shape)
             Alpha_H2_H[k,:,:] = np.dot(SIG_H2_H, Work).reshape(Alpha_H2_H[k,:,:].shape)
+
+        # print("Alpha_H2_H", Alpha_H2_H)
+        # input()
+
         
     # Compute nH2
     for k in range(0, nx):
