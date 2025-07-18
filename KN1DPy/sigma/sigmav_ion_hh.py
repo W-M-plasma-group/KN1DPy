@@ -11,7 +11,7 @@ def sigmav_ion_hh(Te):
 
 #   Te - Scalar, list, or np.array. Gives electron temperature (eV)
 
-  print("Te", Te)
+  #print("Te", Te)
   if type(Te) != np.ndarray: #converts scalar or list input to np.array
     Te=np.array(Te)
   b = [-3.568640293666e+1,

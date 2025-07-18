@@ -1,32 +1,36 @@
-# searches a sorted, non-repeating list
-# if list ascends (ex: 1,2,3,4)- 
-#    returns index of last item less than input value
-#    returns -1 if value less than first item
-# if list descends (ex: 4,3,2,1)-
-#    retruns index of last item greater than input value
-#    returns -1 if value greater than first item
-# table must be a np.array, 
-# value can be scalar, list, or np.array
-# returns a list of equal length to len(value)
-
 import numpy as np
 
 def locate(table, value):
-  if table.size==0:
-    return -1
-  out=[] # this is the output
-  if type(value)!=list and type(value)!=np.ndarray:
-    value=[value] # converts value to list if it is not already a list or np.array
-  if table[0]<table[1]: # if table is ascending
-    for i in value:
-      if i>=table[-1]: # case that value is greater than the last item
-        out+= [table.size-1]
-      else:
-        out+= [np.where(table>i)[0][0]-1] # adds index to out
-  else: # if table is descending
-    for i in value:
-      if i<=table[-1]: # case that value is less than the last item
-        out+= [table.size-1]
-      else:
-        out+= [np.where(table<i)[0][0]-1] # adds index to out
-  return out
+  """
+  Finds the index of a value (or values) in a sorted table using np.searchsorted.
+  Parameters:
+      table (list or np.ndarray): A sorted list or array of numbers (ascending or descending).
+      value (float, int, list, np.ndarray): Value(s) to search for in the table.        
+  Returns:
+      np.ndarray: An array of indices (integers) corresponding to the positions
+                  where the values meet the conditions.
+  """
+  # Convert inputs to NumPy arrays if they are scalars or lists
+  table = np.asarray(table)
+  value = np.atleast_1d(value)  # Ensure `value` is an array
+  
+  # Determine if the table is in ascending or descending order
+  asc = table[0] <= table[-1]
+  
+  if not asc:
+      # If the table is in descending order, temporarily reverse it
+      table = table[::-1]
+  
+  # Use np.searchsorted to find the indices
+  indices = np.searchsorted(table, value, side='right' if asc else 'left') - 1
+  # print(f"indices: {indices}")
+  
+  # Adjust indices for descending tables
+  if not asc:
+      indices = len(table) - indices - 1
+  
+  # Handle special cases: out-of-range values
+  indices[value < table[0]] = -1  # Values less than the first element
+  indices[value >= table[-1]] = len(table) - 1  # Values greater than or equal to the last element
+  
+  return indices

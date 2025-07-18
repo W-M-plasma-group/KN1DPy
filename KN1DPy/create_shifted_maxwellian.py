@@ -6,7 +6,8 @@ from .common import constants as CONST
 
 def create_shifted_maxwellian(vr,vx,Tmaxwell,vx_shift,mu,mol,Tnorm): # fixed function name - nh
   nx = vx_shift.size
-  nvr,nvx = vr.size,vx.size
+  nvr = vr.size
+  nvx = vx.size
   maxwell = np.zeros((nvr,nvx,nx), float)
   vr2vx2_ran2 = np.zeros((nvr,nvx), float)
 

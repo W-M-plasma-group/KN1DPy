@@ -4,7 +4,6 @@ from .sval import sval
 from .common import constants as CONST
 from .make_dvr_dvx import make_dvr_dvx
 import copy
-from tqdm import tqdm
 
 #   This INCLUDE file is used by Kinetic_H2 and Kinetic_H
 #   The code is also written within the create_shifted_maxwellian function
@@ -46,11 +45,12 @@ def create_shifted_maxwellian_include(vr,vx,Tnorm,vx_shift,Tmaxwell,Shifted_Maxw
   AN=np.zeros((nvr,nvx,2), float)
   BN=np.zeros((nvr,nvx,2), float) # fixed array creation - nh
   sgn=[1,-1]
-  maxwell = np.zeros((nvr,nvx,nx),dtype=np.float32)
+  #maxwell = np.zeros((nvr,nvx,nx),dtype=np.float32)
+  maxwell[:] = 0
   # print("nx", nx)
   # print("Tmaxwell", Tmaxwell)
   # input()
-  for k in tqdm(range(nx),desc=f'k'):
+  for k in range(nx):
     if Tmaxwell[k] > 0:
       arg = -((vr[:, np.newaxis]**2 + (vx - (vx_shift[k] / vth))**2) * mol * Tnorm / Tmaxwell[k])
       # print("arg", arg)
@@ -83,9 +83,14 @@ def create_shifted_maxwellian_include(vr,vx,Tnorm,vx_shift,Tmaxwell,Shifted_Maxw
 
       # Compute present moments of Maxwell, WxMax, and EMax 
 
-      max_2d_xd = np.matmul(maxwell[:, :, k],(vx * dVx))            
+      max_2d_xd = np.dot(maxwell[:, :, k],(vx * dVx)) 
+      # print(maxwell[:, :, k].shape)  
+      # print((vx * dVx).shape)
       WxMax       = vth  * (np.nansum(Vr2pidVr * (max_2d_xd) ))
-      EMax        = vth2 * (np.nansum(Vr2pidVr*(np.matmul((vr2vx2_2D*maxwell[:,:,k]),dVx))))
+      EMax        = vth2 * (np.nansum(Vr2pidVr*(np.dot((vr2vx2_2D*maxwell[:,:,k]),dVx))))
+      # print((vr2vx2_2D*maxwell[:, :, k]).shape)  
+      # print(dVx.shape)
+      #input()
       # print("Include Test", (vx*dVx))
       # print("Include Test", maxwell[k,:,:])
       # print("Vx", vx)
@@ -107,14 +112,14 @@ def create_shifted_maxwellian_include(vr,vx,Tnorm,vx_shift,Tmaxwell,Shifted_Maxw
       Nij_vr_Dvr              = Nij*Vr_DVr
       Nim1j_vr_Dvr            = np.roll(auxNij2, shift= 1, axis=0)
       # Compute Ap, Am, Bp, and Bm (0=p 1=m)
-      aux_AN = np.zeros((nvx+2,nvr+2),dtype=np.float64)
+      #aux_AN = np.zeros((nvx+2,nvr+2),dtype=np.float64)
       aux_AN = Nij*Vth_DVx
 
-      _AN         = np.zeros((nvx+2,nvr+2), dtype=np.float64)
+      #_AN         = np.zeros((nvx+2,nvr+2), dtype=np.float64)
       _AN         = np.roll(aux_AN, shift=1, axis=1) - aux_AN
       AN[:,:,0]   = copy.copy(_AN[1:nvr+1,1:nvx+1])
       
-      _AN         = np.zeros((nvx+2,nvr+2), dtype=np.float64)
+      #_AN         = np.zeros((nvx+2,nvr+2), dtype=np.float64)
       _AN         = -np.roll(aux_AN, shift=-1, axis=1) + aux_AN
       AN[:,:,1]   = copy.copy(_AN[1:nvr+1,1:nvx+1])
 
@@ -148,21 +153,26 @@ def create_shifted_maxwellian_include(vr,vx,Tnorm,vx_shift,Tmaxwell,Shifted_Maxw
 
         # Compute TA1, TA2
 
-        aux_TA1 = np.sum(np.matmul(AN[:, :, ia], vx))
-        TA1 = vth*aux_TA1
+        TA1 = vth*np.sum(np.matmul(AN[:, :, ia], vx))
         TA2 = vth2*np.sum(vr2vx2_2D*AN[:,:,ia])
-        # print("maxwell", maxwell)
+        # print("maxwell", maxwell.T)
         # print("TA1", TA1)
         # print("TA2", TA2)
+        # input()
         ib=0
         while ib<2:
 
           # Compute TB1, TB2
 
           if TB1[ib]==0:
-            aux_TB1 = np.sum(np.matmul(BN[:, :, ib], vx))
+            aux_TB1 = np.sum(np.dot(BN[:, :, ib], vx))
+            # print("BN[:, :, ib]", BN[:, :, ib].T)
+            # print("vx", vx)
+            # print("BN(*,*,ib)#Vx", np.dot(BN[:, :, ib],  vx))
+            # print(BN[:, :, ib].shape)
+            # print(vx.shape)
             TB1[ib] = vth*aux_TB1
-          if TB2[ib]==0:
+          if TB2[ib] == 0:
             TB2[ib] = vth2*np.sum(vr2vx2_2D*BN[:,:,ib])
           denom=TA2*TB1[ib]-TA1*TB2[ib]
           #print("TB1", TB1) NOTE This value is off
@@ -173,15 +183,19 @@ def create_shifted_maxwellian_include(vr,vx,Tnorm,vx_shift,Tmaxwell,Shifted_Maxw
             b_max=(TA2*(WxD-WxMax)-TA1*(ED-EMax))/denom
             a_max=(WxD-WxMax-TB1[ib]*b_max)/TA1
             # print("a_max", a_max)
+            # print("b_max", b_max)
             # print("WxD", WxD)
             # print("WxMax", WxMax)
             # print("TB1[ib]", TB1[ib])
-            # print("b_max", b_max)
             # print("TA1", TA1)
             # input()
             # NOTE Some of these values are still off, but maxwell seems to be working for now
           if a_max*sgn[ia]>0 and b_max*sgn[ib]>0:
+            # print("maxwell", maxwell[:, 18].T)
             maxwell[:,:,k] = (Nij + AN[:,:,ia]*a_max + BN[:,:,ib]*b_max)/Vol
+            # print("AN", AN[:, 18, ia])
+            # print("BN", BN[:, 18, ib])
+            # print("maxwell", maxwell[:, 18].T)
             #print("maxwell", maxwell[k,:,:])
             ia=2
             ib=2
@@ -201,6 +215,6 @@ def create_shifted_maxwellian_include(vr,vx,Tnorm,vx_shift,Tmaxwell,Shifted_Maxw
         Verror2=abs(vx_shift[k]-vx_out2)/vth_local
         print('CREATE_SHIFTED_MAXWELLIAN=> Terror:'+sval(Terror)+'->'+sval(Terror2)+'  Verror:'+sval(Verror)+'->'+sval(Verror2))
 
-  # print("maxwell final", maxwell.T)
-  # input()
-  return maxwell.T
+  print("maxwell final", maxwell.T)
+  input()
+  return maxwell

@@ -1057,7 +1057,7 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
         SIG_H2_P = np.zeros((nvr * nvx, nvr * nvx)).T
         SIG_H2_P[:] = (Vr2pidVrdVx * vx_vx * np.dot(dTheta,_Sig).reshape(vx_vx.shape)).reshape(SIG_H2_P.shape)
 
-        print("SIG_H2_P", SIG_H2_P)
+        print("SIG_H2_P", SIG_H2_P[:,0])
         input()
 
         # SIG_H2_P is now vr' * vx_vx * sigma_h2_P(v_v) * v_v (integrated over theta) for all possible ([vr, vx], [vr', vx'])
@@ -1072,7 +1072,10 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
         # Compute sigma_H2_H2 * vr2_vx2 * v_v at all possible relative velocities 
         _Sig = np.zeros((nvr*nvx*nvr*nvx, ntheta)).T
         _Sig[:] = (vr2_vx2*v_v*sigma_el_hh_hh(v_v2 * (CONST.H_MASS * mu * Vth2 / CONST.Q), vis = 1) / 8.0).reshape(_Sig.shape)
-        print("_SIG", _Sig[:,0])
+        # print("vr2_vx2", vr2_vx2)
+        # print("v_v", v_v)
+        # print("v_v2", v_v2)
+        print("_SIG", _Sig[0,:])
         input()
 
         # Note : For viscosity, the cross section for D -> D is the same function of 
