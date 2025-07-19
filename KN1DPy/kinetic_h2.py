@@ -445,164 +445,168 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
     # print("dx", dx)
     # input()
     if count > 0:
-        print(prompt, 'x[:] must be increasing with index!')
-        error = 1
-        return
+        # print(prompt, 'x[:] must be increasing with index!')
+        # error = 1
+        raise Exception(prompt + " x[:] must be increasing with index!")
     if (nvx % 2) != 0:
-        print(prompt, 'Number of elements in vx must be even!')
-        error = 1
-        return 
+        # print(prompt, 'Number of elements in vx must be even!')
+        # error = 1
+        raise Exception(prompt + " Number of elements in vx must be even!")
     if np.size(Ti) != nx:
-        print(prompt, 'Number of elements in Ti and x do not agree!')
-        error = 1
-        return 
+        # print(prompt, 'Number of elements in Ti and x do not agree!')
+        # error = 1
+        raise Exception(prompt + " Number of elements in Ti and x do not agree!")
     if vxi is None:
         vxi = np.arange(nx)
     if np.size(vxi) != nx:
-        print(prompt, 'Number of elements in vxi and x do not agree!')
-        error = 1
-        return 
+        # print(prompt, 'Number of elements in vxi and x do not agree!')
+        # error = 1
+        raise Exception(prompt + " Number of elements in vxi and x do not agree!")
     if np.size(Te) != nx:
-        print(prompt, 'Number of elements in Te and x do not agree!')
-        error = 1
-        return 
+        # print(prompt, 'Number of elements in Te and x do not agree!')
+        # error = 1
+        raise Exception(prompt + " Number of elements in Te and x do not agree!")
     if np.size(n) != nx:
-        print(prompt, 'Number of elements in n and x do not agree!')
-        error = 1
-        return 
+        # print(prompt, 'Number of elements in n and x do not agree!')
+        # error = 1
+        raise Exception(prompt + " Number of elements in n and x do not agree!")
     if NuLoss is None:
         NuLoss = np.zeros(nx)
     if np.size(NuLoss) != nx:
-        print(prompt, 'Number of elements in NuLoss and x do not agree!')
-        error = 1
-        return 
+        # print(prompt, 'Number of elements in NuLoss and x do not agree!')
+        # error = 1
+        raise Exception(prompt + " Number of elements in NuLoss and x do not agree!")
     if PipeDia is None:
         PipeDia = np.zeros(nx)
     if np.size(PipeDia) != nx:
-        print(prompt, 'Number of elements in PipeDia and x do not agree!')
-        error = 1
-        return
+        # print(prompt, 'Number of elements in PipeDia and x do not agree!')
+        # error = 1
+        raise Exception(prompt + " Number of elements in PipeDia and x do not agree!")
     if GammaxH2BC is None:
-        print(prompt, 'GammaxH2BC is not defined!')
-        error = 1
-        return 
+        # print(prompt, 'GammaxH2BC is not defined!')
+        # error = 1
+        raise Exception(prompt + " GammaxH2BC is not defined!")
     if fH is None:
-        fH = np.arange((nvr, nvx, nx)).T
-    if len(fH[0][0]) != nvr:
-        print(prompt, 'Number of elements in fH[0][0][:] and vr do not agree!') # come back and double check the error messages 
-        error = 1
-        return 
-    if len(fH[0]) != nvx:
-        print(prompt, 'Number of elements in fH[0][:] and vx do not agree!')
-        error = 1
-        return 
-    if len(fH) != nx:
-        print(prompt, 'Number of elements in fH[0] and x do not agree!')
-        error = 1
-        return
-    if len(fH2BC[0]) != nvr:
-        print(prompt, 'Number of elements in fH2BC[0][:] and vr do not agree!')
-        error = 1
-        return 
-    if len(fH2BC) != nvx:
-        print(prompt, 'Number of elements in fH2BC[0] and vx do not agree!')
-        error = 1
-        return   
+        fH = np.arange((nvr, nvx, nx))
+    if len(fH[:,0,0]) != nvr:
+        # print(prompt, 'Number of elements in fH[0][0][:] and vr do not agree!') # come back and double check the error messages 
+        # error = 1
+        raise Exception(prompt + " Number of elements in fH[:,0,0] and vr do not agree!")
+    if len(fH[0,:,0]) != nvx:
+        # print(prompt, 'Number of elements in fH[0][:] and vx do not agree!')
+        # error = 1
+        raise Exception(prompt + " Number of elements in fH[0,:,0] and vx do not agree!")
+    if len(fH[0,0,:]) != nx:
+        # print(prompt, 'Number of elements in fH[0] and x do not agree!')
+        # error = 1
+        raise Exception(prompt + " Number of elements in fH[0,0,:] and x do not agree!")
+    if len(fH2BC[:,0]) != nvr:
+        # print(prompt, 'Number of elements in fH2BC[0][:] and vr do not agree!')
+        # error = 1
+        raise Exception(prompt + " Number of elements in fH2BC[:,0] and vr do not agree!")
+    if len(fH2BC[0,:]) != nvx:
+        # print(prompt, 'Number of elements in fH2BC[0] and vx do not agree!')
+        # error = 1
+        raise Exception(prompt + " Number of elements in fH2BC[0,:] and vx do not agree!")
     if fH2 is None:
-        fH2 = np.zeros((nvr,nvx,nx)).T
-    if len(fH2[0][0]) != nvr:
-        print(prompt, 'Number of elements in fH2[0][0][:] and vr do not agree!') # come back and double check the error messages 
-        error = 1
-        return 
-    if len(fH2[0]) != nvx:
-        print(prompt, 'Number of elements in fH2[0][:][0] and vx do not agree!')
-        error = 1
-        return 
-    if len(fH2) != nx: 
-        print(prompt, 'Number of elements in fH2[:][0][0] and x do not agree!')
-        error = 1
-        return
+        fH2 = np.zeros((nvr,nvx,nx))
+    if len(fH2[:,0,0]) != nvr:
+        # print(prompt, 'Number of elements in fH2[0][0][:] and vr do not agree!') # come back and double check the error messages 
+        # error = 1
+        raise Exception(prompt + " Number of elements in fH2[:,0,0] and vr do not agree!")
+    if len(fH2[0,:,0]) != nvx:
+        # print(prompt, 'Number of elements in fH2[0][:][0] and vx do not agree!')
+        # error = 1
+        raise Exception(prompt + " Number of elements in fH2[0,:,0] and vx do not agree!")
+    if len(fH2[0,0,:]) != nx: 
+        # print(prompt, 'Number of elements in fH2[:][0][0] and x do not agree!')
+        # error = 1
+        raise Exception(prompt + " Number of elements in fH2[0,0,:] and x do not agree!")
     if SH2 is None:
         SH2 = np.zeros(nx)
     if np.size(SH2) != nx:
-        print(prompt, 'Number of elements in SH2 and x do not agree!')
-        error = 1
-        return 
+        # print(prompt, 'Number of elements in SH2 and x do not agree!')
+        # error = 1
+        raise Exception(prompt + " Number of elements in SH2 and x do not agree!")
     if nHP is None:
         nHP = np.zeros(nx)
     if np.size(nHP) != nx:
-        print(prompt, 'Number of elements in nHP and x do not agree!')
+        # print(prompt, 'Number of elements in nHP and x do not agree!')
+        # error = 1
+        raise Exception(prompt + " Number of elements in nHP and x do not agree!")
     if THP is None:
         THP = np.zeros(nx) + 3.0
     if np.size(THP) != nx:
-        print(prompt, 'Number of elements in THP and x do not agree!')
-        error = 1 
-        return 
+        # print(prompt, 'Number of elements in THP and x do not agree!')
+        # error = 1 
+        raise Exception(prompt + " Number of elements in THP and x do not agree!")
     if np.sum(abs(vr)) <= 0.0:
-        print(prompt, 'vr is all 0!')
-        error = 1
-        return 
+        # print(prompt, 'vr is all 0!')
+        # error = 1
+        raise Exception(prompt + " vr is all 0!")
     
-    ii = np.argwhere(vr < 0).T
-    count = np.size(ii)
-
+    count = np.size(np.argwhere(vr < 0))
     if count > 0:
-        print(prompt, 'vr contains zero or negative element(s)!')
-        error = 1
-        return 
+        # print(prompt, 'vr contains zero or negative element(s)!')
+        # error = 1
+        raise Exception(prompt + " vr contains zero or negative element(s)!")
     if np.sum(abs(x)) <= 0.0:
-        print(prompt, 'vx is all 0!')
-        error = 1
-        return 
+        # print(prompt, 'vx is all 0!')
+        # error = 1
+        raise Exception(prompt + " vx is all 0!")
     if np.sum(x) <= 0.0:
-        print(prompt, 'Total(x) is less than or equal to 0!')
-        error = 1
-        return 
+        # print(prompt, 'Total(x) is less than or equal to 0!')
+        # error = 1
+        raise Exception(prompt + " Total(x) is less than or equal to 0!")
     if Tnorm is None:
-        print(prompt, 'Tnorm is not defined!')
-        error = 1
-        return 
+        # print(prompt, 'Tnorm is not defined!')
+        # error = 1
+        raise Exception(prompt + " Tnorm is not defined!")
     if mu is None:
-        print(prompt, 'mu is not defined!')
-        error = 1
-        return 
+        # print(prompt, 'mu is not defined!')
+        # error = 1
+        raise Exception(prompt + " mu is not defined!")
     if mu != 1 and mu != 2:
-        print(prompt, 'mu must be 1 or 2!')
-        error = 1
-        return 
+        # print(prompt, 'mu must be 1 or 2!')
+        # error = 1
+        raise Exception(prompt + " mu must be 1 or 2!")
 
     #NOTE Removed Plotting formatting, bring back once the program actually works
 
     i_n = np.argwhere(vx < 0 ) # fixed typo - GG
     count = np.size(i_n)
     if count < 1:
-        print(prompt, 'vx contains no negative elements!')
-        error = 1
-        return 
+        # print(prompt, 'vx contains no negative elements!')
+        # error = 1
+        raise Exception(prompt + " vx contains no negative elements!")
     i_p = np.argwhere(vx > 0)
     count = np.size(i_p)
     if count < 1:
-        print(prompt, 'vx contains no positive elements!')
-        error = 1
-        return 
+        # print(prompt, 'vx contains no positive elements!')
+        # error = 1
+        raise Exception(prompt + " vx contains no positive elements!")
     i_z = np.argwhere(vx == 0)
     count = np.size(i_z)
     if count > 0:
-        print(prompt, 'vx contains one or more zero elements!')
-        error = 1
-        return 
+        # print(prompt, 'vx contains one or more zero elements!')
+        # error = 1
+        raise Exception(prompt + " vx contains one or more zero elements!")
     diff = np.argwhere(vx[i_p] != -np.flipud(vx[i_n])) # fixed how the array is reversed - GG
     count = np.size(diff)
     if count > 0:
-        print(prompt, 'vx array elements are not symmetric about zero!')
-        error = 1
-        return 
-    fH2BC_input = np.zeros(fH2BC.shape) # simplified code - GG
-    for i in i_p:
-        fH2BC_input[i] = fH2BC[i] # fixed indexing - GG
+        # print(prompt, 'vx array elements are not symmetric about zero!')
+        # error = 1
+        raise Exception(prompt + " vx array elements are not symmetric about zero!")
+    fH2BC_input = np.zeros(fH2BC.shape)
+    #for i in i_p:
+    fH2BC_input[:,i_p] = fH2BC[:,i_p]
+    print("fH2BC_input", fH2BC_input.T)
+    input()
     test = np.sum(fH2BC_input)
     if test <= 0.0:
-        print(prompt, 'Values for fH2BC(*,*) with vx > 0 are all zero!')
+        # print(prompt, 'Values for fH2BC(*,*) with vx > 0 are all zero!')
+        # error = 1
+        raise Exception(prompt + " Values for fH2BC(:,:) with vx > 0 are all zero!")
     
     # Output variables 
     nH2 = np.zeros(nx)
@@ -2469,5 +2473,5 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
     if debug > 0:
         print(prompt, 'Finished')
         # Press_return 
-    return fH2, nHP, THP, nH2, GammaxH2, VxH2, pH2, TH2, qxH2, qxH2_total, Sloss, QH2, RxH2, QH2_total, AlbedoH2, \
-        WallH2, fSH, SH, SP, SHP, NuE, NuDis, ESH, Eaxis, error
+    return (fH2, nHP, THP, nH2, GammaxH2, VxH2, pH2, TH2, qxH2, qxH2_total, Sloss, QH2, RxH2, QH2_total, AlbedoH2, \
+        WallH2, fSH, SH, SP, SHP, NuE, NuDis, ESH, Eaxis, error)

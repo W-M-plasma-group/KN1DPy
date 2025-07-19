@@ -405,7 +405,7 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
         if debrief: 
             print(prompt, 'Maximum Normalized change in nH2: ', sval(nDelta_nH2))
         if debrief and pause: 
-            input()
+            input("Press any key to continue")
         if nDelta_nH2 > truncate: 
             # goto fH_fH2_iterate I think we will have to make fH_fH2_iterate a function 
             # since we wont be reading old runs right now I am going to leave this as is 
@@ -443,6 +443,8 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
                     truncate=truncate, Simple_CX=Simple_CX, Max_Gen=max_gen, Compute_H_Source=Compute_H_Source,\
                     H2_H2_EL=H2_H2_EL,H2_P_EL=H2_P_EL,H2_H_EL=H2_H_EL,H2_HP_CX=H2_HP_CX, ni_correct=ni_correct,\
                     Compute_Errors=H2compute_errors, plot=H2plot,debug=H2debug,debrief=H2debrief,pause=H2pause) # fixed inputs - GG 2/26
+            
+            print(kh2_results)
 
             fH2, nHP, THP, nH2, GammaxH2, VxH2, pH2, TH2, qxH2, qxH2_total, Sloss, \
                 QH2, RxH2, QH2_total, AlbedoH2, WallH2, fSH, SH, SP, SHP, NuE, NuDis, ESH, Eaxis, error = kh2_results
