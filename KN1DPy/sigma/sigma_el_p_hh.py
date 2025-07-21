@@ -17,7 +17,7 @@ from .poly import poly
 #	units: m^-2
 # Gwendolyn Galleher 
 def sigma_el_p_hh(E):
-    E = np.array([E])
+    #E = np.array([E])
     _E = E.astype(float)
     # ensures 0.03e0 < E < 1.01e4
     _E = np.maximum(_E, 0.03e0)
