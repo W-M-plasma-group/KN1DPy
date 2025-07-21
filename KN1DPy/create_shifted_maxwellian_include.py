@@ -83,10 +83,9 @@ def create_shifted_maxwellian_include(vr,vx,Tnorm,vx_shift,Tmaxwell,Shifted_Maxw
 
       # Compute present moments of Maxwell, WxMax, and EMax 
 
-      max_2d_xd = np.dot(maxwell[:, :, k],(vx * dVx)) 
       # print(maxwell[:, :, k].shape)  
       # print((vx * dVx).shape)
-      WxMax       = vth  * (np.nansum(Vr2pidVr * (max_2d_xd) ))
+      WxMax       = vth  * (np.nansum(Vr2pidVr*np.dot(maxwell[:,:,k], (vx*dVx))))
       EMax        = vth2 * (np.nansum(Vr2pidVr*(np.dot((vr2vx2_2D*maxwell[:,:,k]),dVx))))
       # print((vr2vx2_2D*maxwell[:, :, k]).shape)  
       # print(dVx.shape)
@@ -153,7 +152,7 @@ def create_shifted_maxwellian_include(vr,vx,Tnorm,vx_shift,Tmaxwell,Shifted_Maxw
 
         # Compute TA1, TA2
 
-        TA1 = vth*np.sum(np.matmul(AN[:, :, ia], vx))
+        TA1 = vth*np.sum(np.matmul(AN[:,:,ia], vx))
         TA2 = vth2*np.sum(vr2vx2_2D*AN[:,:,ia])
         # print("maxwell", maxwell.T)
         # print("TA1", TA1)
@@ -215,6 +214,6 @@ def create_shifted_maxwellian_include(vr,vx,Tnorm,vx_shift,Tmaxwell,Shifted_Maxw
         Verror2=abs(vx_shift[k]-vx_out2)/vth_local
         print('CREATE_SHIFTED_MAXWELLIAN=> Terror:'+sval(Terror)+'->'+sval(Terror2)+'  Verror:'+sval(Verror)+'->'+sval(Verror2))
 
-  print("maxwell final", maxwell.T)
-  input()
+  # print("maxwell final", maxwell.T[-1])
+  # input()
   return maxwell

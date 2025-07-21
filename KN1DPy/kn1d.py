@@ -83,7 +83,9 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
     #     ReadInput - if set, then reset all input variables to that contained in 'file'.KN1D_input
 
     #NOTE Debugging option, remove later
+    import sys
     np.set_printoptions(linewidth=225)
+    np.set_printoptions(threshold=sys.maxsize)
     x = np.array(x, dtype=np.float64)
     COLLISIONS = KN1D_Collisions()
 
@@ -427,13 +429,13 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
             # interpolate fH data onto H2 mesh: fH -> fHM
             do_warn = 5e-3
             fHM = interp_fvrvxx(fH, kh_mesh, kh2_mesh, fvrvxx_internal, do_warn=do_warn, debug=interp_debug) 
-            print("fHM", fHM.shape)
-            input()
+            # print("fHM", fHM.shape)
+            # input()
 
             # Compute fH2 using Kinetic_H2
-            ni_correct=1
-            Compute_H_Source=1
-            H2compute_errors=compute_errors and H2debrief # is this accurate, how can it be equal to both? - GG 2/15
+            ni_correct = 1
+            Compute_H_Source = 1
+            H2compute_errors = compute_errors and H2debrief # is this accurate, how can it be equal to both? - GG 2/15
             
             # print("fH2", fH2)
             # print("shape", fH2.shape)
@@ -442,13 +444,10 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
                     kh2_mesh, mu, vxiM, fh2BC, GammaxH2BC, NuLoss, fHM, SH2, fH2, nH2, THP, KH2_Common,\
                     truncate=truncate, Simple_CX=Simple_CX, Max_Gen=max_gen, Compute_H_Source=Compute_H_Source,\
                     H2_H2_EL=H2_H2_EL,H2_P_EL=H2_P_EL,H2_H_EL=H2_H_EL,H2_HP_CX=H2_HP_CX, ni_correct=ni_correct,\
-                    Compute_Errors=H2compute_errors, plot=H2plot,debug=H2debug,debrief=H2debrief,pause=H2pause) # fixed inputs - GG 2/26
-            
-            print(kh2_results)
-
+                    Compute_Errors=H2compute_errors, plot=H2plot,debug=H2debug,debrief=H2debrief,pause=H2pause)
             fH2, nHP, THP, nH2, GammaxH2, VxH2, pH2, TH2, qxH2, qxH2_total, Sloss, \
                 QH2, RxH2, QH2_total, AlbedoH2, WallH2, fSH, SH, SP, SHP, NuE, NuDis, ESH, Eaxis, error = kh2_results
-            
+
             print("fH2", fH2)
             print("nHP", nHP)
             print("THP", THP)
