@@ -901,7 +901,7 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
         Maxwell = create_shifted_maxwellian_include(vr, vx, Tnorm, vx_shift, Tmaxwell, shifted_Maxwellian_debug, mu, mol, nx, nvx, nvr, \
                                           Vth, Vth2, Maxwell, vr2_2vx_ran2, Vr2pidVr, dVx, vol, \
                                           Vth_DeltaVx, Vx_DeltaVx, Vr_DeltaVr, vr2_2vx2_2D, jpa, jpb, jna, jnb)
-        fi_hat = Maxwell
+        fi_hat = copy.copy(Maxwell) #NOTE Modify create_shifted_maxwellian to create new array, so copying not necessary
         # print("fi_hat", fi_hat.T)
         # input()
 
@@ -1075,9 +1075,9 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
         SIG_H2_P = np.zeros((nvr*nvx, nvr*nvx))
         SIG_H2_P[:] = (Vr2pidVrdVx*vx_vx*(_Sig @ dTheta).reshape(vx_vx.shape, order='F')).reshape(SIG_H2_P.shape, order='F')
 
-        print("SIG_H2_P", SIG_H2_P.T)
-        print("shape", SIG_H2_P.shape)
-        input()
+        # print("SIG_H2_P", SIG_H2_P.T)
+        # print("shape", SIG_H2_P.shape)
+        # input()
 
         # SIG_H2_P is now vr' * vx_vx * sigma_h2_P(v_v) * v_v (integrated over theta) for all possible ([vr, vx], [vr', vx'])
 
@@ -1089,23 +1089,23 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
         # already been computed with the present input parameters
 
         # Compute sigma_H2_H2 * vr2_vx2 * v_v at all possible relative velocities 
-        _Sig = np.zeros((nvr*nvx*nvr*nvx, ntheta)).T
-        _Sig[:] = (vr2_vx2*v_v*sigma_el_hh_hh(v_v2 * (CONST.H_MASS * mu * Vth2 / CONST.Q), vis = 1) / 8.0).reshape(_Sig.shape)
+        _Sig = np.zeros((nvr*nvx*nvr*nvx, ntheta))
+        _Sig[:] = (vr2_vx2*v_v*sigma_el_hh_hh(v_v2*(CONST.H_MASS*mu*Vth2/CONST.Q), vis = 1)/8.0).reshape(_Sig.shape, order='F')
         # print("vr2_vx2", vr2_vx2)
         # print("v_v", v_v)
         # print("v_v2", v_v2)
-        print("_SIG", _Sig[0,:])
-        input()
+        # print("_SIG", _Sig) #NOTE First few values are off, but the rest are correct?
+        # input()
 
         # Note : For viscosity, the cross section for D -> D is the same function of 
         # center of mass energy as H -> H.
 
         # Set SIG_H2_H2 = vr' x Integral{vr2_vx2*v_v*sigma_H2_H2} over theta=0,2pi times differential velocity space element Vr'2pidVr'*dVx'
-        SIG_H2_H2 = np.zeros((nvr * nvx, nvr * nvx)).T
-        SIG_H2_H2[:] = (Vr2pidVrdVx * (np.dot(_Sig, dTheta).reshape(Vr2pidVrdVx.shape))).reshape(SIG_H2_H2.shape)
+        SIG_H2_H2 = np.zeros((nvr * nvx, nvr * nvx))
+        SIG_H2_H2[:] = (Vr2pidVrdVx*((_Sig @ dTheta).reshape(Vr2pidVrdVx.shape, order='F'))).reshape(SIG_H2_H2.shape, order='F')
 
-        print("SIG_H2_H2", SIG_H2_H2[:,0])
-        input()
+        # print("SIG_H2_H2", SIG_H2_H2.T)
+        # input()
 
         # SIG_H2_H2 is now vr' * sigma_H2_H2(v_v) * vr2_vx2 * v_v (intergated over theta) for all possible ([vr,vx],[vr',vx'])
     
@@ -1116,10 +1116,10 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
         # Compute Alpha_H2_H for inputed fH, if it is needed and has not
         # already been computed with the present input parameters
 
-        Alpha_H2_H = np.zeros((nvr, nvx, nx)).T
+        Alpha_H2_H = np.zeros((nvr, nvx, nx))
         for k in range(0, nx):
-            Work[:] = fH[k,:,:].reshape(Work.shape)
-            Alpha_H2_H[k,:,:] = np.dot(SIG_H2_H, Work).reshape(Alpha_H2_H[k,:,:].shape)
+            Work[:] = fH[:,:,k].reshape(Work.shape)
+            Alpha_H2_H[:,:,k] = (SIG_H2_H @ Work).reshape(Alpha_H2_H[:,:,k].shape, order='F')
 
         # print("Alpha_H2_H", Alpha_H2_H)
         # input()
@@ -1127,24 +1127,27 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
         
     # Compute nH2
     for k in range(0, nx):
-        nH2[k] = np.sum(Vr2pidVr * np.matmul(dVx, fH2[k]))
+        nH2[k] = np.sum(Vr2pidVr*(fH2[:,:,k] @ dVx))
 
     if New_H2_Seed:
-        MH2_H2_sum = np.zeros((nvr,nvx,nx)).T
+        MH2_H2_sum = np.zeros((nvr,nvx,nx))
         Delta_nH2s = 1.0
 
-    gamma_wall = np.zeros((nvr, nvx, nx)).T
+    gamma_wall = np.zeros((nvr,nvx,nx))
     for k in range(0, nx):
         if PipeDia[k] > 0.0:
             for j in range(0, nvx):
-                gamma_wall[k][j] = 2 * vr / PipeDia[k]
-    
+                gamma_wall[k][j] = 2*vr/PipeDia[k]
+    # print("nH2", nH2)
+    # print("gamma_wall", gamma_wall)
+    # input()
+
     #fH2 Iteration - I dont know where the fH2_iterate is coming from 
     # This is the iteration entry point for fH2, THP and nHP iteration.
     # Save 'seed' values for comparison later
-    do_fH2_iterate=True
+    do_fH2_iterate = True
     while do_fH2_iterate:
-        do_fH2_iterate=False
+        do_fH2_iterate = False
         fH2s = fH2
         nH2s = nH2
         THPs = THP
@@ -1159,46 +1162,57 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
             vx_shift = vxi
             Tmaxwell = THP
             mol = 2
-            Maxwell=create_shifted_maxwellian_include(vr, vx, Tnorm, vx_shift, Tmaxwell, shifted_Maxwellian_debug, mu, mol, nx, nvx, nvr, \
+            Maxwell = create_shifted_maxwellian_include(vr, vx, Tnorm, vx_shift, Tmaxwell, shifted_Maxwellian_debug, mu, mol, nx, nvx, nvr, \
                                             Vth, Vth2, Maxwell, vr2_2vx_ran2, Vr2pidVr, dVx, vol, \
                                             Vth_DeltaVx, Vx_DeltaVx, Vr_DeltaVr, vr2_2vx2_2D, jpa, jpb, jna, jnb)
-            fHp_hat = Maxwell
+            fHp_hat = copy.copy(Maxwell)
+            # print("fHp_hat", fHp_hat)
+            # input()
 
             if Simple_CX:
                 # Option (B) : Use Maxwellian weighted <sigma v>
                 
                 # THP/mu at each mesh point
-                THP_mu = np.zeros((nx, nvx, nvr))
+                THP_mu = np.zeros((nvr, nvx, nx))
                 for k in range(0, nx):
-                    THP_mu[k,:,:] = THP[k] / mu
+                    THP_mu[:,:,k] = THP[k]/mu
 
                 # Molecular Charge Exchange sink rate 
-                alpha_cx = sigmav_cx_hh(THP_mu, EH2_P) / Vth
+                alpha_cx = sigmav_cx_hh(THP_mu, EH2_P)/Vth
                 for k in range(0, nx):
-                    alpha_cx[k] = alpha_cx[k] * nHP[k]
+                    alpha_cx[:,:,k] = alpha_cx[:,:,k]*nHP[k]
+                # print("alpha_cx", alpha_cx)
+                # input()
             else:
-                alpha_cx = np.zeros((nvr, nvx, nx)).T
+                # Option (A): Compute SigmaV_CX from sigma directly via SIG_CX
+                alpha_cx = np.zeros((nvr, nvx, nx))
                 for k in range(0, nx):
-                    Work[:] = (fHp_hat[k,:,:] * nHP[k]).reshape(Work.shape)
-                    alpha_cx[k] = np.dot(SIG_CX, Work)
+                    Work[:] = (fHp_hat[:,:,k]*nHP[k]).reshape(Work.shape, order='F')
+                    alpha_cx[:,:,k] = SIG_CX @ Work
                 if Do_Alpha_CX_Test:
-                    alpha_cx_test = sigmav_cx_hh(THP_mu, EH2_P) / Vth
+                    alpha_cx_test = sigmav_cx_hh(THP_mu, EH2_P)/Vth
                     for k in range(0, nx):
-                        alpha_cx_test[k] = alpha_cx_test[k] * nHP[k]
+                        alpha_cx_test[:,:,k] = alpha_cx_test[:,:,k]*nHP[k]
                         print('Compare alpha_cx and alpha_cx_test')
-                            # press return 
+                        input()
+
         # Compute Alpha_H2_P for present Ti and ni (optionally correcting for nHP), 
         # if it is needed and has not already been computed with the present parameter
         if Do_Alpha_H2_P == 1:
             if debrief > 1:
                 print(prompt, 'Computing Alpha_H2_P')
-            Alpha_H2_P = np.zeros((nvr, nvx, nx)).T
+            Alpha_H2_P = np.zeros((nvr, nvx, nx))
             ni = n
             if ni_correct:
-                ni = np.maximum(n - nHP,0)
+                ni = np.maximum((n-nHP), 0)
+            # print("ni", ni)
             for k in range(0, nx):
-                Work[:] = (fi_hat[k] * ni[k]).reshape(Work.shape)
-                Alpha_H2_P[k] = np.dot(SIG_H2_P, Work).reshape(Alpha_H2_P[k].shape)
+                Work[:] = (fi_hat[:,:,k]*ni[k]).reshape(Work.shape, order='F')
+                Alpha_H2_P[:,:,k] = (SIG_H2_P @ Work).reshape(Alpha_H2_P[:,:,k].shape, order='F')
+            # print("fi_hat", fi_hat)
+            # print("Work", Work)
+            print("Alpha_H2_P", Alpha_H2_P.T)
+            input()
         
         # Compute Omega values if nH2 is non-zero 
 
