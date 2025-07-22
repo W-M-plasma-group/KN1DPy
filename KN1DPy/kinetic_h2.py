@@ -1392,55 +1392,62 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
         
         #fH2_done = 0 # I am not sure if this is correct because fH2_done is a function, but I'm not sure what the intention of the original IDL code was so I don't know how to change it - GG
         
-        def next_generation(igen, Swall_sum, Beta_CX_sum, MH2_P_sum, MH2_H_sum, MH2_H2_sum, fH2, nH2, Maxwell=Maxwell):
+        while True:
             if igen+1 > Max_Gen or fH2_generations==0: 
                 if debrief > 1:
                     print(prompt,'Completed ', sval(Max_Gen), ' generations. Returning present solution...')
-                return igen, Swall_sum, Beta_CX_sum, MH2_P_sum, MH2_H_sum, MH2_H2_sum, fH2, nH2
+                break
             igen = igen + 1
             if debrief > 0: 
                 print(prompt, 'Computing molecular neutral generation#', sval(igen))
         
             #Compute Swall from previous generation
-            Swall = np.zeros((nvr, nvx, nx)).T
+            Swall = np.zeros((nvr, nvx, nx))
             if np.sum(gamma_wall) > 0:
                 if debrief > 1:
                     print(prompt, 'Computing Swall')
-                for k in range(0, nx - 1): 
-                    Swall[k] = fw_hat * np.sum(Vr2pidVr * np.dot(dVx, gamma_wall[k]*fH2G[k]))
+                for k in range(0, nx): 
+                    Swall[:,:k] = fw_hat*np.sum(Vr2pidVr*((gamma_wall[:,:,k]*fH2G[:,:,k]) @ dVx))
                 #Sum wall collision source over all generations
                 Swall_sum = Swall_sum + Swall 
+            # print("Swall_sum", Swall_sum.T)
+            # input()
 
             #Compute Beta_CX from previous generation
-            Beta_CX = np.zeros((nvr,nvx,nx)).T
+            Beta_CX = np.zeros((nvr,nvx,nx))
             if H2_HP_CX: 
                 if debrief > 1:
                     print(prompt, 'Computing Beta_CX')
                 if Simple_CX:
                     # Option (B): Compute charge exchange source with assumption that CX source neutrals have 
                     # molecular ion distribution function
-                    for k in range(0, nx-1): 
-                        Beta_CX[k] = fHp_hat[k] * np.sum(Vr2pidVr * np.dot(dVx, alpha_cx[k]*fH2G[k]))
+                    for k in range(0, nx): 
+                        Beta_CX[:,:,k] = fHp_hat[:,:,k]*np.sum(Vr2pidVr*((alpha_cx[:,:,k]*fH2G[:,:,k]) @ dVx))
                 else: 
                     # Option (A): Compute charge exchange source using fH2 and vr x sigma x v_v at each velocity mesh point
-                    for k in range(0, nx -1):
-                        Work[:] = fH2G[k]
-                        Beta_CX[k] = nHP[k] * fHp_hat[k] * np.dot(SIG_CX, Work)
+                    for k in range(0, nx):
+                        Work[:] = fH2G[:,:,k]
+                        Beta_CX[:,:,k] = nHP[k]*fHp_hat[:,:,k]*(SIG_CX @ Work)
                 #Sum 
                 Beta_CX_sum = Beta_CX_sum + Beta_CX
+            # print("Beta_CX_sum", Beta_CX_sum.T)
+            # input()
 
             # Compute MH2 from previous generation
-            MH2_H2 = np.zeros((nvr,nvx,nx)).T
-            MH2_P = np.zeros((nvr,nvx,nx)).T
-            MH2_H = np.zeros((nvr,nvx,nx)).T
-            OmegaM = np.zeros((nvr,nvx,nx)).T
+            MH2_H2 = np.zeros((nvr,nvx,nx))
+            MH2_P = np.zeros((nvr,nvx,nx))
+            MH2_H = np.zeros((nvr,nvx,nx))
+            OmegaM = np.zeros((nvr,nvx,nx))
             if H2_H2_EL or H2_P_EL or H2_H_EL:
                 # Compute VxH2G, TH2G
-                for k in range(0, nx ):
-                    VxH2G[k] = Vth * np.sum(Vr2pidVr * np.dot(vx * dVx, fH2G[k,:,:])) / NH2G[igen - 1, k]
+                for k in range(0, nx):
+                    VxH2G[k] = Vth*np.sum(Vr2pidVr*(fH2G[:,:,k] @ (vx * dVx)))/NH2G[k,igen-1]
                     for i in range(0, nvr):
-                        vr2vx2_ran2[:,i] = vr[i]**2 + (vx - VxH2G[k]/Vth)**2
-                    TH2G[k] = (2 * mu * CONST.H_MASS) * Vth2 * np.sum(Vr2pidVr * (np.dot(dVx, vr2vx2_ran2 * fH2G[k,:,:])))/(3 * CONST.Q * NH2G[igen - 1, k])
+                        vr2vx2_ran2[i,:] = vr[i]**2 + (vx - VxH2G[k]/Vth)**2
+                    TH2G[k] = (2*mu*CONST.H_MASS)*Vth2*np.sum(Vr2pidVr*((vr2vx2_ran2*fH2G[:,:,k]) @ dVx))/(3*CONST.Q*NH2G[k,igen-1])
+                # print("TH2G", TH2G)
+                # input()
+
                 if H2_H2_EL:
                     if debrief > 1: 
                         print(prompt, 'Computing MH2_H2')
@@ -1451,112 +1458,135 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
                     Maxwell = create_shifted_maxwellian_include(vr,vx,Tnorm,vx_shift,Tmaxwell,shifted_Maxwellian_debug,mu,mol,
                                             nx,nvx,nvr,Vth,Vth2,Maxwell,vr2vx2_ran2,
                                             Vr2pidVr,dVx,vol,Vth_DeltaVx,Vx_DeltaVx,Vr_DeltaVr,vr2_2vx2_2D,jpa,jpb,jna,jnb)
+                    # print("Maxwell", Maxwell.T)
+                    # input()
+
                     for k in range(0, nx):
-                        MH2_H2[k] = Maxwell[k] * NH2G[igen - 1, k]
-                        OmegaM[k] = OmegaM[k] + Omega_H2_H2[k] * MH2_H2[k]
+                        MH2_H2[:,:,k] = Maxwell[:,:,k]*NH2G[k,igen-1]
+                        OmegaM[:,:,k] = OmegaM[:,:,k] + Omega_H2_H2[k]*MH2_H2[:,:,k]
                     MH2_H2_sum = MH2_H2_sum + MH2_H2
+                    # print("MH2_H2_sum", MH2_H2_sum.T)
+                    # print("OmegaM", OmegaM.T)
+                    # input()
+
                 if H2_P_EL:
                     if debrief > 1:
                         print(prompt, 'Computing MH2_P')
                     # Compute MH2_P
                     vx_shift = (2 * VxH2G + vxi)/3
-                    Tmaxwell = TH2G + (4/9) * (Ti - TH2G + mu * CONST.H_MASS * (vxi - VxH2G)**2 / (6*CONST.Q))
+                    Tmaxwell = TH2G + (4/9)*(Ti - TH2G + ((mu*CONST.H_MASS*(vxi - VxH2G)**2)/(6*CONST.Q)))
                     mol = 2
                     Maxwell = create_shifted_maxwellian_include(vr,vx,Tnorm,vx_shift,Tmaxwell,shifted_Maxwellian_debug,mu,mol,
                                             nx,nvx,nvr,Vth,Vth2,Maxwell,vr2vx2_ran2,
                                             Vr2pidVr,dVx,vol,Vth_DeltaVx,Vx_DeltaVx,Vr_DeltaVr,vr2_2vx2_2D,jpa,jpb,jna,jnb)
+                    # print("Maxwell", Maxwell.T)
+                    # input()
+
                     for k in range(0, nx ):
-                        MH2_P[k] = Maxwell[k] * NH2G[igen - 1, k]
-                        OmegaM[k] = OmegaM[k] + Omega_H2_P[k] * MH2_P[k]
+                        MH2_P[:,:,k] = Maxwell[:,:,k]*NH2G[k,igen-1]
+                        OmegaM[:,:,k] = OmegaM[:,:,k] + Omega_H2_P[k]*MH2_P[:,:,k]
                     MH2_P_sum = MH2_P_sum + MH2_P
-                if H2_H_EL:
+                    # print("MH2_P_sum", MH2_P_sum.T)
+                    # print("OmegaM", OmegaM.T)
+                    # input()
+
+                if H2_H_EL: #NOTE Not Tested Yet
                     if debrief > 1:
                         print(prompt, 'Computing MH2_H')
                     #Compute MH2_H
                     vx_shift = (2 * VxH2G * VxH)/3
-                    Tmaxwell = TH2G + (4/9) * (TH - TH2G + mu * CONST.H_MASS * (VxH - VxH2G)**2 / (6*CONST.Q))
+                    Tmaxwell = TH2G + (4/9)*(TH - TH2G + ((mu*CONST.H_MASS*(VxH - VxH2G)**2)/(6*CONST.Q)))
                     mol = 2
-                    Maxwell=create_shifted_maxwellian_include(vr,vx,Tnorm,vx_shift,Tmaxwell,shifted_Maxwellian_debug,mu,mol,
+                    Maxwell = create_shifted_maxwellian_include(vr,vx,Tnorm,vx_shift,Tmaxwell,shifted_Maxwellian_debug,mu,mol,
                                             nx,nvx,nvr,Vth,Vth2,Maxwell,vr2vx2_ran2,
                                             Vr2pidVr,dVx,vol,Vth_DeltaVx,Vx_DeltaVx,Vr_DeltaVr,vr2_2vx2_2D,jpa,jpb,jna,jnb)
-                    for k in range(0, nx ):
-                        MH2_H[k] = Maxwell[k] * NH2G[igen - 1, k]
-                        OmegaM[k] = OmegaM[k] + Omega_H2_H[k] * MH2_H[k]
+                    # print("Maxwell", Maxwell.T)
+                    # input()
+
+                    for k in range(0, nx):
+                        MH2_H[:,:,k] = Maxwell[:,:,k] * NH2G[k,igen-1]
+                        OmegaM[:,:,k] = OmegaM[:,:,k] + Omega_H2_H[k]*MH2_H[:,:,k]
                     MH2_H_sum = MH2_H_sum + MH2_H
+                    # print("MH2_H_sum", MH2_H_sum.T)
+                    # print("OmegaM", OmegaM.T)
+                    # input()
 
             # Compute next generation molecular distribution
             fH2G[:] = 0.0
-            for k in range(0, nx - 1):
-                fH2G[k + 1, i_p] = Ak[k, i_p] * fH2G[k, i_p] \
-                + Bk[k, i_p] * (Swall[k + 1, i_p] + Beta_CX[k + 1, i_p] + OmegaM[k + 1, i_p] + Swall[k, i_p] + Beta_CX[k, i_p] + OmegaM[k, i_p])
-            for k in range(nx - 1, 0, -1):
-                fH2G[k - 1, i_n] = Ck[k, i_n] * fH2G[k, i_n]\
-                + Dk[k, i_n] * (Swall[k - 1, i_n] + Beta_CX[k - 1, i_n] + OmegaM[k - 1, i_n] + Swall[k, i_n] + Beta_CX[k, i_n] + OmegaM[k, i_n])
+            for k in range(0, nx-1):
+                fH2G[:,i_p,k+1] = Ak[:,i_p,k]*fH2G[:,i_p,k] + Bk[:,i_p,k]*(Swall[:,i_p,k+1] + Beta_CX[:,i_p,k+1] + OmegaM[:,i_p,k+1] + Swall[:,i_p,k] + Beta_CX[:,i_p,k] + OmegaM[:,i_p,k])
+            for k in range(nx-1, 0, -1):
+                fH2G[:,i_n,k-1] = Ck[:,i_n,k]*fH2G[:,i_n,k] + Dk[:,i_n,k]*(Swall[:,i_n,k-1] + Beta_CX[:,i_n,k-1] + OmegaM[:,i_n,k-1] + Swall[:,i_n,k] + Beta_CX[:,i_n,k] + OmegaM[:,i_n,k])
             for k in range(0, nx):
-                NH2G[igen,k] = np.sum(Vr2pidVr * np.dot(dVx, fH2G[k]))
+                NH2G[k,igen] = np.sum(Vr2pidVr*(fH2G[:,:,k] @ dVx))
+            # print("fH2G", fH2G.T)
+            # print("NH2G", NH2G.T)
+            # input()
             
 
-            if plot > 1:
-                fH21d = np.zeros((nvx, nx)).T
-                for k in range(0, nx - 1):
-                    fH21d[k] = np.dot(Vr2pidVr, fH2G[k])
-                plt.plot(vx, fH21d[0, :], label="0", color="b", linewidth=2)
-                for i in range(1, nx):
-                    if np.any(fH21d[i, :] > 0.9):
-                        plt.plot(vx, fH21d[i, :], label=str(i), color=(i % 8) + 2, linewidth=2)
+            # if plot > 1: # NOTE Implement Plotting later
+            #     fH21d = np.zeros((nvx, nx)).T
+            #     for k in range(0, nx - 1):
+            #         fH21d[k] = np.dot(Vr2pidVr, fH2G[k])
+            #     plt.plot(vx, fH21d[0, :], label="0", color="b", linewidth=2)
+            #     for i in range(1, nx):
+            #         if np.any(fH21d[i, :] > 0.9):
+            #             plt.plot(vx, fH21d[i, :], label=str(i), color=(i % 8) + 2, linewidth=2)
 
-                plt.title(str(igen) + ' Generation ' + 'HH')
-                plt.xlabel('vx')
-                plt.ylabel('fH21d')
-                plt.ylim(0, np.max(fH21d))
-                plt.legend(title="Curve Index")
-                plt.show()
-                if debug > 0:
-                    return 
-                    # press return 
+            #     plt.title(str(igen) + ' Generation ' + 'HH')
+            #     plt.xlabel('vx')
+            #     plt.ylabel('fH21d')
+            #     plt.ylim(0, np.max(fH21d))
+            #     plt.legend(title="Curve Index")
+            #     plt.show()
+            #     if debug > 0:
+            #         input()
+
             # Add result to total neutral distribution function
             fH2 = fH2 + fH2G
-            nH2=nH2 + NH2G[igen, :]
+            nH2 = nH2 + NH2G[:,igen]
+            # print("fH2", fH2.T)
+            # print("nH2", nH2.T)
+            # input()
 
             # Compute 'generation error': Delta_nH2G=max(NH2G(*,igen)/max(nH2))
             # and decide if another generation should be computed
-            Delta_nH2G = np.max(NH2G[igen, :] / np.max(nH2))
-            if fH2_iterate:
+            Delta_nH2G = np.max(NH2G[:,igen]/np.max(nH2))
+            if fH2_iterate and ((Delta_nH2G < 0.003 * Delta_nH2s) or (Delta_nH2G < truncate)):
                 # If fH2 'seed' is being iterated, then do another generation until the 'generation error'
                 # is less than 0.003 times the 'seed error' or is less than TRUNCATE
-                if (Delta_nH2G < 0.003 * Delta_nH2s) or (Delta_nH2G < truncate): 
-                    return igen, Swall_sum, Beta_CX_sum, MH2_P_sum, MH2_H_sum, MH2_H2_sum, fH2, nH2
-                
+                print("stuff")
+                input()
+                break
+            print("not stuff")
+            input()
             # If fH2 'seed' is NOT being iterated, then do another generation unitl the 'generation error'
             # is less than parameter TRUNCATE
-            elif Delta_nH2G < truncate:
-                return igen, Swall_sum, Beta_CX_sum, MH2_P_sum, MH2_H_sum, MH2_H2_sum, fH2, nH2
+
+        # if plot > 0: #NOTE Implement Plotting Later
+        #     plt.figure()
+
+        #     # Plot the first curve with logarithmic y-axis
+        #     plt.plot(x, NH2G[:, 0], label="0", color="b", linewidth=2)
+
+        #     # Plot additional curves up to generation igen
+        #     for i in range(igen + 1):
+        #         plt.plot(x, NH2G[:, i], label=str(i), color=(i % 8) + 2, linewidth=2)
             
-            return next_generation(igen, Swall_sum, Beta_CX_sum, MH2_P_sum, MH2_H_sum, MH2_H2_sum, fH2, nH2)
-
-        igen, Swall_sum, Beta_CX_sum, MH2_P_sum, MH2_H_sum, MH2_H2_sum, fH2, nH2=next_generation(igen, Swall_sum, Beta_CX_sum, MH2_P_sum, MH2_H_sum, MH2_H2_sum, fH2, nH2) # Come back and double check this function later 
-
-        if plot > 0: 
-            plt.figure()
-
-            # Plot the first curve with logarithmic y-axis
-            plt.plot(x, NH2G[:, 0], label="0", color="b", linewidth=2)
-
-            # Plot additional curves up to generation igen
-            for i in range(igen + 1):
-                plt.plot(x, NH2G[:, i], label=str(i), color=(i % 8) + 2, linewidth=2)
+        #     # Set plot attributes
+        #     plt.title(_HH + ' Density by Generation')
+        #     plt.xlabel('x (m)')
+        #     plt.ylabel('Density (m⁻³)')
+        #     plt.yscale('log')
             
-            # Set plot attributes
-            plt.title(_HH + ' Density by Generation')
-            plt.xlabel('x (m)')
-            plt.ylabel('Density (m⁻³)')
-            plt.yscale('log')
-            
-            plt.legend(title="Generation")
+        #     plt.legend(title="Generation")
 
         # Compute H2 density profile
         for k in range(0, nx):
-            nH2[k] = np.sum(Vr2pidVr * ( np.matmul(dVx,fH2[k,:])))
+            nH2[k] = np.sum(Vr2pidVr*(fH2[:,:,k] @ dVx))
+        print("nH2", nH2)
+        input()
+
         # GammaxH2 - particle flux in x direction
         for k in range(0, nx):
             GammaxH2[k] = Vth * np.sum(Vr2pidVr * np.matmul(vx * dVx, fH2[k,:]))
