@@ -1211,19 +1211,20 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
                 Alpha_H2_P[:,:,k] = (SIG_H2_P @ Work).reshape(Alpha_H2_P[:,:,k].shape, order='F')
             # print("fi_hat", fi_hat)
             # print("Work", Work)
-            print("Alpha_H2_P", Alpha_H2_P.T)
-            input()
+            # print("Alpha_H2_P", Alpha_H2_P.T)
+            # input()
         
         # Compute Omega values if nH2 is non-zero 
 
-        ii = np.argwhere(nH2 <= 0) # come back to because I dont remember how I am supposed to call np.argwhere
-        if ii.shape[1] <= 0:
+        ii = np.argwhere(nH2 <= 0) 
+        if ii.size <= 0: #NOTE NOT Tested yet, return on iteration
             # compute VxH2
             if H2_P_EL or H2_H_EL or H2_H2_EL:
                 for k in range(0, nx):
-                    VxH2[k] = Vth * np.sum(Vr2pidVr * np.dot((vx * dVx),fH2[k])) / nH2[k]
+                    VxH2[k] = Vth*np.sum(Vr2pidVr*(fH2[:,:,k] @ (vx*dVx))) / nH2[k]
+            print("VxH2", VxH2)
+            input()
             # compute Omega_H2_P for present fH2 and Alpha_H2_P if H2_P elastic collisions are included
-            raise Exception('check')
             if H2_P_EL:
                 if debrief > 1:
                     print(prompt, 'Computing Omega_H2_P')
@@ -1236,7 +1237,7 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
             # Compute Omega_H2_H for present fH2 and Alpha_H2_H if H2_H elastic collisions are included
             if H2_H_EL:
                 if debrief>1:
-                    print(pprompt+'Computing Omega_H2_H')
+                    print(prompt+'Computing Omega_H2_H')
                 for k in range(nx):
                     DeltaVx=(VxH2[k]-VxH[k])/ Vth
                     MagDeltaVx=np.maximum(np.abs(DeltaVx),DeltaVx_tol)
@@ -1266,33 +1267,45 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
 
         # Total Elastic scattering frequency
         Omega_EL = Omega_H2_P + Omega_H2_H + Omega_H2_H2
+        # print("Omega_EL", Omega_EL)
+        # input()
 
         # Total collision frequency
-        alpha_c = np.zeros((nvr,nvx,nx)).T
+        alpha_c = np.zeros((nvr,nvx,nx))
         if H2_HP_CX:
             for k in range(0, nx):
-                alpha_c[k] = alpha_cx[k]+Alpha_Loss[k]+Omega_EL[k]+gamma_wall[k]
+                alpha_c[:,:,k] = alpha_cx[:,:,k]+Alpha_Loss[k]+Omega_EL[k]+gamma_wall[:,:,k]
         else: 
             for k in range(0, nx):
-                alpha_c[k] = Alpha_Loss[k]+Omega_EL[k]+gamma_wall[k]
+                alpha_c[:,:,k] = Alpha_Loss[k]+Omega_EL[k]+gamma_wall[:,:,k]
+        # print("alpha_c", alpha_c.T)
+        # input()
 
         # Test x grid spacing based on Eq.(27) in notes
         if debrief > 1: 
             print(prompt, 'Testing x grid spacing')
-        Max_dx = np.zeros(nx) ; Max_dx[:] = 1.0E32
+        Max_dx = np.full(nx, 1.0E32)
         for k in range(0, nx) : 
             for j in range(i_p[0][0], nvx):
-                denom = alpha_c[k, j]
-                Max_dx[k] = np.minimum(Max_dx[k],np.min(2*vx[j]/denom)) 
+                denom = alpha_c[:,j,k]
+                Max_dx[k] = np.minimum(Max_dx[k], np.min(2*vx[j]/denom)) 
+        # print("Max_dx", Max_dx)
+        # input()
 
-        dx = shift(x, -1)-x
-        Max_dxL = Max_dx[0:nx-2] # not sure if this is the correct way to write this dont feel like checking now
-        Max_dxR = Max_dx[1:nx-1]
+        dx = np.roll(x,-1) - x
+        Max_dxL = Max_dx[0:nx-1]
+        Max_dxR = Max_dx[1:nx]
         Max_dx = np.minimum(Max_dxL, Max_dxR)
-        ilarge = np.argwhere(Max_dx < dx[0:nx-2])
+        ilarge = np.argwhere(Max_dx < dx[0:nx-1])
+        # print("dx", dx)
+        # print("Max_dxL", Max_dxL)
+        # print("Max_dxR", Max_dxR)
+        # print("Max_dx", Max_dx)
+        # print("ilarge", ilarge.size)
+        # input()
 
-        if np.argwhere(Max_dx < dx[0:nx-2]).shape[0] > 0:
-            print(prompt,'x mesh spacing is too large!')
+        if ilarge.size > 0:
+            print(prompt,'x mesh spacing is too large!') #Fix error formatting here
             debug = 1
             out = ''
             jj = 0
@@ -1307,59 +1320,77 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
             if jj > 0: 
                 print(out) 
             error = 1
-            return 
+            raise Exception("x mesh spacing is too large") 
         
         # Define parameters Ak, Bk, Ck, Dk, Fk, Gk
-        Ak = np.zeros((nvr,nvx,nx)).T
-        Bk = np.zeros((nvr,nvx,nx)).T
-        Ck = np.zeros((nvr,nvx,nx)).T
-        Dk = np.zeros((nvr,nvx,nx)).T
-        Fk = np.zeros((nvr,nvx,nx)).T
-        Gk = np.zeros((nvr,nvx,nx)).T
+        Ak = np.zeros((nvr,nvx,nx))
+        Bk = np.zeros((nvr,nvx,nx))
+        Ck = np.zeros((nvr,nvx,nx))
+        Dk = np.zeros((nvr,nvx,nx))
+        Fk = np.zeros((nvr,nvx,nx))
+        Gk = np.zeros((nvr,nvx,nx))
 
         for k in range(0, nx-1):
             for j in range(i_p[0][0], nvx): # double check some of the ranges in for statements I might have some typos
-                denom = 2*vx[j] + (x[k+1]-x[k]) * alpha_c[k+1,j]
-                Ak[k,j] = (2 * vx[j] - (x[k+1] - x[k]) * alpha_c[k,j])/denom
-                Bk[k,j] = (x[k+1] - x[k])/denom
-                Fk[k,j] = (x[k+1] - x[k]) * fw_hat[j] * (SH2[k+1] + SH2[k])/(Vth * denom)
+                denom = 2*vx[j] + (x[k+1] - x[k])*alpha_c[:,j,k+1]
+                Ak[:,j,k] = (2*vx[j] - (x[k+1] - x[k])*alpha_c[:,j,k])/denom
+                Bk[:,j,k] = (x[k+1] - x[k])/denom
+                Fk[:,j,k] = (x[k+1] - x[k])*fw_hat[:,j]*(SH2[k+1]+SH2[k])/(Vth*denom)
         for k in range(1, nx):
             for j in range(0, i_p[0][0]):
-                denom = -2 * vx[j] + (x[k]-x[k-1]) * alpha_c[k-1, j]
-                Ck[k,j] = (-2 * vx[j] - (x[k] - x[k -1]) * alpha_c[k,j]) / denom
-                Dk[k,j] = (x[k] - x[k-1])/denom
-                Gk[k,j] = (x[k] - x[k-1]) * fw_hat[j] * (SH2[k] + SH2[k -1])/(Vth * denom)
+                denom = -2*vx[j] + (x[k] - x[k-1])*alpha_c[:,j,k-1]
+                Ck[:,j,k] = (-2*vx[j] - (x[k] - x[k -1])*alpha_c[:,j,k])/denom
+                Dk[:,j,k] = (x[k] - x[k-1])/denom
+                Gk[:,j,k] = (x[k] - x[k-1])*fw_hat[:,j]*(SH2[k]+SH2[k-1])/(Vth*denom)
+        # print("Ak", Ak.T)
+        # print("Bk", Bk.T)
+        # print("Ck", Ck.T)
+        # print("Dk", Dk.T)
+        # print("Fk", Fk.T)
+        # print("Gk", Gk.T)
+        # input()
 
         # Compute first-flight (0th generation) neutral distribution function
-        Swall_sum = np.zeros((nvr,nvx,nx)).T
-        Beta_CX_sum = np.zeros((nvr,nvx,nx)).T
-        MH2_P_sum = np.zeros((nvr,nvx,nx)).T
-        MH2_H_sum = np.zeros((nvr,nvx,nx)).T
-        MH2_H2_sum = np.zeros((nvr,nvx,nx)).T
+        Swall_sum = np.zeros((nvr,nvx,nx))
+        Beta_CX_sum = np.zeros((nvr,nvx,nx))
+        MH2_P_sum = np.zeros((nvr,nvx,nx))
+        MH2_H_sum = np.zeros((nvr,nvx,nx))
+        MH2_H2_sum = np.zeros((nvr,nvx,nx))
         igen = 0
         if debrief > 0:
             print(prompt, 'Computing molecular neutral generation#', sval(igen))
-        fH2G[0, i_p,:] = fH2[0, i_p,:]
-        for k in range(0, nx - 1):
-            fH2G[k+1, i_p,:] = fH2G[k, i_p,:]*Ak[k,i_p,:]+Fk[k,i_p,:]
-        for k in range(nx - 1, 0, -1):
-            fH2G[k - 1, i_n,:] = fH2G[k, i_n,:] * Ck[k, i_n,:] + Gk[k, i_n,:]
+        fH2G[:,i_p,0] = fH2[:,i_p,0]
+        for k in range(0, nx-1):
+            fH2G[:,i_p,k+1] = fH2G[:,i_p,k]*Ak[:,i_p,k] + Fk[:,i_p,k]
+        for k in range(nx-1,0,-1):
+            fH2G[:,i_n,k-1] = fH2G[:,i_n,k]*Ck[:,i_n,k] + Gk[:,i_n,k]
+        # print("fH2G", fH2G.T)
+        # input()
+
         # Compute first-flight neutral density profile 
         for k in range(0, nx):
-            NH2G[igen, k] = np.sum(Vr2pidVr * np.dot(dVx,fH2G[k]))
-        if plot > 1:
-            fH21d = np.zeros((nvx, nx)).T
-            for k in range(0, nx - 1):
-                fH21d[k] = np.dot(Vr2pidVr, fH2G[k])
-            for i in range(0, nx-1):
-                plt.plot(vx, fH21d[i]) #I cant really tell if this is plotting the data rge same way that the idl version does
-            if debug > 0:
-                return 
+            NH2G[k, igen] = np.sum(Vr2pidVr*(fH2G[:,:,k] @ dVx))
+        # print("NH2G", NH2G.T)
+        # input()
+
+        # if plot > 1: #NOTE Implement Plotting Later
+        #     fH21d = np.zeros((nvx, nx)).T
+        #     for k in range(0, nx - 1):
+        #         fH21d[k] = np.dot(Vr2pidVr, fH2G[k])
+        #     for i in range(0, nx-1):
+        #         plt.plot(vx, fH21d[i]) #I cant really tell if this is plotting the data rge same way that the idl version does
+        #     if debug > 0:
+        #         return 
+
+
         # Set total molecular neutral distrobution function to first flight generation 
-        fH2 = copy.deepcopy(fH2G)
-        nH2 = NH2G[0]
+        fH2 = copy.copy(fH2G)
+        nH2 = NH2G[:,0]
+        # print("fH2", fH2.T)
+        # print("nH2", nH2)
+        # input()
         
-        fH2_done = 0 # I am not sure if this is correct because fH2_done is a function, but I'm not sure what the intention of the original IDL code was so I don't know how to change it - GG
+        #fH2_done = 0 # I am not sure if this is correct because fH2_done is a function, but I'm not sure what the intention of the original IDL code was so I don't know how to change it - GG
         
         def next_generation(igen, Swall_sum, Beta_CX_sum, MH2_P_sum, MH2_H_sum, MH2_H2_sum, fH2, nH2, Maxwell=Maxwell):
             if igen+1 > Max_Gen or fH2_generations==0: 
