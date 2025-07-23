@@ -1094,7 +1094,7 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
         # print("vr2_vx2", vr2_vx2)
         # print("v_v", v_v)
         # print("v_v2", v_v2)
-        # print("_SIG", _Sig) #NOTE First few values are off, but the rest are correct?
+        # print("_SIG", _Sig.T)
         # input()
 
         # Note : For viscosity, the cross section for D -> D is the same function of 
@@ -1104,7 +1104,7 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
         SIG_H2_H2 = np.zeros((nvr * nvx, nvr * nvx))
         SIG_H2_H2[:] = (Vr2pidVrdVx*((_Sig @ dTheta).reshape(Vr2pidVrdVx.shape, order='F'))).reshape(SIG_H2_H2.shape, order='F')
 
-        # print("SIG_H2_H2", SIG_H2_H2.T)
+        # print("SIG_H2_H2", SIG_H2_H2)
         # input()
 
         # SIG_H2_H2 is now vr' * sigma_H2_H2(v_v) * vr2_vx2 * v_v (intergated over theta) for all possible ([vr,vx],[vr',vx'])
@@ -1222,27 +1222,34 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
             if H2_P_EL or H2_H_EL or H2_H2_EL:
                 for k in range(0, nx):
                     VxH2[k] = Vth*np.sum(Vr2pidVr*(fH2[:,:,k] @ (vx*dVx))) / nH2[k]
-            print("VxH2", VxH2)
-            input()
+            # print("VxH2", VxH2)
+            # input()
             # compute Omega_H2_P for present fH2 and Alpha_H2_P if H2_P elastic collisions are included
             if H2_P_EL:
                 if debrief > 1:
                     print(prompt, 'Computing Omega_H2_P')
                 for k in range(0, nx):
-                    DeltaVx = (VxH2[k]-vxi[k]) / Vth
+                    DeltaVx = (VxH2[k] - vxi[k])/Vth
                     MagDeltaVx = np.maximum(np.abs(DeltaVx), DeltaVx_tol)
-                    DeltaVx = sign(DeltaVx) * MagDeltaVx
-                    Omega_H2_P[k] = np.sum(Vr2pidVr * (np.matmul(dVx,(Alpha_H2_P[k]*fH2[k]))))/(nH2[k]*DeltaVx) #Not sure if I indexed right its been a while
-                Omega_H2_P=np.maximum(Omega_H2_P, 0)
+                    DeltaVx = sign(DeltaVx)*MagDeltaVx
+                    Omega_H2_P[k] = np.sum(Vr2pidVr*(((Alpha_H2_P[:,:,k]*fH2[:,:,k]) @ dVx)))/(nH2[k]*DeltaVx)
+                Omega_H2_P =  np.maximum(Omega_H2_P, 0)
+                # print("Omega_H2_P", Omega_H2_P)
+                # input()
+
             # Compute Omega_H2_H for present fH2 and Alpha_H2_H if H2_H elastic collisions are included
-            if H2_H_EL:
+            if H2_H_EL: #NOTE Note Tested Yet
                 if debrief>1:
                     print(prompt+'Computing Omega_H2_H')
                 for k in range(nx):
-                    DeltaVx=(VxH2[k]-VxH[k])/ Vth
-                    MagDeltaVx=np.maximum(np.abs(DeltaVx),DeltaVx_tol)
-                    Omega_H2_H[k]=np.sum(Vr2pidVr*(np.matmul(dVx,Alpha_H2_H[k]*fH2[k]))/(nH2[k]*DeltaVx))
-                Omega_H2_H=np.maximum(Omega_H2_H,0)
+                    DeltaVx = (VxH2[k] - VxH[k])/Vth
+                    MagDeltaVx = np.maximum(np.abs(DeltaVx), DeltaVx_tol)
+                    DeltaVx = sign(DeltaVx)*MagDeltaVx
+                    Omega_H2_H[k] = np.sum(Vr2pidVr*((Alpha_H2_H[:,:,k]*fH2[:,:,k]) @ dVx)/(nH2[k]*DeltaVx))
+                Omega_H2_H = np.maximum(Omega_H2_H, 0)
+                # print("Omega_H2_H", Omega_H2_H)
+                # input()
+
             # Compute Omega_H2_H2 for present fH2 if H2_H2 elastic collisions are included
             if H2_H2_EL:
                 if debrief > 1:
@@ -1250,20 +1257,24 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
                 if np.sum(MH2_H2_sum) < 0:
                     for k in range(0, nx):
                         for i in range(0, nvr):
-                            vr2_2vx_ran2[i] = vr[i]**2 - 2 * (vx-VxH2[k]/Vth)**2 # I think vr is a 1D array but I am not entirely sure 
-                        Wperp_paraH2[k] = np.sum(Vr2pidVr * np.matmul(dVx,vr2_2vx_ran2*fH2[k]))/nH2[k]
+                            vr2_2vx_ran2[i,:] = vr[i]**2 - 2*(vx - VxH2[k]/Vth)**2
+                        Wperp_paraH2[k] = np.sum(Vr2pidVr*((vr2_2vx_ran2*fH2[:,:,k]) @ dVx))/nH2[k]
                 else:
                     for k in range(0, nx):
-                        M_fH2 = MH2_H2_sum[k]-fH2[k]
-                        Wperp_paraH2[k] = -np.sum(Vr2pidVr * np.matmul(dVx,vr2_2vx2_2D*M_fH2))/nH2[k]
+                        M_fH2 = MH2_H2_sum[:,:,k] - fH2[:,:,k]
+                        Wperp_paraH2[k] = -np.sum(Vr2pidVr*((vr2_2vx2_2D*M_fH2) @ dVx))/nH2[k]
+
                 for k in range(0, nx):
-                    Work[:] = fH2[k].reshape(Work.shape)
-                    Alpha_H2_H2[:] = np.dot(SIG_H2_H2, Work).reshape(Alpha_H2_H2.shape)
+                    Work[:] = fH2[:,:,k].reshape(Work.shape, order='F')
+                    Alpha_H2_H2[:] = (SIG_H2_H2 @ Work).reshape(Alpha_H2_H2.shape, order='F')
                     Wpp = Wperp_paraH2[k]
                     MagWpp = np.maximum(abs(Wpp), Wpp_tol)
-                    Wpp = np.sign(Wpp) * MagWpp  
-                    Omega_H2_H2[k] = np.sum(Vr2pidVr * np.matmul(dVx,Alpha_H2_H2 * Work.reshape(Alpha_H2_H2.shape)))/(nH2[k]*Wpp)
+                    Wpp = sign(Wpp)*MagWpp  
+                    Omega_H2_H2[k] = np.sum(Vr2pidVr*((Alpha_H2_H2*Work.reshape(Alpha_H2_H2.shape, order='F')) @ dVx))/(nH2[k]*Wpp)
+                    
                 Omega_H2_H2 = np.maximum(Omega_H2_H2, 0)
+                # print("Omega_H2_H2", Omega_H2_H2)
+                # input()
 
         # Total Elastic scattering frequency
         Omega_EL = Omega_H2_P + Omega_H2_H + Omega_H2_H2
@@ -1392,6 +1403,7 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
         
         #fH2_done = 0 # I am not sure if this is correct because fH2_done is a function, but I'm not sure what the intention of the original IDL code was so I don't know how to change it - GG
         
+# next_generation #########################################################################################################################################################################
         while True:
             if igen+1 > Max_Gen or fH2_generations==0: 
                 if debrief > 1:
@@ -1555,13 +1567,12 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
             if fH2_iterate and ((Delta_nH2G < 0.003 * Delta_nH2s) or (Delta_nH2G < truncate)):
                 # If fH2 'seed' is being iterated, then do another generation until the 'generation error'
                 # is less than 0.003 times the 'seed error' or is less than TRUNCATE
-                print("stuff")
-                input()
                 break
-            print("not stuff")
-            input()
             # If fH2 'seed' is NOT being iterated, then do another generation unitl the 'generation error'
             # is less than parameter TRUNCATE
+
+
+# fH2_done #########################################################################################################################################################################
 
         # if plot > 0: #NOTE Implement Plotting Later
         #     plt.figure()
@@ -1584,42 +1595,70 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
         # Compute H2 density profile
         for k in range(0, nx):
             nH2[k] = np.sum(Vr2pidVr*(fH2[:,:,k] @ dVx))
-        print("nH2", nH2)
-        input()
+        # print("nH2", nH2)
+        # input()
 
         # GammaxH2 - particle flux in x direction
         for k in range(0, nx):
-            GammaxH2[k] = Vth * np.sum(Vr2pidVr * np.matmul(vx * dVx, fH2[k,:]))
+            GammaxH2[k] = Vth*np.sum(Vr2pidVr*(fH2[:,:,k] @ (vx*dVx)))
+        # print("GammaxH2", GammaxH2)
+        # input()
+
         # VxH2 - x velocity
         VxH2 = GammaxH2 / nH2
         _VxH2 = VxH2 / Vth 
+        # print("VxH2", VxH2)
+        # print("_VxH2", _VxH2)
+        # input()
 
         # magnitude of random velocity at each mesh point 
-        vr2vx2_ran = np.zeros((nvr, nvx, nx)).T
-        for i in range(0, nvr ):
-            vr2vx2_ran[k, :, i] = vr[i]**2 + (vx - _VxH2[k])**2
-        # pH2 - pressure 
-        for k in range(0, nx ):
-            pH2[k] = (2 * mu * CONST.H_MASS) * Vth2 * np.sum(Vr2pidVr * np.dot(dVx, vr2vx2_ran[k] * fH2[k])) / (3 * CONST.Q)
-        #TH2 - temperature 
-        TH2 = pH2 / nH2   
-        # Compute NuDis - Dissociation frequency 
+        vr2vx2_ran = np.zeros((nvr, nvx, nx))
+        for i in range(0, nvr):
+            for k in range(0, nx):
+                vr2vx2_ran[i,:,k] = vr[i]**2 + (vx - _VxH2[k])**2
+        # print("vr2vx2_ran", vr2vx2_ran.T)
+        # input()
 
-        NuDis = n * np.sum(sigv[7:10], 0) # the indexing could be wrong here 
+        # pH2 - pressure 
+        for k in range(0, nx):
+            pH2[k] = ((2*mu*CONST.H_MASS)*Vth2*np.sum(Vr2pidVr*((vr2vx2_ran[:,:,k]*fH2[:,:,k]) @ dVx)))/(3*CONST.Q)
+        # print("pH2", pH2)
+        # input()
+
+        #TH2 - temperature 
+        TH2 = pH2/nH2
+        # print("TH2", TH2)
+        # input()
+
+        # Compute NuDis - Dissociation frequency 
+        NuDis = n*np.sum(sigv[:,7:11], 1) # the indexing could be wrong here
+        # print("NuDis", NuDis)
+        # input()
+        
         # Compute NuE (assume np=ne) - Energy equilibration frequency H(+) <-> H2(+)
-        NuE = 7.7e-7 * n * 1.0e-6 / np.sqrt(mu) * Ti**1.5 
+        NuE = (7.7e-7*n*1.0e-6)/(np.sqrt(mu)*(Ti**1.5)) 
+        # print("NuE", NuE)
+        # input()
+        
         # Compute H2(+) density profile
-        nHP = nH2 * n * sigv[1, :] / (NuDis + NuLoss)
+        nHP = (nH2*n*sigv[:,1])/(NuDis + NuLoss)
+        # print("nHP", nHP)
+        # input()
 
         # Compute THP - temperature of molecular ions
-        THP = Ti * NuE / (NuE + NuDis + NuLoss)
+        THP = (Ti*NuE)/(NuE + NuDis + NuLoss)
+        # print("THP", THP)
+        # input()
+        
         if fH2_iterate:
             # Compute 'seed error': Delta_nH2s=(|nH2s-nH2|)/max(nH2) 
             # If Delta_nH2s is greater than 10*truncate then iterate fH2
 
-            Delta_nH2s = np.max(np.abs(nH2s- nH2)) / np.max(nH2)
-            if Delta_nH2s > 10 * truncate:
-                do_fH2_iterate=True # not sure if this is correct 
+            Delta_nH2s = np.max(np.abs(nH2s - nH2))/np.max(nH2)
+            if Delta_nH2s > 10*truncate:
+                do_fH2_iterate = True # not sure if this is correct
+    print("Delta_nH2s", Delta_nH2s)
+    input() 
     
     # Update Swall_sum using last generation
     Swall = np.zeros((nvr, nvx, nx)).T
