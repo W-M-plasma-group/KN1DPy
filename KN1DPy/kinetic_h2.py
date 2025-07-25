@@ -1494,12 +1494,11 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
                     # print("Maxwell", Maxwell.T)
                     # input()
 
-                    for k in range(0, nx ):
+                    for k in range(0, nx):
                         MH2_P[:,:,k] = Maxwell[:,:,k]*NH2G[k,igen-1]
                         OmegaM[:,:,k] = OmegaM[:,:,k] + Omega_H2_P[k]*MH2_P[:,:,k]
                     MH2_P_sum = MH2_P_sum + MH2_P
                     # print("MH2_P_sum", MH2_P_sum.T)
-                    # print("OmegaM", OmegaM.T)
                     # input()
 
                 if H2_H_EL: #NOTE Not Tested Yet
@@ -1688,65 +1687,75 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
                 Work[:] = fH2G[:,:,k]
                 Beta_CX[:,:,k] = nHP[k]*fHp_hat[:,:,k]*(SIG_CX @ Work)
         Beta_CX_sum = Beta_CX_sum + Beta_CX
-    print("Beta_CX", Beta_CX.T)
-    print("Beta_CX_sum", Beta_CX_sum.T)
-    input()
+    # print("Beta_CX", Beta_CX.T)
+    # print("Beta_CX_sum", Beta_CX_sum.T)
+    # input()
 
     # Update MH2_*_sum using last generation
-    MH2_H2 = np.zeros((nvr,nvx,nx)).T
-    MH2_P = np.zeros((nvr,nvx,nx)).T      
-    MH2_H = np.zeros((nvr,nvx,nx)).T
-    OmegaM = np.zeros((nvr,nvx,nx)).T
-    if H2_H2_EL or H2_P_EL or H2_H2_EL: 
+    MH2_H2 = np.zeros((nvr,nvx,nx))
+    MH2_P = np.zeros((nvr,nvx,nx))
+    MH2_H = np.zeros((nvr,nvx,nx))
+    OmegaM = np.zeros((nvr,nvx,nx))
+    if H2_H2_EL or H2_P_EL or H2_H_EL: 
         # Compute VxH2G, TH2G
-        for k in range( 0, nx - 1):
-            VxH2G[k] = Vth * np.sum(Vr2pidVr * np.dot(vx * dVx, fH2G[k])) / NH2G[igen, k]
-            for i in range(0, nvr - 1):
-                vr2vx2_ran2[:, i] = vr[i]**2 + (vx - VxH2G[k]/Vth)**2
-            TH2G = (2 * mu * CONST.H_MASS) * Vth2 * np.sum(Vr2pidVr * np.dot( dVx, vr2vx2_ran2 * fH2G[k])) / (3 * CONST.Q * NH2G[igen, k])
+        for k in range(0, nx):
+            VxH2G[k] = Vth*np.sum(Vr2pidVr*(fH2G[:,:,k] @ (vx*dVx)))/NH2G[k,igen]
+            for i in range(0, nvr):
+                vr2vx2_ran2[i,:] = vr[i]**2 + (vx - VxH2G[k]/Vth)**2
+            TH2G[k] = (2*mu*CONST.H_MASS)*Vth2*np.sum(Vr2pidVr*((vr2vx2_ran2*fH2G[:,:,k]) @ dVx))/(3*CONST.Q*NH2G[k,igen])
+        # print("TH2G", TH2G)
+        # input()
+
         if H2_H2_EL:
             if debrief > 1: 
                 print(prompt, 'Computing MH2_H2')
             # Compute MH2_H2
             vx_shift = VxH2G
-            Tmaxwell = np.full(nx, TH2G) # this is only temporary TH2G should be an array but because of the issues with nh2 it is not right now
+            Tmaxwell = np.copy(TH2G)
             mol = 2
-            Maxwell=create_shifted_maxwellian_include(vr,vx,Tnorm,vx_shift,Tmaxwell,shifted_Maxwellian_debug,mu,mol,
+            Maxwell = create_shifted_maxwellian_include(vr,vx,Tnorm,vx_shift,Tmaxwell,shifted_Maxwellian_debug,mu,mol,
                                       nx,nvx,nvr,Vth,Vth2,Maxwell,vr2vx2_ran2,
                                       Vr2pidVr,dVx,vol,Vth_DeltaVx,Vx_DeltaVx,Vr_DeltaVr,vr2_2vx2_2D,jpa,jpb,jna,jnb)
-            for k in range(0, nx-1):
-                MH2_H2[k] = Maxwell[k] * NH2G[igen, k]
-                OmegaM[k] = OmegaM[k] + Omega_H2_H2[k] * MH2_H2[k]
+            for k in range(0, nx):
+                MH2_H2[:,:,k] = Maxwell[:,:,k]*NH2G[k,igen]
+                OmegaM[:,:,k] = OmegaM[:,:,k] + Omega_H2_H2[k]*MH2_H2[:,:,k]
             MH2_H2_sum = MH2_H2_sum + MH2_H2
+            # print("MH2_H2_sum", MH2_H2_sum.T)
+            # input()
+
         if H2_P_EL:
             if debrief > 1:
                 print(prompt, 'Computing MH2_P')
-                # Compute MH2_P
-                vx_shift = (2 * VxH2G + vxi) / 3
-                Tmaxwell = TH2G + (4/9) * (Ti - TH2G + mu * CONST.H_MASS * (vxi - VxH2G)**2 / (6 * CONST.Q))
-                mol = 2
-                Maxwell=create_shifted_maxwellian_include(vr,vx,Tnorm,vx_shift,Tmaxwell,shifted_Maxwellian_debug,mu,mol,
-                                      nx,nvx,nvr,Vth,Vth2,Maxwell,vr2vx2_ran2,
-                                      Vr2pidVr,dVx,vol,Vth_DeltaVx,Vx_DeltaVx,Vr_DeltaVr,vr2_2vx2_2D,jpa,jpb,jna,jnb)
-                for k in range(0, nx - 1):
-                    MH2_P[k] = Maxwell[k] * NH2G[igen, k]
-                    OmegaM[k] = OmegaM[k] + Omega_H2_P[k] * MH2_P[k]
-                MH2_P_sum = MH2_P_sum + MH2_P
-            if H2_H_EL:
+            # Compute MH2_P
+            vx_shift = (2*VxH2G + vxi)/3
+            Tmaxwell = TH2G + (4/9)*(Ti - TH2G + mu*CONST.H_MASS*((vxi - VxH2G)**2)/(6*CONST.Q))
+            mol = 2
+            Maxwell = create_shifted_maxwellian_include(vr,vx,Tnorm,vx_shift,Tmaxwell,shifted_Maxwellian_debug,mu,mol,
+                                    nx,nvx,nvr,Vth,Vth2,Maxwell,vr2vx2_ran2,
+                                    Vr2pidVr,dVx,vol,Vth_DeltaVx,Vx_DeltaVx,Vr_DeltaVr,vr2_2vx2_2D,jpa,jpb,jna,jnb)
+            for k in range(0, nx):
+                MH2_P[:,:,k] = Maxwell[:,:,k]*NH2G[k,igen]
+                OmegaM[:,:,k] = OmegaM[:,:,k] + Omega_H2_P[k]*MH2_P[:,:,k]
+            MH2_P_sum = MH2_P_sum + MH2_P
+            # print("MH2_P_sum", MH2_P_sum.T)
+            # input()
+
+            if H2_H_EL: #NOTE Not Tested Yet
                 if debrief > 1:
                     print(prompt, 'Computing MH2_H')
-            # Compute MH2_H
-            vx_shift = (2 * VxH2G * VxH) / 3
-            Tmaxwell = TH2G + (4/9) * (TH - TH2G + mu * CONST.H_MASS *(VxH - VxH2G)**2 / (6 * CONST.Q))
-            mol = 2
-
-            Maxwell=create_shifted_maxwellian_include(vr,vx,Tnorm,vx_shift,Tmaxwell,shifted_Maxwellian_debug,mu,mol,
-                                      nx,nvx,nvr,Vth,Vth2,Maxwell,vr2vx2_ran2,
-                                      Vr2pidVr,dVx,vol,Vth_DeltaVx,Vx_DeltaVx,Vr_DeltaVr,vr2_2vx2_2D,jpa,jpb,jna,jnb)
-            for k in range(0, nx - 1):
-                MH2_H[k] = Maxwell[k] * NH2G[igen, k]
-                OmegaM[k] = OmegaM[k] + Omega_H2_H[k] * MH2_H[k]
-            MH2_H_sum = MH2_H_sum + MH2_H
+                # Compute MH2_H
+                vx_shift = (2*VxH2G + VxH)/3
+                Tmaxwell = TH2G + (4/9)*(TH - TH2G + mu*CONST.H_MASS*((VxH - VxH2G)**2)/(6*CONST.Q))
+                mol = 2
+                Maxwell=create_shifted_maxwellian_include(vr,vx,Tnorm,vx_shift,Tmaxwell,shifted_Maxwellian_debug,mu,mol,
+                                        nx,nvx,nvr,Vth,Vth2,Maxwell,vr2vx2_ran2,
+                                        Vr2pidVr,dVx,vol,Vth_DeltaVx,Vx_DeltaVx,Vr_DeltaVr,vr2_2vx2_2D,jpa,jpb,jna,jnb)
+                for k in range(0, nx):
+                    MH2_H[:,:,k] = Maxwell[:,:,k]*NH2G[k,igen]
+                    OmegaM[:,:,k] = OmegaM[:,:,k] + Omega_H2_H[k]*MH2_H[:,:,k]
+                MH2_H_sum = MH2_H_sum + MH2_H
+                print("MH2_H_sum", MH2_H_sum.T)
+                input()
         
      # Compute remaining moments
     # piH2_xx
