@@ -1181,8 +1181,6 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
                 alpha_cx = sigmav_cx_hh(THP_mu, EH2_P)/Vth
                 for k in range(0, nx):
                     alpha_cx[:,:,k] = alpha_cx[:,:,k]*nHP[k]
-                # print("alpha_cx", alpha_cx)
-                # input()
             else:
                 # Option (A): Compute SigmaV_CX from sigma directly via SIG_CX
                 alpha_cx = np.zeros((nvr, nvx, nx))
@@ -1195,6 +1193,8 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
                         alpha_cx_test[:,:,k] = alpha_cx_test[:,:,k]*nHP[k]
                         print('Compare alpha_cx and alpha_cx_test')
                         input()
+            # print("alpha_cx", alpha_cx.T)
+            # input()
 
         # Compute Alpha_H2_P for present Ti and ni (optionally correcting for nHP), 
         # if it is needed and has not already been computed with the present parameter
@@ -1657,32 +1657,40 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
             Delta_nH2s = np.max(np.abs(nH2s - nH2))/np.max(nH2)
             if Delta_nH2s > 10*truncate:
                 do_fH2_iterate = True # not sure if this is correct
-    print("Delta_nH2s", Delta_nH2s)
-    input() 
+    # print("Delta_nH2s", Delta_nH2s)
+    # input() 
     
     # Update Swall_sum using last generation
-    Swall = np.zeros((nvr, nvx, nx)).T
+    Swall = np.zeros((nvr, nvx, nx))
     if np.sum(gamma_wall) > 0:
-        for k in range(0, nx - 1):
-            Swall[k] = fw_hat * np.sum(Vr2pidVr * np.dot(dVx, gamma_wall[k, :] * fH2G[k, :]))
+        for k in range(0, nx):
+            Swall[:,:,k] = fw_hat * np.sum(Vr2pidVr*((gamma_wall[:,:,k]*fH2G[:,:,k]) @ dVx))
             Swall_sum = Swall_sum + Swall 
+    # print("Swall", Swall.T)
+    # print("Swall_sum", Swall_sum.T)
+    # input()
     
     # Update Beta_CX_sum using last generation
-    Beta_CX = np.zeros((nvr, nvx, nx)).T
+    Beta_CX = np.zeros((nvr, nvx, nx))
     if H2_HP_CX:
         if debrief > 1:
             print(prompt, 'Computing Beta_CX')
         if Simple_CX:
             # Option (B): Compute charge exchange source with assumption that CX source neutrals have
             # molecular ion distribution function
-            for k in range(0, nx - 1):
-                Beta_CX[k, :] = fHp_hat[k, :] * np.sum(Vr2pidVr * np.dot(dVx, alpha_cx[k] * fH2G[k]))
+            for k in range(0, nx):
+                Beta_CX[:,:,k] = fHp_hat[:,:,k]*np.sum(Vr2pidVr*(alpha_cx[:,:,k]*fH2G[:,:,k] @ dVx))
+                # print((alpha_cx[:,:,k]*fH2G[:,:,k] @ dVx).T)
+                # input()
         else:
             # Option (A): Compute charge exchange source using fH2 and vr x sigma x v_v at each velocity mesh point
-            for k in range(0, nx - 1):
-                Work[:] = fH2G[k]
-                Beta_CX[k] = nHP[k] * fHp_hat[k] * np.dot(SIG_CX, Work)
+            for k in range(0, nx):
+                Work[:] = fH2G[:,:,k]
+                Beta_CX[:,:,k] = nHP[k]*fHp_hat[:,:,k]*(SIG_CX @ Work)
         Beta_CX_sum = Beta_CX_sum + Beta_CX
+    print("Beta_CX", Beta_CX.T)
+    print("Beta_CX_sum", Beta_CX_sum.T)
+    input()
 
     # Update MH2_*_sum using last generation
     MH2_H2 = np.zeros((nvr,nvx,nx)).T

@@ -11,16 +11,20 @@ def sigmav_cx_hh(T,E):
     #   E   -   Molecular neutral [ion] mono-energy (ev); Scalar, list, or np.array
 
     #   Converts Scalar or list inputs into np.array
-  if type(T)!=np.ndarray:
-    T=np.array(T)
-  if type(E)!=np.ndarray:
-    E=np.array(E)
+  if type(T) != np.ndarray:
+    T = np.array(T)
+  if type(E) != np.ndarray:
+    E = np.array(E)
 
-  if T.size!=E.size:
+  if T.size != E.size:
     raise Exception("number of elements of T and E are different!")
 
-  alpha=np.zeros((9,9))
-  alpha[:,0:3]=[[ -2.013143517466e+01,	  1.875197914224e-01,	   6.865479604288e-02],
+  alpha = np.zeros((9,9))
+
+  #alpha indexing is reversed to match idl format
+  #NOTE consider reversing once translation is complete
+  alpha[:,0:3] = \
+      [[ -2.013143517466e+01,	  1.875197914224e-01,	   6.865479604288e-02],
       [ 2.643458086299e-01,    -1.177247941077e-01,    -6.758032286178e-03],
       [ 7.295645990688e-02,	    6.053418575149e-03,    -1.068656224307e-02],
       [-1.022454343675e-02,     7.350954380641e-03,     6.814213275702e-04],
@@ -29,7 +33,9 @@ def sigmav_cx_hh(T,E):
       [-3.388853048483e-05,     4.426148343648e-05,     9.992317920676e-06],
       [-6.418225985394e-06,    -3.652063962019e-06,     1.351312819077e-07],
       [ 3.555592819527e-07,     1.012701361110e-07,    -1.993091213299e-08]]
-  alpha[:,3:6]=[[ 6.246595384100e-03,    -5.017891372102e-03,    -3.907644829287e-04],
+  
+  alpha[:,3:6] = \
+      [[ 6.246595384100e-03,    -5.017891372102e-03,    -3.907644829287e-04],
       [ 8.585003721992e-03,    -3.261863407467e-04,    -3.322528542186e-04],
       [-9.371235639464e-04,     9.735708783528e-04,    -9.933049259228e-05],
       [-8.156435157073e-04,     2.903991825737e-05,     3.223596225946e-05],
@@ -38,7 +44,9 @@ def sigmav_cx_hh(T,E):
       [-5.333970870280e-06,    -2.999105886511e-07,     2.275612517364e-07],
       [ 4.285396408056e-07,    -7.184302986068e-08,    -3.265552364687e-10],
       [-1.131561847140e-08,     3.678869095972e-09,    -3.639982258214e-10]]
-  alpha[:,6:9]=[[ 2.786239030986e-04,    -2.942576591004e-05,     9.352275354690e-07],
+  
+  alpha[:,6:9] = \
+      [[ 2.786239030986e-04,    -2.942576591004e-05,     9.352275354690e-07],
       [ 6.015471216449e-05,    -4.039435357369e-06,     9.730479674748e-08],
       [-6.786246802840e-06,     1.438327767305e-06,    -5.530742535057e-08],
       [-5.199055182831e-06,     2.852443990256e-07,    -4.825480212106e-09],
@@ -49,16 +57,17 @@ def sigmav_cx_hh(T,E):
       [ 2.056662091085e-11,    -1.804254277469e-12,     9.042973335167e-14]]
 
     #   Limits values to >= 0.1 and <= 2.01e4
-  E2=np.maximum(E,.1)
-  Ee=np.minimum(E2,2.01e4)
-  T2=np.maximum(T,.1)
-  T2=np.minimum(T2,2.01e4)
-  alogE=np.log(E2)
-  alogT=np.log(T2)
+  E2 = np.maximum(E, 0.1)
+  E2 = np.minimum(E2, 2.01e4)
+  T2 = np.maximum(T, 0.1)
+  T2 = np.minimum(T2, 2.01e4)
+  alogE = np.log(E2)
+  alogT = np.log(T2)
 
-  result=np.zeros(E2.shape)
-  for i in range(9):
-    for j in range(9):
-      result=result+alpha[j,i]*(alogE**j)*(alogT**i)
+  result = np.zeros(E2.shape)
+  for n in range(9):
+    for m in range(9):
+      #using alpha[m,n] instead of alpha[n,m] since alpha is reversed
+      result = result + alpha[m,n]*(alogE**n)*(alogT**m)
 
-  return np.e**result*1e-6
+  return np.exp(result)*1e-6
