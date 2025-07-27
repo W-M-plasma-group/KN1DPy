@@ -573,6 +573,8 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
 
     #NOTE Removed Plotting formatting, bring back once the program actually works
 
+    #NOTE Fix how these are set up, temporary fix included later, but this is causing problems
+    # Creates an array with shape (N X 1) instead of just an array of length N
     i_n = np.argwhere(vx < 0 ) # fixed typo - GG
     count = np.size(i_n)
     if count < 1:
@@ -1758,57 +1760,95 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
                 input()
         
      # Compute remaining moments
+     #NOTE Why are these seperate loops?
     # piH2_xx
-    for k in range(0, nx - 1):
-        piH2_xx[k] = (2 * mu * CONST.H_MASS) * Vth2 * np.sum(Vr2pidVr * np.dot(dVx * (vx - _VxH2[k])**2, fH2[k])) / CONST.Q - pH2[k]
+    for k in range(0, nx):
+        piH2_xx[k] = (((2*mu*CONST.H_MASS)*Vth2*np.sum(Vr2pidVr*(fH2[:,:,k] @ (dVx*(vx - _VxH2[k])**2))))/CONST.Q) - pH2[k]
     # piH2_yy
-    for k in range(0, nx - 1):
-        piH2_yy[k] = (2 * mu * CONST.H_MASS) * Vth2 * 0.5 * np.sum((Vr2pidVr * vr**2) * np.dot(dVx, fH2[k])) / CONST.Q - pH2[k]
+    for k in range(0, nx):
+        piH2_yy[k] = (((2*mu*CONST.H_MASS)*Vth2*0.5*np.sum((Vr2pidVr*(vr**2))*(fH2[:,:,k] @ dVx)))/CONST.Q) - pH2[k]
     # piH2_zz 
-    piH2_zz = piH2_yy 
+    piH2_zz = copy.copy(piH2_yy) 
     # qxH2
-    for k in range(0, nx - 1):
-        qxH2[k] = 0.5 * (2 * mu * CONST.H_MASS) * Vth3 * np.sum(Vr2pidVr * np.dot(dVx * (vx - _VxH2[k]), vr2vx2_ran[k] * fH2[k]))
+    for k in range(0, nx):
+        qxH2[k] = 0.5*(2*mu*CONST.H_MASS)*Vth3*np.sum(Vr2pidVr*((vr2vx2_ran[:,:,k]*fH2[:,:,k]) @ (dVx*(vx - _VxH2[k]))))
+    # print("piH2_xx", piH2_xx)
+    # print("piH2_yy", piH2_yy)
+    # print("qxH2", qxH2)
+    # input()
     
     # C = RHS of Boltzman equation for total fH2
-    for k in range(0, nx - 1):
-        C = Vth * (fw_hat[:,:] * SH2[k] / Vth + Swall_sum[k] + Beta_CX_sum[k] - alpha_c[k] * fH2[k] + \
-                   Omega_H2_P[k] * MH2_P_sum[k] + Omega_H2_H[k] * MH2_H_sum[k] + Omega_H2_H2[k] * MH2_H2_sum[k])
-        QH2[k] = 0.5 * (2 * mu * CONST.H_MASS) * Vth * np.sum(Vr2pidVr * np.dot(dVx, vr2vx2_ran[k] * C))
-        RxH2[k] = (2 * mu * CONST.H_MASS) * Vth * np.sum(Vr2pidVr * np.dot(dVx * (vx - _VxH2[k]), C))
-        Sloss[k] = np.sum(Vr2pidVr * np.dot(dVx, C)) + SH2[k]
-        WallH2[k] = np.sum(Vr2pidVr * np.dot(dVx, gamma_wall[k] * fH2[k]))
+    for k in range(0, nx):
+        C = Vth*((fw_hat[:,:]*SH2[k]/Vth) + Swall_sum[:,:,k] + Beta_CX_sum[:,:,k] - (alpha_c[:,:,k]*fH2[:,:,k]) + \
+                   (Omega_H2_P[k]*MH2_P_sum[:,:,k]) + (Omega_H2_H[k]*MH2_H_sum[:,:,k]) + (Omega_H2_H2[k]*MH2_H2_sum[:,:,k]))
+        # print("C", C.T)
+        # input()
+        QH2[k] = 0.5*(2*mu*CONST.H_MASS)*Vth2*np.sum(Vr2pidVr*((vr2vx2_ran[:,:,k]*C) @ dVx))
+        RxH2[k] = (2*mu*CONST.H_MASS)*Vth*np.sum(Vr2pidVr*(C @ (dVx*(vx - _VxH2[k]))))
+        Sloss[k] = -np.sum(Vr2pidVr*(C @ dVx)) + SH2[k]
+        WallH2[k] = np.sum(Vr2pidVr*((gamma_wall[:,:,k]*fH2[:,:,k]) @ dVx))
+
         if H2_H_EL:
-            CH2_H = Vth * Omega_H2_H[k] * (MH2_H_sum[k] - fH2[k])
-            RxH_H2[k] = (2 * mu * CONST.H_MASS) * Vth * np.sum(Vr2pidVr * np.dot(dVx * (vx - _VxH2[k]), CH2_H))
-            EH_H2[k] = 0.5 * (2 * mu * CONST.H_MASS) * Vth2 * np.sum(Vr2pidVr * np.dot(dVx, vr2vx2[k] * CH2_H))
+            CH2_H = Vth*Omega_H2_H[k]*(MH2_H_sum[:,:,k] - fH2[:,:,k])
+            RxH_H2[k] = (2*mu*CONST.H_MASS)*Vth*np.sum(Vr2pidVr*(CH2_H @ (dVx*(vx - _VxH2[k]))))
+            EH_H2[k] = 0.5*(2*mu*CONST.H_MASS)*Vth2*np.sum(Vr2pidVr*((vr2vx2[:,:,k]*CH2_H) @ dVx))
+
         if H2_P_EL:
-            CH2_P = Vth * Omega_H2_P[k] * (MH2_P_sum[k] - fH2[k])
-            RxP_H2[k] = (2 * mu *CONST.H_MASS) * Vth * np.sum(Vr2pidVr * np.dot( dVx * (vx - _VxH2[k]), CH2_P))
-            EP_H2[k] = 0.5 * (2 *mu * CONST.H_MASS) * Vth2 * np.sum(Vr2pidVr * np.dot(dVx, vr2vx2[k] * CH2_P))
+            CH2_P = Vth*Omega_H2_P[k]*(MH2_P_sum[:,:,k] - fH2[:,:,k])
+            RxP_H2[k] = (2*mu*CONST.H_MASS)*Vth*np.sum(Vr2pidVr*(CH2_P @ (dVx*(vx - _VxH2[k]))))
+            EP_H2[k] = 0.5*(2*mu*CONST.H_MASS)*Vth2*np.sum(Vr2pidVr*((vr2vx2[:,:,k]*CH2_P) @ dVx))
+
         if H2_HP_CX:
-            CH2_HP_CX = Vth * (Beta_CX_sum[k] - alpha_cx[k] * fH2[k])
-            RxH2CX[k] = (2 * mu * CONST.H_MASS) * Vth * np.sum(Vr2pidVr * np.dot(dVx * (vx - _VxH2[k]), CH2_HP_CX))
-            EH2CX[k] = 0.5 * (2 * mu * CONST.H_MASS) * np.sum(Vr2pidVr * np.dot(dVx, vr2vx2[k] * CH2_HP_CX))
-        CW_H2 = Vth * (Swall_sum[k] - gamma_wall[k] * fH2[k])
-        RxW_H2[k] = (2 * mu * CONST.H_MASS) * Vth * np.sum(Vr2pidVr * np.dot(dVx * (vx - _VxH2[k]), CW_H2))
-        EW_H2[k] = 0.5 * (2 * mu * CONST.H_MASS) * Vth2 * np.sum(Vr2pidVr * np.dot(dVx, vr2vx2[k] * CW_H2))
+            CH2_HP_CX = Vth*(Beta_CX_sum[:,:,k] - alpha_cx[:,:,k]*fH2[:,:,k])
+            RxH2CX[k] = (2*mu*CONST.H_MASS)*Vth*np.sum(Vr2pidVr*(CH2_HP_CX @ (dVx*(vx - _VxH2[k]))))
+            EH2CX[k] = 0.5*(2*mu*CONST.H_MASS)*Vth2*np.sum(Vr2pidVr*((vr2vx2[:,:,k]*CH2_HP_CX) @ dVx))
+
+        CW_H2 = Vth*(Swall_sum[:,:,k] - gamma_wall[:,:,k]*fH2[:,:,k])
+        RxW_H2[k] = (2*mu*CONST.H_MASS)*Vth*np.sum(Vr2pidVr*(CW_H2 @ (dVx*(vx - _VxH2[k]))))
+        EW_H2[k] = 0.5*(2*mu*CONST.H_MASS)*Vth2*np.sum(Vr2pidVr*((vr2vx2[:,:,k]*CW_H2) @ dVx))
+
         if H2_H2_EL:
-            CH2_H2 = Vth * Omega_H2_H2[k] * (MH2_H2_sum[k] - fH2[k])
-            for i in range(0, nvr - 1):
-                vr2_2vx_ran2[:, i] = vr[i]**2 - 2 * (vx - _VxH2[k])**2
-                Epara_PerpH2_H2[k] = - 0.5 * (2 * mu * CONST.H_MASS) * Vth2 * np.sum(Vr2pidVr * np.dot( dVx, vr2_2vx_ran2 * CH2_H2))
+            CH2_H2 = Vth*Omega_H2_H2[k]*(MH2_H2_sum[:,:,k] - fH2[:,:,k])
+            for i in range(0, nvr):
+                vr2_2vx_ran2[i,:] = vr[i]**2 - 2*((vx - _VxH2[k])**2)
+            Epara_PerpH2_H2[k] = -0.5*(2*mu*CONST.H_MASS)*Vth2*np.sum(Vr2pidVr*((vr2_2vx_ran2*CH2_H2) @ dVx))
+    # print("QH2", QH2)
+    # print("RxH2", RxH2)
+    # print("Sloss", Sloss)
+    # print("WallH2", WallH2)
+    # input()
+    # print("RxH_H2", RxH_H2)
+    # print("EH_H2", EH_H2)
+    # input()
+    # print("RxP_H2", RxP_H2)
+    # print("EP_H2", EP_H2)
+    # input()
+    # print("RxH2CX", RxH2CX)
+    # print("EH2CX", EH2CX)
+    # input()
+    # print("RxW_H2", RxW_H2)
+    # print("EW_H2", EW_H2)
+    # input()
+    # print("Epara_PerpH2_H2", Epara_PerpH2_H2)
+    # input()
 
     # qxH2_total
-    qxH2_total = (0.5 * nH2 * (2 *mu * CONST.H_MASS) * VxH2 * VxH2 + 2.5 * pH2 * CONST.Q) * VxH2 + CONST.Q * piH2_xx * VxH2 + qxH2
+    qxH2_total = (0.5*nH2*(2*mu*CONST.H_MASS)*VxH2*VxH2 + 2.5*pH2*CONST.Q)*VxH2 + CONST.Q*piH2_xx*VxH2 + qxH2
+    # print("qxH2_total", qxH2_total)
+    # input()
+
     # QH2_total
-    QH2_total = QH2_total + QH2 + RxH2 * VxH2 - 0.5 * (2 * mu * CONST.H_MASS) * (Sloss - SH2) * VxH2 * VxH2
-    # Albedo 
-    AlbedoH2 = 0.0 
-    gammax_plus = Vth * np.sum(Vr2pidVr * np.dot(fH2[0, i_p], vx[i_p] * dVx[i_p]))
-    gammax_minus = Vth * np.sum(Vr2pidVr * np.dot(fH2[0, i_n], vx[i_n]) * dVx[i_n])
+    QH2_total = QH2 + RxH2*VxH2 - 0.5*(2*mu*CONST.H_MASS)*(Sloss - SH2)*VxH2*VxH2
+    # print("QH2_total", QH2_total)
+    # input()
+
+    # Albedo
+    gammax_plus = Vth*np.sum(Vr2pidVr*(fH2[:,i_p[:,0],0] @ (vx[i_p[:,0]]*dVx[i_p[:,0]]))) #NOTE Had to reference i_p and i_n in a weird way, fix how they are called in the first place
+    gammax_minus = Vth*np.sum(Vr2pidVr*(fH2[:,i_n[:,0],0] @ (vx[i_n[:,0]]*dVx[i_n[:,0]]))) #This is awful and should not be allowed to remain
     if np.abs(gammax_plus) > 0:
         AlbedoH2 = -gammax_minus/gammax_plus
+    # print("AlbedoH2", AlbedoH2)
+    # input()
 
     # Compute Mesh Errors
     mesh_error = np.zeros((nvr,nvx,nx)).T
