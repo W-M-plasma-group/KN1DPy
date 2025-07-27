@@ -24,7 +24,7 @@ print("Beginning KN1D")
 start = time.time()
 results = kn1d(sav_data['x'], sav_data['x_lim'], sav_data['x_sep'], sav_data['p_wall'], sav_data['mu'], sav_data['t_i'], 
                sav_data['t_e'], sav_data['n_e'], sav_data['vx'], sav_data['lc'], sav_data['d_pipe'], 
-               pause = 1, refine = 1, debrief = 2, Hdebrief = 2, H2debrief = 2, debug = 1, compute_errors = 1)
+               pause=1, Hpause=1, H2pause=1, debug=0, Hdebug=0, H2debug=0, refine=1, debrief = 1, Hdebrief = 1, H2debrief = 1, compute_errors = 1)
 end = time.time()
 
 print("Elapsed Time: ", end-start)
