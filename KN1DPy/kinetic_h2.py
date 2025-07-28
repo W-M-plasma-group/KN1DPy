@@ -638,11 +638,11 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
     Epara_PerpH2_H2 = np.zeros(nx)
     AlbedoH2 = 0.0
 
-    fSH = np.zeros((nvr,nvx,nx)).T
+    fSH = np.zeros((nvr,nvx,nx))
     SH = np.zeros(nx)
     SP = np.zeros(nx)
     SHP = np.zeros(nx)
-    ESH = np.zeros((nvr,nx)).T
+    ESH = np.zeros((nvr,nx))
     Eaxis = np.zeros(nx)
 
     # Internal Varibales 
@@ -1749,7 +1749,7 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
                 vx_shift = (2*VxH2G + VxH)/3
                 Tmaxwell = TH2G + (4/9)*(TH - TH2G + mu*CONST.H_MASS*((VxH - VxH2G)**2)/(6*CONST.Q))
                 mol = 2
-                Maxwell=create_shifted_maxwellian_include(vr,vx,Tnorm,vx_shift,Tmaxwell,shifted_Maxwellian_debug,mu,mol,
+                Maxwell = create_shifted_maxwellian_include(vr,vx,Tnorm,vx_shift,Tmaxwell,shifted_Maxwellian_debug,mu,mol,
                                         nx,nvx,nvr,Vth,Vth2,Maxwell,vr2vx2_ran2,
                                         Vr2pidVr,dVx,vol,Vth_DeltaVx,Vx_DeltaVx,Vr_DeltaVr,vr2_2vx2_2D,jpa,jpb,jna,jnb)
                 for k in range(0, nx):
@@ -2070,85 +2070,88 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
             if debug > 0:
                 input()
     
-    mid1 = locate(x, 0.7 * (np.max(x) + np.min(x)) / 2)
-    mid2 = locate(x, 0.85 * (np.max(x) + np.min(x)) / 2)
-    mid3 = locate(x, (np.max(x) + np.min(x)) / 2)
-    mid4 = locate(x, 1.15 * (np.max(x) + np.min(x)) / 2)
-    mid5 = locate(x, 1.3 * (np.max(x) + np.min(x)) / 2)
-    mid6 = locate(x, 1.45 * (np.max(x) + np.min(x)) / 2)
+    # NOTE Commented Plotting elements, re-add once program is working
+    # mid1 = locate(x, 0.7 * (np.max(x) + np.min(x)) / 2)
+    # mid2 = locate(x, 0.85 * (np.max(x) + np.min(x)) / 2)
+    # mid3 = locate(x, (np.max(x) + np.min(x)) / 2)
+    # mid4 = locate(x, 1.15 * (np.max(x) + np.min(x)) / 2)
+    # mid5 = locate(x, 1.3 * (np.max(x) + np.min(x)) / 2)
+    # mid6 = locate(x, 1.45 * (np.max(x) + np.min(x)) / 2)
 
-    if plot > 1:
-        fH21d = np.zeros((nvx, nx)).T
-        for k in range(0, nx - 1):
-            fH21d[k] = np.dot(Vr2pidVr, fH2[k])
-        plt.figure()
-        plt.plot(vx, fH21d[:, 0], label="0", linewidth=2)
-        for i in range(nx):
-            plt.plot(vx, fH21d[:, i], label=str(i), color=(i % 6) + 2, linewidth=2)
+    # if plot > 1:
+    #     fH21d = np.zeros((nvx, nx)).T
+    #     for k in range(0, nx - 1):
+    #         fH21d[k] = np.dot(Vr2pidVr, fH2[k])
+    #     plt.figure()
+    #     plt.plot(vx, fH21d[:, 0], label="0", linewidth=2)
+    #     for i in range(nx):
+    #         plt.plot(vx, fH21d[:, i], label=str(i), color=(i % 6) + 2, linewidth=2)
 
-        plt.title(_HH + ' Velocity Distribution Function: fH2(Vx)')
-        plt.xlabel('Vx/Vth')
-        plt.legend()
-        plt.show()
-        if pause:
-            # press_return 
-            return
+    #     plt.title(_HH + ' Velocity Distribution Function: fH2(Vx)')
+    #     plt.xlabel('Vx/Vth')
+    #     plt.legend()
+    #     plt.show()
+    #     if pause:
+    #         # press_return 
+    #         return
     
-    if plot > 0:
-        data = np.array([nH, n, nHP, nH2])
-        jp = np.argwhere(data > 0).shape[0]
-        yrange = np.array([np.min(data[jp]), np.max(data[jp])])
+    # if plot > 0:
+    #     data = np.array([nH, n, nHP, nH2])
+    #     jp = np.argwhere(data > 0).shape[0]
+    #     yrange = np.array([np.min(data[jp]), np.max(data[jp])])
 
-        plt.figure()
-        plt.plot(x, nH, label='nH', color='b')
-        plt.plot(x, n, label='n', color='g')
-        plt.plot(x, nH2, label='nH2', color='r')
-        plt.plot(x, nHP, label='nHP', color='c')
+    #     plt.figure()
+    #     plt.plot(x, nH, label='nH', color='b')
+    #     plt.plot(x, n, label='n', color='g')
+    #     plt.plot(x, nH2, label='nH2', color='r')
+    #     plt.plot(x, nHP, label='nHP', color='c')
 
 
-        plt.title('Density Profiles')
-        plt.xlabel('x (meters)')
-        plt.ylabel('m⁻³')
-        plt.yscale('log')
-        plt.ylim(yrange)
-        plt.legend()
+    #     plt.title('Density Profiles')
+    #     plt.xlabel('x (meters)')
+    #     plt.ylabel('m⁻³')
+    #     plt.yscale('log')
+    #     plt.ylim(yrange)
+    #     plt.legend()
 
-        plt.annotate(_H, (x[mid1], 1.2 * nH[mid1]), color='b')
-        plt.annotate('e⁻', (x[mid2], 1.2 * n[mid2]), color='g')
-        plt.annotate(_HH, (x[mid3], 1.2 * nH2[mid3]), color='r')
-        plt.annotate(_Hp, (x[mid4], 1.2 * nHP[mid4]), color='c')
-        plt.show()
+    #     plt.annotate(_H, (x[mid1], 1.2 * nH[mid1]), color='b')
+    #     plt.annotate('e⁻', (x[mid2], 1.2 * n[mid2]), color='g')
+    #     plt.annotate(_HH, (x[mid3], 1.2 * nH2[mid3]), color='r')
+    #     plt.annotate(_Hp, (x[mid4], 1.2 * nHP[mid4]), color='c')
+    #     plt.show()
 
-        if pause:
-            # press_return 
-            return 
+    #     if pause:
+    #         # press_return 
+    #         return 
     
-    if plot > 0:
-        data = np.array([TH, Te, THP, TH2])
-        jp = np.argwhere(data > 0)
-        yrange = np.array([np.min(data[jp]), np.max(data[jp])])
+    # if plot > 0:
+    #     data = np.array([TH, Te, THP, TH2])
+    #     jp = np.argwhere(data > 0)
+    #     yrange = np.array([np.min(data[jp]), np.max(data[jp])])
 
-        plt.figure()
-        plt.plot(x, TH, label='TH', color='b')
-        plt.plot(x, Te, label='Te', color='g')
-        plt.plot(x, TH2, label='TH2', color='r')
-        plt.plot(x, THP, label='THP', color='c')
+    #     plt.figure()
+    #     plt.plot(x, TH, label='TH', color='b')
+    #     plt.plot(x, Te, label='Te', color='g')
+    #     plt.plot(x, TH2, label='TH2', color='r')
+    #     plt.plot(x, THP, label='THP', color='c')
 
-        plt.title('Temperature Profiles')
-        plt.xlabel('x (meters)')
-        plt.ylabel('eV')
-        plt.yscale('log')
-        plt.ylim(yrange)
-        plt.legend()
+    #     plt.title('Temperature Profiles')
+    #     plt.xlabel('x (meters)')
+    #     plt.ylabel('eV')
+    #     plt.yscale('log')
+    #     plt.ylim(yrange)
+    #     plt.legend()
 
-        plt.annotate(_H, (x[mid1], 1.2 * TH[mid1]), color='b')
-        plt.annotate('e⁻', (x[mid2], 1.2 * Te[mid2]), color='g')
-        plt.annotate(_HH, (x[mid3], 1.2 * TH2[mid3]), color='r')
-        plt.annotate(_Hp, (x[mid4], 1.2 * THP[mid4]), color='c')
-        plt.show()
-        if pause:
-            #press_return 
-            return
+    #     plt.annotate(_H, (x[mid1], 1.2 * TH[mid1]), color='b')
+    #     plt.annotate('e⁻', (x[mid2], 1.2 * Te[mid2]), color='g')
+    #     plt.annotate(_HH, (x[mid3], 1.2 * TH2[mid3]), color='r')
+    #     plt.annotate(_Hp, (x[mid4], 1.2 * THP[mid4]), color='c')
+    #     plt.show()
+    #     if pause:
+    #         #press_return 
+    #         return
+
+
     if Compute_H_Source:
         if debrief > 1:
             print(prompt, 'Computing Velocity Distributions of H products...')
@@ -2157,59 +2160,62 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
         # Make lookup table to select reaction Rn in SFCn
         #   Rn=2 3 4 5 6 7 8   10
         nFC = np.array([0, 0, 0, 1, 2, 3, 4, 5, 6, 0, 7])
-        SFCn = np.zeros((nvr,nvx,nx,8)).T
-        Eave = np.zeros((nx, 8)).T
-        Emax = np.zeros((nx, 8)).T
-        Emin = np.zeros((nx, 8)).T
+        SFCn = np.zeros((nvr,nvx,nx,8))
+        Eave = np.zeros((nx, 8))
+        Emax = np.zeros((nx, 8))
+        Emin = np.zeros((nx, 8))
 
         # Reaction R2: e + H2 -> e + H(1s) + H(1s)
         ii = nFC[2]
-        Eave[ii] = 3.0 
-        Emax[ii] = 0.55
-        Emin[ii] = 0.0
+        Eave[:,ii] = 3.0 
+        Emax[:,ii] = 4.25
+        Emin[:,ii] = 2
 
         # Reaction R3: e + H2 -> e + H(1s) + H*(2s)
         ii = nFC[3]
-        Eave[ii] = 0.3
-        Emax[ii] = 0.55
-        Emin[ii] = 0.0 
+        Eave[:,ii] = 0.3
+        Emax[:,ii] = 0.55
+        Emin[:,ii] = 0.0 
 
         # Reaction R4:  e + H2 -> e + H(+) + H(1s) + e
         ii = nFC[4]
-        Ee = 3 * Te / 2     # Note the FC energy depends on electron energy
-        kk = np.argwhere(Ee < 26.0)
-        if np.argwhere(Ee < 26.0).shape[0]:
-            Eave[ii, kk] = 0.5 * (Ee[kk] - 26)
-            Eave[ii, kk] = np.maximum(Eave[ii, kk], 0.25)
+        Ee = 3*Te/2     # Note the FC energy depends on electron energy
+        kk = np.argwhere(Ee <= 26.0)
+        if kk.size > 0:
+            Eave[kk,ii] = 0.25
+        kk = np.argwhere((Ee > 26.0) & (Ee <= 41.6))
+        if kk.size > 0:
+            Eave[kk,ii] = 0.5*(Ee[kk] - 26)
+            Eave[kk,ii] = np.maximum(Eave[kk, ii], 0.25)
         kk = np.argwhere(Ee > 41.6)
-        if np.argwhere(Ee > 41.6).shape[0] > 0:
-            Eave[ii, kk] = 7.8
-        Emax[ii] = 1.5 * Eave[ii]   # Note the max/min values here are a guess
-        Emin[ii] = 0.5 * Eave[ii]   # Note the max/min values here are a guess
+        if kk.size > 0:
+            Eave[kk,ii] = 7.8
+        Emax[:,ii] = 1.5*Eave[:,ii]   # Note the max/min values here are a guess
+        Emin[:,ii] = 0.5*Eave[:,ii]   # Note the max/min values here are a guess
 
         # Reaction R5: e + H2 -> e + H*(2p) + H*(2s)
         ii = nFC[5]
-        Eave[ii] = 4.85 
-        Emax[ii] = 5.85
-        Emin[ii] = 1.25
+        Eave[:,ii] = 4.85 
+        Emax[:,ii] = 5.85
+        Emin[:,ii] = 2.85
 
         # Reaction R6: e + H2 -> e + H(1s) + H*(n=3)
         ii = nFC[6]
-        Eave[ii] = 2.5 
-        Emax[ii] = 3.75 
-        Emin[ii] = 1.25 
+        Eave[:,ii] = 2.5 
+        Emax[:,ii] = 3.75 
+        Emin[:,ii] = 1.25 
 
         # Reaction R7: e + H2(+) -> e + H(+) + H(1s)
         ii = nFC[7]
-        Eave[ii] = 4.3   
-        Emax[ii] = 4.3 + 2.1     # Note the max/min values here are a guess
-        Emin[ii] = 4.3 - 2.1     # Note the max/min values here are a guess
+        Eave[:,ii] = 4.3   
+        Emax[:,ii] = 4.3 + 2.1     # Note the max/min values here are a guess
+        Emin[:,ii] = 4.3 - 2.1     # Note the max/min values here are a guess
 
         # Reaction R8: e + H2(+) -> e + H(+) + H*(n=2)
         ii = nFC[8]
-        Eave[ii] = 1.5 
-        Emax[ii] = 1.5 + 0.75     # Note the max/min values here are a guess
-        Emin[ii] = 1.5 - 0.75     # Note the max/min values here are a guess 
+        Eave[:,ii] = 1.5 
+        Emax[:,ii] = 1.5 + 0.75     # Note the max/min values here are a guess
+        Emin[:,ii] = 1.5 - 0.75     # Note the max/min values here are a guess 
 
         # Reaction R10: e + H2(+) -> H(1s) + H*(n>=2)
         ii = nFC[10]
@@ -2219,28 +2225,34 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
         #   n=2   3    4    5    6
         R10rel = np.array([0.1, 0.45, 0.22, 0.12, 0.069])
         for k in range(7, 11): 
-            R10rel = np.append(R10rel,10.0 / k**3)
-        En = 13.58 / (2 + np.arange(9))**2 # Energy of Levels
+            R10rel = np.append(R10rel, 10/(k**3))
+        En = 13.58/((2 + np.arange(9))**2) # Energy of Levels
+
         for k in range(0, nx):
-            if Ee.size >= 9: # This constricts Ee to have length 9 so that the operations involving R10rel and En work, Not sure if this is correct though
-                EHn = 0.5 * (Ee[:En.size] - En) * R10rel / np.sum(R10rel)
-            if Ee.size < 9:
-                EHn = 0.5 * (np.concatenate((Ee, np.zeros(9-Ee.size))) - En) * R10rel / np.sum(R10rel)
+            truncate_point = np.minimum(len(Ee), len(En))
+            EHn = 0.5*(Ee[:truncate_point] - En[:truncate_point])*R10rel/np.sum(R10rel) #NOTE For some reason, this is how idl handles subtracting two arrays of different sizes
             EHn = np.maximum(EHn, 0)
-            Eave[ii, k] = np.sum(EHn)
-            Eave[ii, k] = np.maximum(Eave[ii, k],0.25)
-            Emax[ii, k] = 1.5 * Eave[ii, k] # Note the max/min values here are a guess
-            Emin[ii, k] = 0.5 * Eave[ii, k] # Note the max/min values here are a guess
+            Eave[k,ii] = np.sum(EHn)
+            Eave[k,ii] = np.maximum(Eave[k,ii], 0.25)
+            Emax[k,ii] = 1.5*Eave[k,ii] # Note the max/min values here are a guess
+            Emin[k,ii] = 0.5*Eave[k,ii] # Note the max/min values here are a guess
+        # print("Eave", Eave.T)
+        # print("Emax", Emax.T)
+        # print("Emin", Emin.T)
+        # input()
         
         # Set SFCn values for reactions R2, R3, R4, R5, R6, R7, R8, R10
-        Vfc = np.zeros((nvr,nvx,nx)).T
-        Tfc = np.zeros((nvr,nvx,nx)).T
+        Vfc = np.zeros((nvr,nvx,nx))
+        Tfc = np.zeros((nvr,nvx,nx))
         magV = np.sqrt(vr2vx2)
-        _THP = np.zeros((nvr,nvx,nx)).T
-        _TH2 = np.zeros((nvr,nvx,nx)).T 
+        _THP = np.zeros((nvr,nvx,nx))
+        _TH2 = np.zeros((nvr,nvx,nx)) 
         for k in range(0, nx):
-            _THP[k] = THP[k] / Tnorm
-            _TH2[k] = TH2[k] / Tnorm 
+            _THP[:,:,k] = THP[k]/Tnorm
+            _TH2[:,:,k] = TH2[k]/Tnorm 
+        # print("_THP", _THP.T)
+        # print("_TH2", _TH2.T)
+        # input()
         
         # The following function is choosen to represent the velocity distribution of the
         # hydrogen products for a given reaction, accounting for the Franck-Condon energy
@@ -2287,236 +2299,265 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
         #    relative to the thermal speed of the molecules.
 
         Rn = np.array([2, 3, 4, 5, 6, 7, 8, 10])
-        for jRn in range(0, np.size(Rn)):
+        for jRn in range(np.size(Rn)):
             ii = nFC[Rn[jRn]]
-            Tfc[:, 0, 0] = 0.25 * (Emax[ii,:] - Emin[ii,:]) / Tnorm # Franck-Condon 'effective temperature'
-            Vfc[:, 0, 0] = np.sqrt(Eave[ii,:]/Tnorm) # Velocity corresponding to Franck-Condon 'mean evergy'
+            # print("ii", ii)
+            Tfc[0,0,:] = 0.25*(Emax[:,ii] - Emin[:,ii])/Tnorm # Franck-Condon 'effective temperature'
+            Vfc[0,0,:] = np.sqrt(Eave[:,ii]/Tnorm) # Velocity corresponding to Franck-Condon 'mean evergy'
             for k in range(nx):
-                Vfc[k, :, :] = Vfc[k, 0, 0]
-                Tfc[k, :, :] = Tfc[k, 0, 0]
-        if Rn[jRn] < 6:
-            # For R2-R6, the Franck-Condon 'mean energy' is taken equal to Eave
+                Vfc[:,:,k] = Vfc[0,0,k]
+                Tfc[:,:,k] = Tfc[0,0,k]
+
+            if Rn[jRn] <= 6:
+                # For R2-R6, the Franck-Condon 'mean energy' is taken equal to Eave
+                #	   and the 'temperature' corresponds to the sum of the Franck-Condon 'temperature', Tfc,
+                #          and the temperature of the H2 molecules, TH2. (Note: directed neutral molecule velocity
+                #	   is not included and assumed to be small)
+                arg = -(magV - Vfc + 1.5*Tfc/Vfc)**2 / (Tfc + 0.5*_TH2)
+                SFCn[:,:,:,ii] = np.exp(np.maximum(arg, -80))
+            else: 
+            #   For R7, R8 and R10, the Franck-Condon 'mean energy' is taken equal to Eave
             #	   and the 'temperature' corresponds to the sum of the Franck-Condon 'temperature', Tfc,
-            #          and the temperature of the H2 molecules, TH2. (Note: directed neutral molecule velocity
-            #	   is not included and assumed to be small)
-            arg = -(magV - Vfc + 1.5 * Tfc/ Vfc)**2 / (Tfc + 0.5 * _TH2)
-            SFCn[ii] = np.exp(np.maximum(arg > (-80)))
-        else: 
-        #   For R7, R8 and R10, the Franck-Condon 'mean energy' is taken equal to Eave
-        #	   and the 'temperature' corresponds to the sum of the Franck-Condon 'temperature', Tfc,
-        #          and the temperature of the H2(+) molecular ions, THP. (Note: directed molecular ion velocity
-        #	   is not included and assumed to be small)    
-            arg = -(magV - Vfc + 1.5 * Tfc / Vfc)**2 / (Tfc + 0.5 * _THP)
-            SFCn[ii] = np.exp(np.maximum(arg, (-80)))
-        for k in range(0, nx):
-            SFCn[ii, k, :, :] = SFCn[ii, k, :, :] / (np.sum(Vr2pidVr * np.dot(dVx,SFCn[ii, k, :, :])))
-        nm = 3
-        if plot > 3:
-            ii = nFC[Rn[0]]
-            m = np.arange(nm) * (nx-1) / (nm-1)
-            kp = 0
+            #          and the temperature of the H2(+) molecular ions, THP. (Note: directed molecular ion velocity
+            #	   is not included and assumed to be small)    
+                arg = -(magV - Vfc + 1.5*Tfc/Vfc)**2 / (Tfc + 0.5*_THP)
+                SFCn[:,:,:,ii] = np.exp(np.maximum(arg, -80))
+            
+            # print("sfcn", SFCn[:,:,0,4].T)
+            # input()
 
-            for mm in range(nm):
-                for jRn in range(len(Rn)):
-                    ii = nFC[Rn[jRn]]
-                    color = (kp % 6) + 1
-                    plt.contour(SFCn[ii, int(m[mm])], colors=f'C{color}', linestyles='dashed')
+            for k in range(nx):
+                SFCn[:,:,k,ii] = SFCn[:,:,k,ii] / (np.sum(Vr2pidVr*(SFCn[:,:,k,ii] @ dVx)))
+        # print("SFCn", SFCn.T)
+        # print("Tfc", Tfc.T)
+        # print("Vfc", Vfc.T)
+        # input()
+        
+        #NOTE Removed plotting for now, re-implement once program is working
+        # nm = 3
+        # if plot > 3:
+        #     ii = nFC[Rn[0]]
+        #     m = np.arange(nm) * (nx-1) / (nm-1)
+        #     kp = 0
 
-                    plt.text(0.7, 0.8 - kp * 0.03, f'R{Rn[jRn]} Te:{Te[int(m[mm])]}', transform=plt.gca().transAxes, color=f'C{color}')
-                    kp = kp + 1
-                    plt.pause(0.1)  # Pause for a short while (adjust as needed)
+        #     for mm in range(nm):
+        #         for jRn in range(len(Rn)):
+        #             ii = nFC[Rn[jRn]]
+        #             color = (kp % 6) + 1
+        #             plt.contour(SFCn[ii, int(m[mm])], colors=f'C{color}', linestyles='dashed')
 
-            ii = nFC[Rn[0]]
-            plt.contour(SFCn[:, :, 0, ii], colors=f'C{color}', linestyles='dashed')
-            plt.title('SFCn - Franck-Condon Velocity Distributions')
+        #             plt.text(0.7, 0.8 - kp * 0.03, f'R{Rn[jRn]} Te:{Te[int(m[mm])]}', transform=plt.gca().transAxes, color=f'C{color}')
+        #             kp = kp + 1
+        #             plt.pause(0.1)  # Pause for a short while (adjust as needed)
 
-            plt.show() # I just realized that sum of the indexing in the plotting code might be incorrect 
+        #     ii = nFC[Rn[0]]
+        #     plt.contour(SFCn[:, :, 0, ii], colors=f'C{color}', linestyles='dashed')
+        #     plt.title('SFCn - Franck-Condon Velocity Distributions')
+
+        #     plt.show() # I just realized that sum of the indexing in the plotting code might be incorrect 
     
-        if plot > 2:
-            m = np.arange(nm) * (nx - 1)/(nm - 1)
-            kp = 0
+        # if plot > 2:
+        #     m = np.arange(nm) * (nx - 1)/(nm - 1)
+        #     kp = 0
 
-            plt.figure()
-            plt.semilogx(Eaxis, Eaxis * 0, linestyle='-', color='none')  # Dummy line for plotting
-            plt.ylim([0, 1])
-            plt.title('Energy Distribution of ' + _H + ' Products')
-            plt.xlabel('Energy (eV)')
+        #     plt.figure()
+        #     plt.semilogx(Eaxis, Eaxis * 0, linestyle='-', color='none')  # Dummy line for plotting
+        #     plt.ylim([0, 1])
+        #     plt.title('Energy Distribution of ' + _H + ' Products')
+        #     plt.xlabel('Energy (eV)')
 
-            for mm in range(len(Rn)):
-                kp += 1
-                plt.text(0.85, 0.92 - kp * 0.02, f'Te:{Te[int(m[mm])]:.4f}', fontsize=8)
-                kp += 1
-                for jRn in range(len(Rn)):
-                    ii = nFC[Rn[jRn]]
-                    color - jRn % len(Rn) + 1
+        #     for mm in range(len(Rn)):
+        #         kp += 1
+        #         plt.text(0.85, 0.92 - kp * 0.02, f'Te:{Te[int(m[mm])]:.4f}', fontsize=8)
+        #         kp += 1
+        #         for jRn in range(len(Rn)):
+        #             ii = nFC[Rn[jRn]]
+        #             color - jRn % len(Rn) + 1
 
-                    EFC = Eaxis * SFCn[int(m[mm]), i_p[0]] * VrVr4pidVr / dEaxis
-                    EFC /= np.max(EFC)
+        #             EFC = Eaxis * SFCn[int(m[mm]), i_p[0]] * VrVr4pidVr / dEaxis
+        #             EFC /= np.max(EFC)
 
-                    plt.plot(Eaxis, EFC, color = f'C{color}')
-                    plt.text(0.87, 0.92 - kp * 0.02, f'R{Rn[jRn]}', fontsize=8, color=f'C{color}')
-                    kp += 1
-            plt.show()
-            if pause: 
-                # press_return 
-                return 
+        #             plt.plot(Eaxis, EFC, color = f'C{color}')
+        #             plt.text(0.87, 0.92 - kp * 0.02, f'R{Rn[jRn]}', fontsize=8, color=f'C{color}')
+        #             kp += 1
+        #     plt.show()
+        #     if pause: 
+        #         # press_return 
+        #         return 
     
-        if plot > 0:
-            kp = 0
-            for jRn in range(0, np.size(Rn - 1)):
-                ii = nFC[Rn[jRn]]
-                Ebar = np.zeros(nx)
-                for k in range(0, nx - 1):
-                    Ebar[k] = 0.5 * (mu * CONST.H_MASS) * Vth2 * np.sum(Vr2pidVr * np.dot(vr2vx2[k] * SFCn[ii, k], dVx)) / CONST.Q
-                color (kp % np.size(Rn)) + 1
-                if kp == 0:
-                    plt.figure()
-                    plt.plot(x, Ebar, label='R' + str(Rn[jRn]) + ': ' + _Rn[Rn[jRn]])
-                    plt.title('Average Energy of ' + _H + ', ' + _p + ' Products')
-                    plt.xlabel('x (meters)')
-                    plt.ylabel('eV')
-                    plt.yscale('log')
-                    plt.ylim([0.1, 100])
-                    plt.legend()
-                else:
-                    plt.plot(x, Ebar, label='R' + str(Rn[jRn]) + ': ' + _Rn[Rn[jRn]], color=f'C{color}')
-                kp += 1
-            plt.show()
-            if pause:
-                # press_return 
-                return 
+        # if plot > 0:
+        #     kp = 0
+        #     for jRn in range(0, np.size(Rn - 1)):
+        #         ii = nFC[Rn[jRn]]
+        #         Ebar = np.zeros(nx)
+        #         for k in range(0, nx - 1):
+        #             Ebar[k] = 0.5 * (mu * CONST.H_MASS) * Vth2 * np.sum(Vr2pidVr * np.dot(vr2vx2[k] * SFCn[ii, k], dVx)) / CONST.Q
+        #         color (kp % np.size(Rn)) + 1
+        #         if kp == 0:
+        #             plt.figure()
+        #             plt.plot(x, Ebar, label='R' + str(Rn[jRn]) + ': ' + _Rn[Rn[jRn]])
+        #             plt.title('Average Energy of ' + _H + ', ' + _p + ' Products')
+        #             plt.xlabel('x (meters)')
+        #             plt.ylabel('eV')
+        #             plt.yscale('log')
+        #             plt.ylim([0.1, 100])
+        #             plt.legend()
+        #         else:
+        #             plt.plot(x, Ebar, label='R' + str(Rn[jRn]) + ': ' + _Rn[Rn[jRn]], color=f'C{color}')
+        #         kp += 1
+        #     plt.show()
+        #     if pause:
+        #         # press_return 
+        #         return 
+
         Vbar_Error = np.zeros(nx)
         if Compute_Errors:
             # Test: The average speed of a non-shifted maxwellian should be 2*Vth*sqrt(Ti(x)/Tnorm)/sqrt(!pi)
-            TFC = np.min(Eave[:, 0]) + (np.max(Eave[:, 0])) - np.min(Eave[:, 0]) * np.arange(0, nx) / (nx - 1)
-            vx_shift = TFC; vx_shift[:] = 0.0 
+            TFC = np.min(Eave[0,:]) + ((np.max(Eave[0,:]) - np.min(Eave[0,:]))*np.arange(0, nx) / (nx - 1))
+            # vx_shift = TFC
+            # vx_shift[:] = 0.0 
+            vx_shift = np.zeros_like(TFC)
             Tmaxwell = TFC
             mol = 1
-            create_shifted_maxwellian_include(vr,vx,Tnorm,vx_shift,Tmaxwell,shifted_Maxwellian_debug,mu,mol,
+            Maxwell = create_shifted_maxwellian_include(vr,vx,Tnorm,vx_shift,Tmaxwell,shifted_Maxwellian_debug,mu,mol,
                                       nx,nvx,nvr,Vth,Vth2,Maxwell,vr2vx2_ran2,
                                       Vr2pidVr,dVx,vol,Vth_DeltaVx,Vx_DeltaVx,Vr_DeltaVr,vr2_2vx2_2D,jpa,jpb,jna,jnb)
-            vbar_test = Vth * np.sqrt(vr2vx2(0))
-            for k in range(0, nx - 1):
-                vbar = np.sum(Vr2pidVr * (vbar_test * np.dot(Maxwell[k], dVx)))
-                vbar_exact = 2 * Vth * np.sqrt(TFC[k] / Tnorm/ np.sqrt(np.pi))
+            vbar_test = Vth*np.sqrt(vr2vx2[:,:,0])
+            for k in range(0, nx):
+                vbar = np.sum(Vr2pidVr*((vbar_test*Maxwell[:,:,k]) @ dVx))
+                vbar_exact = 2*Vth*np.sqrt(TFC[k] / Tnorm) / np.sqrt(np.pi)
                 Vbar_Error[k] = np.abs(vbar - vbar_exact) / vbar_exact
             if debrief > 0: 
                 print(prompt, 'Maximum Vbar error over FC energy range = ', np.max(Vbar_Error))
+            # input()
+
         # Compute atomic hydrogen source distribution function
         # using normalized FC source distributions SFCn
+        fSH_calc = lambda k,x : sigv[k,x]*SFCn[:,:,k,nFC[x]]
         for k in range(0, nx):
-            fSH[k] = n[k] * nH2[k] * (sigv[2, k] * SFCn[nFC[2], k] + \
-                                 2 * sigv[3, k] * SFCn[nFC[3], k] + 
-                                 sigv[4, k] * SFCn[nFC[4], k] +
-                                 2 * sigv[5, k] * SFCn[nFC[5], k] + 
-                                 2 * sigv[6, k] * SFCn[nFC[6], k])
-            fSH[k] = fSH[k] + \
-                n[k] * nHP[k] * ( sigv[7, k] * SFCn[nFC[7], k] + \
-                             sigv[8, k] * SFCn[nFC[8], k] + \
-                             2 * sigv[10, k] * SFCn[nFC[10], k])
+
+            fSH[:,:,k] = n[k]*nH2[k]*(2*fSH_calc(k,2) + 2*fSH_calc(k,3) + fSH_calc(k,4) + 2*fSH_calc(k,5) + 2*fSH_calc(k,6))
+            
+            fSH[:,:,k] = fSH[:,:,k] + n[k]*nHP[k]*(fSH_calc(k,7) + fSH_calc(k,8) + 2*fSH_calc(k,10))
+        # print("fSH", fSH.T)
+        # input()
+
         # Compute total H and H(+) sources
-        # edit indents 
-        SHP = n * nH2 * sigv[1]
+        for k in range(nx):
+            SH[k] = np.sum(Vr2pidVr*(fSH[:,:,k] @ dVx))
+            SP[k] = n[k]*nH2[k]*sigv[k,4] + n[k]*nHP[k]*(sigv[k,7] + sigv[k,8] + 2*sigv[k,9])
+        # print("SH", SH)
+        # print("SP", SP)
+        # input()
+
+        # Compute total HP source
+        SHP = n*nH2*sigv[:,1]
+        # print("SHP", SHP.T)
+        # input()
+
         # Compute energy distrobution of H source 
         for k in range(0, nx):
-            ESH[k] = Eaxis * fSH[k, i_p[0], :] * VrVr4pidVr / dEaxis
-            ESH[k] = ESH[k] / np.max(ESH[k])
+            ESH[:,k] = (Eaxis*fSH[:,i_p[0,0],k]*VrVr4pidVr) / dEaxis #NOTE Had to reference i_p and i_n in a weird way, fix how they are called in the first place
+            ESH[:,k] = ESH[:,k] / np.max(ESH[:,k])
+        # print("ESH", ESH.T)
+        # input()
         
-        if plot > 2:
-            fH21d = np.zeros((nvx, nx)).T
-            for k in range(0, nx - 1):
-                fH21d[k] = np.dot(Vr2pidVr, fSH[k])
-            plt.figure()
-            plt.plot(vx, fH21d[:, 0], label=_H + ' Source Velocity Distribution Function: fSH(Vx)')
-            plt.xlabel('Vx/Vth')
-            plt.ylabel('m⁻³ s⁻¹ dVx⁻¹')
-            plt.title(_H + ' Source Velocity Distribution Function: fSH(Vx)')
-            plt.yscale('log')
+        #NOTE Removed plotting for now, re-implement once program is working
+        # if plot > 2:
+        #     fH21d = np.zeros((nvx, nx)).T
+        #     for k in range(0, nx - 1):
+        #         fH21d[k] = np.dot(Vr2pidVr, fSH[k])
+        #     plt.figure()
+        #     plt.plot(vx, fH21d[:, 0], label=_H + ' Source Velocity Distribution Function: fSH(Vx)')
+        #     plt.xlabel('Vx/Vth')
+        #     plt.ylabel('m⁻³ s⁻¹ dVx⁻¹')
+        #     plt.title(_H + ' Source Velocity Distribution Function: fSH(Vx)')
+        #     plt.yscale('log')
 
-            for i in range(nx):
-                plt.plot(vx, fH21d[:, i], label=f'fH21d[:, {i}]', color=f'C{(i % 6) + 2}')
-            plt.legend()
-            if pause:
-                input("Press Enter to continue...") 
+        #     for i in range(nx):
+        #         plt.plot(vx, fH21d[:, i], label=f'fH21d[:, {i}]', color=f'C{(i % 6) + 2}')
+        #     plt.legend()
+        #     if pause:
+        #         input("Press Enter to continue...") 
     
-        if plot > 2:
-            plt.figure()
-            plt.semilogx(Eaxis, ESH[:, 0], label=_H + ' Source Energy Distribution: ESH(E) = E fSH(E)')
-            plt.xlabel('E (eV)')
-            plt.ylabel('E fSH(E)')
-            plt.title(_H + ' Source Energy Distribution: ESH(E) = E fSH(E)')
-            for k in range(nx):
-                plt.semilogx(Eaxis, ESH[:, k], label=f'ESH[:, {k}]', color=f'C{(k % 6) + 2}')
-            plt.legend()
-            if pause:
-                input("Press Enter to continue...")
+        # if plot > 2:
+        #     plt.figure()
+        #     plt.semilogx(Eaxis, ESH[:, 0], label=_H + ' Source Energy Distribution: ESH(E) = E fSH(E)')
+        #     plt.xlabel('E (eV)')
+        #     plt.ylabel('E fSH(E)')
+        #     plt.title(_H + ' Source Energy Distribution: ESH(E) = E fSH(E)')
+        #     for k in range(nx):
+        #         plt.semilogx(Eaxis, ESH[:, k], label=f'ESH[:, {k}]', color=f'C{(k % 6) + 2}')
+        #     plt.legend()
+        #     if pause:
+        #         input("Press Enter to continue...")
     
-        if plot > 1:
-            plt.figure()
-            plt.semilogx(Eaxis, ESH[:, 0], label=_H + ' Source Energy Distribution: ESH(E) = E fSH(E)')
-            plt.xlabel('E (eV)')
-            plt.ylabel('E fSH(E)')
-            plt.title(_H + ' Source Energy Distribution: ESH(E) = E fSH(E)')
+        # if plot > 1:
+        #     plt.figure()
+        #     plt.semilogx(Eaxis, ESH[:, 0], label=_H + ' Source Energy Distribution: ESH(E) = E fSH(E)')
+        #     plt.xlabel('E (eV)')
+        #     plt.ylabel('E fSH(E)')
+        #     plt.title(_H + ' Source Energy Distribution: ESH(E) = E fSH(E)')
 
-            for k in range(nx):
-                plt.semilogx(Eaxis, ESH[:, k], label=f'ESH[:, {k}]', color=f'C{(k % 6) + 2}')
-            plt.legend()
-            if pause:
-                input("Press Enter to continue...")
+        #     for k in range(nx):
+        #         plt.semilogx(Eaxis, ESH[:, k], label=f'ESH[:, {k}]', color=f'C{(k % 6) + 2}')
+        #     plt.legend()
+        #     if pause:
+        #         input("Press Enter to continue...")
     
-        if plot > 0:
-            data = [SH, SP, SHP, SH2, NuLoss * nHP, NuDis * nHP]
-            jp = np.where(np.array(data) > 0)
-            yrange = [min(np.array(data)[jp]), max(np.array(data)[jp])]
+        # if plot > 0:
+        #     data = [SH, SP, SHP, SH2, NuLoss * nHP, NuDis * nHP]
+        #     jp = np.where(np.array(data) > 0)
+        #     yrange = [min(np.array(data)[jp]), max(np.array(data)[jp])]
 
-            plt.figure()
-            plt.plot(x, SH, label=_H + ' source', color='C2')
-            plt.plot(x, SHP, label=_Hp + ' source', color='C3')
-            plt.plot(x, SP, label=_p + ' source', color='C4')
-            plt.plot(x, NuLoss * nHP, label=_Hp + ' loss', color='C5')
-            plt.plot(x, NuDis * nHP, label=_Hp + ' dissoc.', color='C6')
-            plt.plot(x, SH2, label=_HH + ' source', color='C1')
+        #     plt.figure()
+        #     plt.plot(x, SH, label=_H + ' source', color='C2')
+        #     plt.plot(x, SHP, label=_Hp + ' source', color='C3')
+        #     plt.plot(x, SP, label=_p + ' source', color='C4')
+        #     plt.plot(x, NuLoss * nHP, label=_Hp + ' loss', color='C5')
+        #     plt.plot(x, NuDis * nHP, label=_Hp + ' dissoc.', color='C6')
+        #     plt.plot(x, SH2, label=_HH + ' source', color='C1')
 
-            plt.xlabel('x (meters)')
-            plt.ylabel('m⁻³ s⁻¹')
-            plt.yscale('log')
-            plt.ylim(yrange)
-            plt.title('Source and Sink Profiles')
-            plt.legend()
+        #     plt.xlabel('x (meters)')
+        #     plt.ylabel('m⁻³ s⁻¹')
+        #     plt.yscale('log')
+        #     plt.ylim(yrange)
+        #     plt.title('Source and Sink Profiles')
+        #     plt.legend()
 
-            plt.text(x[mid1], 1.2 * SH[mid1], _H + ' source', color='C2')
-            plt.text(x[mid2], 1.2 * SHP[mid2], _Hp + ' source', color='C3')
-            plt.text(x[mid3], 0.6 * SP[mid3], _p + ' source', color='C4')
-            plt.text(x[mid4], 0.6 * NuLoss[mid4] * nHP[mid4], _Hp + ' loss', color='C5')
-            plt.text(x[mid5], 0.6 * NuDis[mid5] * nHP[mid5], _Hp + ' dissoc.', color='C6')
-            plt.text(x[mid6], 0.8 * SH2[mid6], _HH + ' source', color='C1')
+        #     plt.text(x[mid1], 1.2 * SH[mid1], _H + ' source', color='C2')
+        #     plt.text(x[mid2], 1.2 * SHP[mid2], _Hp + ' source', color='C3')
+        #     plt.text(x[mid3], 0.6 * SP[mid3], _p + ' source', color='C4')
+        #     plt.text(x[mid4], 0.6 * NuLoss[mid4] * nHP[mid4], _Hp + ' loss', color='C5')
+        #     plt.text(x[mid5], 0.6 * NuDis[mid5] * nHP[mid5], _Hp + ' dissoc.', color='C6')
+        #     plt.text(x[mid6], 0.8 * SH2[mid6], _HH + ' source', color='C1')
 
-            if pause:
-                input("Press Enter to continue...")
+        #     if pause:
+        #         input("Press Enter to continue...")
 
-            plt.show()
+        #     plt.show()
     
-        if plot > 0:
-            gammaxH2_plus = np.zeros(nx)
-            gammaxH2_minus = np.zeros(nx)
+        # if plot > 0:
+        #     gammaxH2_plus = np.zeros(nx)
+        #     gammaxH2_minus = np.zeros(nx)
 
-            for k in range(nx):
-                gammaxH2_plus[k] = Vth * np.sum(Vr2pidVr * (fH2[:, i_p, k] * (vx[i_p] * dVx[i_p])))
-                gammaxH2_minus[k] = Vth * np.sum(Vr2pidVr * (fH2[:, i_n, k] * (vx[i_n] * dVx[i_n])))
+        #     for k in range(nx):
+        #         gammaxH2_plus[k] = Vth * np.sum(Vr2pidVr * (fH2[:, i_p, k] * (vx[i_p] * dVx[i_p])))
+        #         gammaxH2_minus[k] = Vth * np.sum(Vr2pidVr * (fH2[:, i_n, k] * (vx[i_n] * dVx[i_n])))
 
-            gammaxH2 = gammaxH2_plus - gammaxH2_minus
+        #     gammaxH2 = gammaxH2_plus - gammaxH2_minus
 
-            data = [gammaxH2_plus, gammaxH2_minus, gammaxH2]
-            jp = np.where(np.array(data) < 1.0e32)
-            yrange = [np.min(np.array(data)[jp]), np.max(np.array(data)[jp])]
+        #     data = [gammaxH2_plus, gammaxH2_minus, gammaxH2]
+        #     jp = np.where(np.array(data) < 1.0e32)
+        #     yrange = [np.min(np.array(data)[jp]), np.max(np.array(data)[jp])]
 
-            plt.figure()
-            plt.plot(x, gammaxH2, label=_HH + ' Fluxes', color='C2')
-            plt.xlabel('x (meters)')
-            plt.ylabel('m⁻² s⁻¹')
-            plt.title(_HH + ' Fluxes')
-            plt.yscale('log')
-            plt.ylim(yrange)
+        #     plt.figure()
+        #     plt.plot(x, gammaxH2, label=_HH + ' Fluxes', color='C2')
+        #     plt.xlabel('x (meters)')
+        #     plt.ylabel('m⁻² s⁻¹')
+        #     plt.title(_HH + ' Fluxes')
+        #     plt.yscale('log')
+        #     plt.ylim(yrange)
     
         Source_Error = np.zeros(nx)
 
@@ -2526,51 +2567,50 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
                 print(prompt, 'Computing Source Error')
             # Test Mass Balance
             # The relationship, 2 dGammaxH2/dx - 2 SH2 + SH + SP + 2 nHp x Nuloss = 0, should be satisfied.
-            dGammaxH2dx = np.zeros((nx - 1))
-            SH_p = np.zeros(nx - 1)
-            for k in range(0, nx - 2):
-                dGammaxH2dx[k] = (GammaxH2[k+1] - GammaxH2[k]) / (x[k + 1] - x[k])
-            for k in range(0, nx - 2):
-                SH_p[k] = 0.5 * (SH[k + 1] + SP[k + 1] + 2 * NuLoss[k + 1] * nHP[k + 1] - 2 * 2 * SH2[k + 1] \
-                                 + SH[k] + SP[k] + 2 * NuLoss[k] * nHP[k] - 2 * SH2[k])
-            max_source = np.max(np.array([SH, 2 * SH2]))
-            for k in range(0, nx - 2):
-                Source_Error[k] = np.abs(2 * GammaxH2[k] + SH_p[k]) / np.max(np.abs(np.array([2 * dGammaxH2dx[k], SH_p[k], max_source])))
+            dGammaxH2dx = np.zeros((nx-1))
+            SH_p = np.zeros(nx-1)
+            for k in range(0, nx-1):
+                dGammaxH2dx[k] = (GammaxH2[k+1] - GammaxH2[k]) / (x[k+1] - x[k])
+            for k in range(0, nx-1):
+                SH_p[k] = 0.5*(SH[k+1] + SP[k+1] + 2*NuLoss[k+1]*nHP[k+1] - 2*SH2[k+1] + SH[k] + SP[k] + 2*NuLoss[k]*nHP[k] - 2*SH2[k])
+            max_source = np.max(np.array([SH, 2*SH2]))
+            for k in range(0, nx - 1):
+                Source_Error[k] = np.abs(2*dGammaxH2dx[k] + SH_p[k]) / np.max(np.abs(np.array([2*dGammaxH2dx[k], SH_p[k], max_source])))
             if debrief > 0:
                 print(prompt, 'Maximum Normalized Source_error =', np.max(Source_Error))
         
         # Save input parameters in common block
-        vx_s=vx
-        vr_s=vr
-        x_s=x
-        Tnorm_s=Tnorm
-        mu_s=mu
-        Ti_s=Ti
-        vxi_s=vxi
-        Te_s=Te
-        n_s=n
-        vxi_s=vxi
-        fH2BC_s=fH2BC
-        GammaxH2BC_s=GammaxH2BC
-        NuLoss_s=NuLoss
-        PipeDia_s=PipeDia
-        fH_s=fH
-        SH2_s=SH2
-        fH2_s=fH2
-        nHP_s=nHP
-        THP_s=THP
-        Simple_CX_s=Simple_CX
-        Sawada_s=Sawada
-        H2_H2_EL_s=H2_H2_EL
-        H2_P_EL_s=H2_P_EL
-        H2_H_EL_s=H2_H_EL
-        H2_HP_CX_s=H2_HP_CX
-        ni_correct_s=ni_correct
+        vx_s = vx
+        vr_s = vr
+        x_s = x
+        Tnorm_s = Tnorm
+        mu_s = mu
+        Ti_s = Ti
+        vxi_s = vxi
+        Te_s = Te
+        n_s = n
+        vxi_s = vxi
+        fH2BC_s = fH2BC
+        GammaxH2BC_s = GammaxH2BC
+        NuLoss_s = NuLoss
+        PipeDia_s = PipeDia
+        fH_s = fH
+        SH2_s = SH2
+        fH2_s = fH2
+        nHP_s = nHP
+        THP_s = THP
+        Simple_CX_s = Simple_CX
+        Sawada_s = Sawada
+        H2_H2_EL_s = H2_H2_EL
+        H2_P_EL_s = H2_P_EL
+        H2_H_EL_s = H2_H_EL
+        H2_HP_CX_s = H2_HP_CX
+        ni_correct_s = ni_correct
 
     # Set output parameters to single precision
 
-    #   fH2=float(fH2)
-    #   nH2=float(nH2)
+    #   fH2 = float(fH2)
+    #   nH2 = float(nH2)
     #   GammaxH2=float(GammaxH2)
     #   VxH2=float(VxH2)
     #   pH2=float(pH2)
@@ -2611,85 +2651,85 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
         
     # Set common blocks 
         # Kinetic_H2_Output common block
-    KH2_Common.Output.piH2_xx=piH2_xx
-    KH2_Common.Output.piH2_yy=piH2_yy
-    KH2_Common.Output.piH2_zz=piH2_zz
-    KH2_Common.Output.RxH2CX=RxH2CX
-    KH2_Common.Output.RxH_H2=RxH_H2
-    KH2_Common.Output.RxP_H2=RxP_H2
-    KH2_Common.Output.RxW_H2=RxW_H2
-    KH2_Common.Output.EH2CX=EH2CX
-    KH2_Common.Output.EH_H2=EH_H2
-    KH2_Common.Output.EP_H2=EP_H2
-    KH2_Common.Output.EW_H2=EW_H2
-    KH2_Common.Output.Epara_PerpH2_H2=Epara_PerpH2_H2
+    KH2_Common.Output.piH2_xx = piH2_xx
+    KH2_Common.Output.piH2_yy = piH2_yy
+    KH2_Common.Output.piH2_zz = piH2_zz
+    KH2_Common.Output.RxH2CX = RxH2CX
+    KH2_Common.Output.RxH_H2 = RxH_H2
+    KH2_Common.Output.RxP_H2 = RxP_H2
+    KH2_Common.Output.RxW_H2 = RxW_H2
+    KH2_Common.Output.EH2CX = EH2CX
+    KH2_Common.Output.EH_H2 = EH_H2
+    KH2_Common.Output.EP_H2 = EP_H2
+    KH2_Common.Output.EW_H2 = EW_H2
+    KH2_Common.Output.Epara_PerpH2_H2 = Epara_PerpH2_H2
 
     # Kinetic_H2_Errors common block
-    KH2_Common.Errors.Max_dx=Max_dx
-    KH2_Common.Errors.vbar_error=vbar_error
-    KH2_Common.Errors.mesh_error=mesh_error
-    KH2_Common.Errors.C_Error=C_error
-    KH2_Common.Errors.CX_Error=CX_error
-    KH2_Common.Errors.H2_H2_error=H2_H2_error
-    KH2_Common.Errors.qxH2_total_error=qxH2_total_error
-    KH2_Common.Errors.QH2_total_error=QH2_total_error
+    KH2_Common.Errors.Max_dx = Max_dx
+    KH2_Common.Errors.vbar_error = vbar_error
+    KH2_Common.Errors.mesh_error = mesh_error
+    KH2_Common.Errors.C_Error = C_error
+    KH2_Common.Errors.CX_Error = CX_error
+    KH2_Common.Errors.H2_H2_error = H2_H2_error
+    KH2_Common.Errors.qxH2_total_error = qxH2_total_error
+    KH2_Common.Errors.QH2_total_error = QH2_total_error
 
     # Kinetic_H2_input common  
-    KH2_Common.Input.vx_s=vx_s
-    KH2_Common.Input.vr_s=vr_s
-    KH2_Common.Input.x_s=x_s
-    KH2_Common.Input.Tnorm_s=Tnorm_s
-    KH2_Common.Input.mu_s=mu_s
-    KH2_Common.Input.Ti_s=Ti_s
-    KH2_Common.Input.Te_s=Te_s
-    KH2_Common.Input.n_s=n_s
-    KH2_Common.Input.vxi_s=vxi_s
-    KH2_Common.Input.fH2BC_s=fH2BC_s
-    KH2_Common.Input.GammaxH2BC_s=GammaxH2BC_s
-    KH2_Common.Input.NuLoss_s=Nuloss 
-    KH2_Common.Input.PipeDia_s=PipeDia_s
-    KH2_Common.Input.fH_s=fH_s
-    KH2_Common.Input.SH2_s=SH2_s
-    KH2_Common.Input.fH2_s=fH2_s
+    KH2_Common.Input.vx_s = vx_s
+    KH2_Common.Input.vr_s = vr_s
+    KH2_Common.Input.x_s = x_s
+    KH2_Common.Input.Tnorm_s = Tnorm_s
+    KH2_Common.Input.mu_s = mu_s
+    KH2_Common.Input.Ti_s = Ti_s
+    KH2_Common.Input.Te_s = Te_s
+    KH2_Common.Input.n_s = n_s
+    KH2_Common.Input.vxi_s = vxi_s
+    KH2_Common.Input.fH2BC_s = fH2BC_s
+    KH2_Common.Input.GammaxH2BC_s = GammaxH2BC_s
+    KH2_Common.Input.NuLoss_s = Nuloss 
+    KH2_Common.Input.PipeDia_s = PipeDia_s
+    KH2_Common.Input.fH_s = fH_s
+    KH2_Common.Input.SH2_s = SH2_s
+    KH2_Common.Input.fH2_s = fH2_s
 
-    KH2_Common.Input.nHP_s=nHP_s
-    KH2_Common.Input.THP_s=THP_s
-    KH2_Common.Input.Simple_CX_s=Simple_CX_s
-    KH2_Common.Input.Sawada_s=Sawada_s
-    KH2_Common.Input.H2_H2_EL_s=H2_H2_EL_s
-    KH2_Common.Input.H2_P_EL_s=H2_P_EL_s
-    KH2_Common.Input.H2_H_EL_s=H2_H_EL_s
-    KH2_Common.Input.H2_HP_CX_s=H2_HP_CX_s
-    KH2_Common.Input.ni_correct_s=ni_correct_s
+    KH2_Common.Input.nHP_s = nHP_s
+    KH2_Common.Input.THP_s = THP_s
+    KH2_Common.Input.Simple_CX_s = Simple_CX_s
+    KH2_Common.Input.Sawada_s = Sawada_s
+    KH2_Common.Input.H2_H2_EL_s = H2_H2_EL_s
+    KH2_Common.Input.H2_P_EL_s = H2_P_EL_s
+    KH2_Common.Input.H2_H_EL_s = H2_H_EL_s
+    KH2_Common.Input.H2_HP_CX_s = H2_HP_CX_s
+    KH2_Common.Input.ni_correct_s = ni_correct_s
 
     # kinetic_h2_internal common block  
-    KH2_Common.Internal.vr2vx2=vr2vx2
-    KH2_Common.Internal.vr2vx_vxi2=vr2vx_vxi2
-    KH2_Common.Internal.fw_hat=fw_hat
-    KH2_Common.Internal.fi_hat=fi_hat
-    KH2_Common.Internal.fHp_hat=fHp_hat
-    KH2_Common.Internal.EH2_P=EH2_P
-    KH2_Common.Internal.sigv=sigv
-    KH2_Common.Internal.Alpha_Loss=Alpha_Loss
-    KH2_Common.Internal.v_v2=v_v2
-    KH2_Common.Internal.v_v=v_v
-    KH2_Common.Internal.vr2_vx2=vr2_vx2
-    KH2_Common.Internal.vx_vx=vx_vx
+    KH2_Common.Internal.vr2vx2 = vr2vx2
+    KH2_Common.Internal.vr2vx_vxi2 = vr2vx_vxi2
+    KH2_Common.Internal.fw_hat = fw_hat
+    KH2_Common.Internal.fi_hat = fi_hat
+    KH2_Common.Internal.fHp_hat = fHp_hat
+    KH2_Common.Internal.EH2_P = EH2_P
+    KH2_Common.Internal.sigv = sigv
+    KH2_Common.Internal.Alpha_Loss = Alpha_Loss
+    KH2_Common.Internal.v_v2 = v_v2
+    KH2_Common.Internal.v_v = v_v
+    KH2_Common.Internal.vr2_vx2 = vr2_vx2
+    KH2_Common.Internal.vx_vx = vx_vx
 
-    KH2_Common.Internal.Vr2pidVrdVx=Vr2pidVrdVx
-    KH2_Common.Internal.SIG_CX=SIG_CX
-    KH2_Common.Internal.SIG_H2_H2=SIG_H2_H2
-    KH2_Common.Internal.SIG_H2_H=SIG_H2_H
-    KH2_Common.Internal.SIG_H2_P=SIG_H2_P
-    KH2_Common.Internal.Alpha_CX=Alpha_CX
-    KH2_Common.Internal.Alpha_H2_H=Alpha_H2_H
-    KH2_Common.Internal.MH2_H2_sum=MH2_H2_sum
-    KH2_Common.Internal.Delta_nH2s=Delta_nH2s
+    KH2_Common.Internal.Vr2pidVrdVx = Vr2pidVrdVx
+    KH2_Common.Internal.SIG_CX = SIG_CX
+    KH2_Common.Internal.SIG_H2_H2 = SIG_H2_H2
+    KH2_Common.Internal.SIG_H2_H = SIG_H2_H
+    KH2_Common.Internal.SIG_H2_P = SIG_H2_P
+    KH2_Common.Internal.Alpha_CX = Alpha_CX
+    KH2_Common.Internal.Alpha_H2_H = Alpha_H2_H
+    KH2_Common.Internal.MH2_H2_sum = MH2_H2_sum
+    KH2_Common.Internal.Delta_nH2s = Delta_nH2s
 
     # kinetic_h2_moments common block
-    KH2_Common.Moments.nH=nH2
-    KH2_Common.Moments.VxH=VxH2
-    KH2_Common.Moments.TH=TH2
+    KH2_Common.Moments.nH = nH2
+    KH2_Common.Moments.VxH = VxH2
+    KH2_Common.Moments.TH = TH2
     
     if debug > 0:
         print(prompt, 'Finished')

@@ -448,18 +448,18 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
             fH2, nHP, THP, nH2, GammaxH2, VxH2, pH2, TH2, qxH2, qxH2_total, Sloss, \
                 QH2, RxH2, QH2_total, AlbedoH2, WallH2, fSH, SH, SP, SHP, NuE, NuDis, ESH, Eaxis, error = kh2_results
 
-            print("fH2", fH2)
-            print("nHP", nHP)
-            print("THP", THP)
-            print("nH2", nH2)
-            print("GammaxH2", GammaxH2)
-            print("TH2", TH2)
-            print("qxH2_total", qxH2_total)
-            print("AlbedoH2", AlbedoH2)
-            print("fSH", fSH)
-            print("SH", SH)
-            print("SP", SP)
-            input()
+            # print("fH2", fH2.T)
+            # print("nHP", nHP)
+            # print("THP", THP)
+            # print("nH2", nH2)
+            # print("GammaxH2", GammaxH2)
+            # print("TH2", TH2)
+            # print("qxH2_total", qxH2_total)
+            # print("AlbedoH2", AlbedoH2)
+            # print("fSH", fSH.T)
+            # print("SH", SH)
+            # print("SP", SP)
+            # input()
             
 
             # Interpolate H2 data onto H mesh: fH2 -> fH2A, fSH -> fSHA, nHP -> nHPA, THP -> THPA
