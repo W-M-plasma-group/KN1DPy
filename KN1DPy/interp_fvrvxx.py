@@ -253,7 +253,7 @@ def interp_fvrvxx(fa, mesh_a : kinetic_mesh, mesh_b : kinetic_mesh, internal : I
             input()
         Ea[k]=_Ea[kL] + (_Ea[kR] - _Ea[kL])*f
     # print("fb", fb)
-    print("wxa", wxa)
+    # print("wxa", wxa)
     # print("Ea", Ea)
     # input()
 

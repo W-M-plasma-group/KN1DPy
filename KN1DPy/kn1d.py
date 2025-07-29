@@ -483,7 +483,10 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
             # input()
 
             nHPA = interp_scalarx(nHP, kh2_mesh.x, kh_mesh.x, do_warn=do_warn, debug=interp_debug) 
-            THPA = interp_scalarx(THP, kh2_mesh.x, kh_mesh.x, do_warn=do_warn, debug=interp_debug)     
+            THPA = interp_scalarx(THP, kh2_mesh.x, kh_mesh.x, do_warn=do_warn, debug=interp_debug) 
+            # print("nHPA", nHPA)
+            # print("THPA", THPA)
+            # input()    
 
             # Compute fH using Kinetic_H
             GammaxHBC = 0
