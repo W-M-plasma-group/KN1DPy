@@ -59,9 +59,13 @@ class kinetic_mesh:
         elif mesh_type == 'h2':
             #Estimate total reaction rate for destruction of molecules and for interation with side walls
             RR=n*sigmav_ion_hh(Te)+n*sigmav_h1s_h1s_hh(Te)+n*sigmav_h1s_h2s_hh(Te)
+            # print("RR", RR)
+            # input()
 
             #directed random velocity of diatomic molecule
             v0 = np.sqrt(8.0*CONST.TWALL*CONST.Q/(np.pi*2*mu*CONST.H_MASS))	
+            # print("v0", v0)
+            # input()
 
         else:
             raise Exception("ERROR: Mesh type invalid:", mesh_type)

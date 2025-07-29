@@ -32,5 +32,8 @@ def locate(table, value):
   # Handle special cases: out-of-range values
   indices[value < table[0]] = -1  # Values less than the first element
   indices[value >= table[-1]] = len(table) - 1  # Values greater than or equal to the last element
+
+  if(len(indices) == 1): #Convert to scalar if only one value
+     indices = indices[0]
   
   return indices

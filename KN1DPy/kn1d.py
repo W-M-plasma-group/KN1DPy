@@ -205,8 +205,16 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
         if GaugeH2 > 15.0:
             fctr = fctr * 15 / GaugeH2
 
-        # replaced function inputs, split output list into variables - nh // fixed keyword inputs - GG
+        # print("x_in", x)
+        # print("Ti_in", Ti)
+        # print("Te_in", Te)
+        # print("n_in", n)
+        # print("PipeDia_in", PipeDia)
+        # print("mu", mu)
+        # input()
         kh2_mesh = create_kinetic_h2_mesh(CONST.KH2_NV, mu, x, Ti, Te, n, PipeDia, E0 = Eneut, fctr = fctr) 
+        # print(kh2_mesh)
+        # input()
         #xH2,TiM,TeM,nM,PipeDiaM,vxM,vrM,TnormM = kh2_mesh
         
         # determine optimized vr, vx grid for kinetic_h (atoms, A)
@@ -465,7 +473,15 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
             # Interpolate H2 data onto H mesh: fH2 -> fH2A, fSH -> fSHA, nHP -> nHPA, THP -> THPA
             do_warn = 5.0E-3
             fH2A = interp_fvrvxx(fH2, kh2_mesh, kh_mesh, fvrvxx_internal, do_warn=do_warn, debug=interp_debug) 
-            fSHA = interp_fvrvxx(fSH, kh2_mesh, kh_mesh, fvrvxx_internal, do_warn=do_warn, debug=interp_debug) 
+            fSHA = interp_fvrvxx(fSH, kh2_mesh, kh_mesh, fvrvxx_internal, do_warn=do_warn, debug=interp_debug) #NOTE return value here not correct, see _Wxa calculation, set debug_flag
+            # ii = np.nonzero(fH2A.reshape(fH2A.size, order='F'))
+            # print("fH2Anz", ii)
+            # print("fH2A", fH2A.reshape(fH2A.size, order='F')[ii])
+            # ii = np.nonzero(fSHA.reshape(fSHA.size, order='F')) #NOTE Not Correct, Revisit
+            # print("fSHAnz", ii)
+            # print("fSHA", fSHA.reshape(fSHA.size, order='F')[ii])
+            # input()
+
             nHPA = interp_scalarx(nHP, kh2_mesh.x, kh_mesh.x, do_warn=do_warn, debug=interp_debug) 
             THPA = interp_scalarx(THP, kh2_mesh.x, kh_mesh.x, do_warn=do_warn, debug=interp_debug)     
 

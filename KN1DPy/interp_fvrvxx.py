@@ -12,7 +12,7 @@ from .common import constants as CONST
 from .common.INTERP_FVRVXX import INTERP_FVRVXX_internal
 
 def interp_fvrvxx(fa, mesh_a : kinetic_mesh, mesh_b : kinetic_mesh, internal : INTERP_FVRVXX_internal, 
-                  do_warn=None, debug=0, correct=1):
+                  do_warn=None, debug=0, correct=1, debug_flag = 0): #NOTE Debug flag added to mark specific function calls, remove later
 
     # NOTE Passing full mesh may be unneccessary, works for this code, but would need to be refactored for other projects
     # NOTE If removing mesh passing, will need to change code, mesh variables have replaced several variables here
@@ -77,9 +77,9 @@ def interp_fvrvxx(fa, mesh_a : kinetic_mesh, mesh_b : kinetic_mesh, internal : I
 
     #   Compute Vtha, Vtha2, Vthb and Vthb2
 
-    Vtha = np.sqrt(2*CONST.Q*mesh_a.Tnorm/(mu*CONST.H_MASS))
+    Vtha = np.sqrt((2*CONST.Q*mesh_a.Tnorm) / (mu*CONST.H_MASS))
     Vtha2 = Vtha*Vtha # fixed capitalization
-    Vthb = np.sqrt(2*CONST.Q*mesh_b.Tnorm/(mu*CONST.H_MASS))
+    Vthb = np.sqrt((2*CONST.Q*mesh_b.Tnorm) / (mu*CONST.H_MASS))
     Vthb2 = Vthb*Vthb # fixed capitalization
 
     if fa[:,0,0].size != nvra:
@@ -114,8 +114,8 @@ def interp_fvrvxx(fa, mesh_a : kinetic_mesh, mesh_b : kinetic_mesh, internal : I
     fb = np.zeros((nvrb, nvxb, nxb))
 
     make_dvr_dvx_out = make_dvr_dvx(mesh_a.vr,mesh_a.vx)
-    Vr2pidVra,VrVr4pidVra,dVxa,vraL,vraR,vxaL,vxaR=make_dvr_dvx_out[:7]
-    Vra2Vxa2=make_dvr_dvx_out[11]
+    Vr2pidVra,VrVr4pidVra,dVxa,vraL,vraR,vxaL,vxaR = make_dvr_dvx_out[:7]
+    Vra2Vxa2 = make_dvr_dvx_out[11]
 
     make_dvr_dvx_out = make_dvr_dvx(mesh_b.vr,mesh_b.vx)
     Vr2pidVrb,VrVr4pidVrb,dVxb,vrbL,vrbR,vxbL,vxbR,Vol,Vth_DVx,Vx_DVx,Vr_DVr,Vrb2Vxb2,jpa,jpb,jna,jnb = make_dvr_dvx_out
@@ -125,7 +125,7 @@ def interp_fvrvxx(fa, mesh_a : kinetic_mesh, mesh_b : kinetic_mesh, internal : I
     w1_active = 0
     w1_match = 0
 
-    if (not vra1 is None):
+    if (not vra1 is None) and (vra1.size == mesh_a.vr.size): #NOTE Might need a better fix for this, but works for now
         w1_active = 1
         test = 0
 
@@ -144,7 +144,7 @@ def interp_fvrvxx(fa, mesh_a : kinetic_mesh, mesh_b : kinetic_mesh, internal : I
     w2_active = 0
     w2_match = 0
 
-    if (not vra2 is None):
+    if (not vra2 is None) and (vra2.size == mesh_a.vr.size):
         w2_active = 1
         test = 0
 
@@ -184,7 +184,7 @@ def interp_fvrvxx(fa, mesh_a : kinetic_mesh, mesh_b : kinetic_mesh, internal : I
 
         #   Set area contributions to Weight array
 
-        _weight = np.zeros((nvrb, nvxb, nvra, nvxa))
+        _weight = np.zeros((nvrb,nvxb,nvra,nvxa))
         weight = np.zeros((nvrb*nvxb,nvra*nvxa))
 
         for ib in range(nvrb):
@@ -196,19 +196,18 @@ def interp_fvrvxx(fa, mesh_a : kinetic_mesh, mesh_b : kinetic_mesh, internal : I
                         vxaMin = max([fV*vxbL[jb], vxaL[ja]])
                         vxaMax = min([fV*vxbR[jb], vxaR[ja]])
                         if vraMax > vraMin and vxaMax > vxaMin:
-                            _weight[ib, jb, ia, ja] = 2*np.pi*(vraMax**2-vraMin**2)*(vxaMax-vxaMin)/(Vr2pidVrb[ib]*dVxb[jb])
+                            _weight[ib,jb,ia,ja] = 2*np.pi*(vraMax**2 - vraMin**2)*(vxaMax - vxaMin) / (Vr2pidVrb[ib]*dVxb[jb])
 
-        weight = np.reshape(_weight, weight.shape) # previous version caused error 
+        weight = np.reshape(_weight, weight.shape, order = 'F') # previous version caused error
 
     # print("weight", weight.T[np.nonzero(weight.T)].size)
     # input()
 
-    fb_xa = np.zeros((nvrb*nvxb, nxa)) 
+    fb_xa = np.zeros((nvrb*nvxb,nxa)) 
 
     #   Determine fb_xa from weight array
 
-    _fa = np.zeros((nvra*nvxa, nxa))
-    _fa = np.reshape(fa, _fa.shape) # previous version caused error
+    _fa = np.reshape(fa, (nvra*nvxa, nxa), order = 'F')
     fb_xa = weight @ _fa
 
     # print("fb_xa", fb_xa)
@@ -217,32 +216,44 @@ def interp_fvrvxx(fa, mesh_a : kinetic_mesh, mesh_b : kinetic_mesh, internal : I
 
     #   Compute _Wxa and _Ea - these are the desired moments of fb, but on the xa grid
 
-    na = np.zeros(nxa) # fixed capitalization
+    na = np.zeros(nxa)
     _Wxa = np.zeros(nxa)
     _Ea = np.zeros(nxa)
 
     for k in range(nxa):
-        na[k] = np.sum(Vr2pidVra*(fa[:,:,k] @ dVxa)) # fixed typo - GG
+        na[k] = np.sum(Vr2pidVra*(fa[:,:,k] @ dVxa))
         if na[k] > 0:
             _Wxa[k] = np.sqrt(mesh_a.Tnorm)*np.sum(Vr2pidVra*(fa[:,:,k] @ (mesh_a.vx*dVxa)))/na[k]
+            if debug_flag:
+                print("_wxa", _Wxa[k])
+                print("a", fa[:,:,k].T)
+                print("b", (mesh_a.vx*dVxa))
+                print("c", (fa[:,:,k] @ (mesh_a.vx*dVxa)))
+                input()
             _Ea[k] = mesh_a.Tnorm*np.sum(Vr2pidVra*((Vra2Vxa2*fa[:,:,k]) @ dVxa))/na[k]
     # print("na", na)
     # input()
 
-    wxa = np.zeros(nxb) # fixed capitalization
+    wxa = np.zeros(nxb)
     Ea = np.zeros(nxb)
 
     for k in range(k0, k1+1):
-        kL = np.maximum(locate(mesh_a.x, mesh_b.x[k]), 0) # fixed capitalization
+        kL = np.maximum(locate(mesh_a.x, mesh_b.x[k]), 0)
         kR = np.minimum(kL+1, mesh_a.x.size-1)
         kL = np.minimum(kL, kR-1)
 
-        f = (mesh_b.x[k] - mesh_a.x[kL])/(mesh_a.x[kR] - mesh_a.x[kL])
-        fb[:,:,k] = np.reshape((fb_xa[:,kL] + (fb_xa[:,kR] - fb_xa[:,kL])*f), fb[:,:,k].shape)
+        f = (mesh_b.x[k] - mesh_a.x[kL]) / (mesh_a.x[kR] - mesh_a.x[kL])
+        fb[:,:,k] = np.reshape((fb_xa[:,kL] + (fb_xa[:,kR] - fb_xa[:,kL])*f), fb[:,:,k].shape, order='F')
         wxa[k] = _Wxa[kL] + (_Wxa[kR] - _Wxa[kL])*f
+        if debug_flag:
+            print("klkr", kL, kR)
+            print("wxa1", wxa[k])
+            print("wxa2", _Wxa[kL])
+            print("wxa3", _Wxa[kR])
+            input()
         Ea[k]=_Ea[kL] + (_Ea[kR] - _Ea[kL])*f
     # print("fb", fb)
-    # print("wxa", wxa)
+    print("wxa", wxa)
     # print("Ea", Ea)
     # input()
 
@@ -265,17 +276,17 @@ def interp_fvrvxx(fa, mesh_a : kinetic_mesh, mesh_b : kinetic_mesh, internal : I
             nb = np.sum(Vr2pidVrb*(fb[:,:,k] @ dVxb))
             # print("nb", nb)
             # input()
-            if nb>0:
+            if nb > 0:
                 
                 #   Entry point for iteration - 'correct' tag in original code
                 #   Since Python doesn't have goto, a while loop was used
 
-                goto_correct=True
+                goto_correct = True
                 while goto_correct:
-                    goto_correct=False
+                    goto_correct = False
                     nb = np.sum(Vr2pidVrb*(fb[:,:,k] @ dVxb))
-                    Wxb = np.sqrt(mesh_b.Tnorm)*np.sum(Vr2pidVrb*(fb[:,:,k] @ (mesh_b.vx*dVxb)))/nb
-                    Eb = mesh_b.Tnorm*np.sum(Vr2pidVrb*((Vrb2Vxb2*fb[k,:,:]) @ dVxb))/nb
+                    Wxb = np.sqrt(mesh_b.Tnorm)*np.sum(Vr2pidVrb*(fb[:,:,k] @ (mesh_b.vx*dVxb))) / nb
+                    Eb = mesh_b.Tnorm*np.sum(Vr2pidVrb*((Vrb2Vxb2*fb[:,:,k]) @ dVxb)) / nb
                     # print("nb", nb)
                     # print("Wxb", Wxb)
                     # print("Eb", Eb)
@@ -284,36 +295,31 @@ def interp_fvrvxx(fa, mesh_a : kinetic_mesh, mesh_b : kinetic_mesh, internal : I
                     #   Compute Nij from fb, padded with zeros
 
                     Nij = np.zeros((nvrb+2,nvxb+2))
-                    Nij[1:-1,1:-1] = fb[:,:,k]*Vol/nb
+                    Nij[1:nvrb+1,1:nvxb+1] = fb[:,:,k]*Vol / nb
 
                     #   Set Cutoff and remove Nij very close to zero
 
                     cutoff = 1.0e-6*np.max(Nij)
                     ii = np.where((abs(Nij) < cutoff) & (abs(Nij) > 0))
-                    for i in ii:
-                        #Nij[tuple(i)]=0
-                        Nij[i] = 0.0
+                    if ii[0].size > 0:
+                        Nij[ii] = 0.0
+
                     if max(Nij[2,:]) <= 0:
                         allow_neg = 1
 
-                    Nijp1_vx_Dvx = np.roll(Nij*Vx_DVx, shift = -1, axis = 1)
+                    Nijp1_vx_Dvx = np.roll(Nij*Vx_DVx, shift=-1, axis=1)
                     Nij_vx_Dvx = Nij*Vx_DVx
-                    Nijm1_vx_Dvx = np.roll(Nij*Vx_DVx, shift = 1, axis = 1)
-                    Nip1j_vr_Dvr = np.roll(Nij*Vr_DVr, shift = -1, axis = 0)
+                    Nijm1_vx_Dvx = np.roll(Nij*Vx_DVx, shift=1, axis=1)
+                    Nip1j_vr_Dvr = np.roll(Nij*Vr_DVr, shift=-1, axis=0)
                     Nij_vr_Dvr = Nij*Vr_DVr
-                    Nim1j_vr_Dvr = np.roll(Nij*Vr_DVr, shift = 1, axis = 0)
+                    Nim1j_vr_Dvr = np.roll(Nij*Vr_DVr, shift=1, axis=0)
 
                     #   Compute Ap, Am, Bp, and Bm (0=p 1=m)
 
-                    #aux_AN = np.zeros((nvx+2,nvr+2),dtype=np.float64)
-                    aux_AN = Nij*Vth_DVx
-
-                    #_AN                = np.zeros((nvx+2,nvr+2), dtype=np.float64)
-                    _AN                 = np.roll(aux_AN, shift=1, axis=1) - aux_AN
+                    _AN                 = np.roll(Nij*Vth_DVx, shift=1, axis=1) - Nij*Vth_DVx
                     AN[:,:,0]           = copy.copy(_AN[1:nvrb+1,1:nvxb+1])
                     
-                    #_AN                = np.zeros((nvx+2,nvr+2), dtype=np.float64)
-                    _AN                 = -np.roll(aux_AN, shift=-1, axis=1) + aux_AN
+                    _AN                 = -np.roll(Nij*Vth_DVx, shift=-1, axis=1) + Nij*Vth_DVx
                     AN[:,:,1]           = copy.copy(_AN[1:nvrb+1,1:nvxb+1])
 
                     BN[:,jpa+1:jpb+1,0] =  Nijm1_vx_Dvx[1:nvrb+1,jpa+2:jpb+2] - Nij_vx_Dvx[1:nvrb+1,jpa+2:jpb+2]
@@ -341,20 +347,22 @@ def interp_fvrvxx(fa, mesh_a : kinetic_mesh, mesh_b : kinetic_mesh, internal : I
 
                     #   Remove padded zeros in Nij
 
-                    Nij = Nij[1:nvxb+1,1:nvrb+1]
+                    Nij = Nij[1:nvrb+1,1:nvxb+1]
+                    
 
                     #   Cycle through 4 possibilies of sign(alpha),sign(beta)
 
-                    TB1=np.zeros(2, float)
-                    TB2=np.zeros(2, float)
+                    TB1 = np.zeros(2, float)
+                    TB2 = np.zeros(2, float)
 
                     for ia in range(2):
-
+                        # print("a")
                         #   Compute TA1, TA2
 
                         TA1 = np.sqrt(mesh_b.Tnorm)*np.sum((AN[:,:,ia] @ mesh_b.vx))
                         TA2 = mesh_b.Tnorm*np.sum(Vrb2Vxb2*AN[:,:,ia])
                         for ib in range(2):
+                            # print("b")
 
                             #   Compute TB1, TB2
 
@@ -364,7 +372,13 @@ def interp_fvrvxx(fa, mesh_a : kinetic_mesh, mesh_b : kinetic_mesh, internal : I
                                 TB2[ib] = mesh_b.Tnorm*np.sum(Vrb2Vxb2*BN[:,:,ib])
 
                             denom = TA2*TB1[ib] - TA1*TB2[ib]
-                            #print("denom", denom)
+                            if debug_flag:
+                                print("denom", denom)
+                                # print(TA2*TB1[ib])
+                                # print(TA1*TB2[ib])
+                                # print(TB2[ib])
+                                # print(BN[:,:,ib].T)
+                                input()
                             beta = 0
                             alpha = 0
 
@@ -373,6 +387,8 @@ def interp_fvrvxx(fa, mesh_a : kinetic_mesh, mesh_b : kinetic_mesh, internal : I
                                 alpha = (wxa[k] - Wxb - TB1[ib]*beta)/TA1
 
                             do_break = ((alpha*sgn[ia]) > 0) and ((beta*sgn[ib]) > 0)
+                            # print("break", do_break)
+                            # print(Wxb)
                             if do_break:
                                 break
                         if do_break:
@@ -390,9 +406,15 @@ def interp_fvrvxx(fa, mesh_a : kinetic_mesh, mesh_b : kinetic_mesh, internal : I
                         ii = np.nonzero(Nij)
                         if np.size(ii) > 0:
                             s = min(1/np.max(-RHS[ii]/Nij[ii]),1)
+                    
                     fb[:,:,k] = nb*(Nij + s*RHS)/Vol # fixed capitalization
 
+                    # print("goto", goto_correct)
                     goto_correct = (s < 1)
+    if(debug_flag != 0):
+        ii = np.nonzero(fb.reshape(fb.size, order='F'))
+        print("fSHAnz", ii)
+        input()
 
     if do_warn != None:
 
@@ -449,8 +471,8 @@ def interp_fvrvxx(fa, mesh_a : kinetic_mesh, mesh_b : kinetic_mesh, internal : I
         tot_a[k] = np.sum(Vr2pidVra*(fa[:,:,k] @ dVxa))
     tot_b = np.zeros(nxb)
     tot_b[k0:k1+1] = interpolate.interp1d(mesh_a.x,tot_a,fill_value="extrapolate")(mesh_b.x[k0:k1+1])
-    ii = np.argwhere(fb>0)
-    if ii.size > 0: # replaced fb with ii
+    ii = np.where(fb>0)
+    if ii[0].size > 0: # replaced fb with ii
         min_tot = np.min(np.array(fb[ii])) #(np.array([fb[tuple(i)] for i in ii]))
         for k in range(k0, k1+1):
             tot = np.sum(Vr2pidVrb*(fb[:,:,k] @ dVxb))
