@@ -437,7 +437,7 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
     nvx = np.size(vx)
     nx = np.size(x)
     dx = x - np.roll(x, 1) ; dx = dx[1:]
-    notpos = np.argwhere(dx < 0.0)
+    notpos = np.argwhere(dx <= 0.0)
     count = np.size(notpos)
     # print("vr", vr)
     # print("vx", vx)
@@ -457,7 +457,7 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
         # error = 1
         raise Exception(prompt + " Number of elements in Ti and x do not agree!")
     if vxi is None:
-        vxi = np.arange(nx)
+        vxi = np.zeros(nx)
     if np.size(vxi) != nx:
         # print(prompt, 'Number of elements in vxi and x do not agree!')
         # error = 1
@@ -593,14 +593,13 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
         # print(prompt, 'vx contains one or more zero elements!')
         # error = 1
         raise Exception(prompt + " vx contains one or more zero elements!")
-    diff = np.argwhere(vx[i_p] != -np.flipud(vx[i_n])) # fixed how the array is reversed - GG
+    diff = np.argwhere(vx[i_p] != -np.flipud(vx[i_n]))
     count = np.size(diff)
     if count > 0:
         # print(prompt, 'vx array elements are not symmetric about zero!')
         # error = 1
         raise Exception(prompt + " vx array elements are not symmetric about zero!")
     fH2BC_input = np.zeros(fH2BC.shape)
-    #for i in i_p:
     fH2BC_input[:,i_p] = fH2BC[:,i_p]
     test = np.sum(fH2BC_input)
     if test <= 0.0:

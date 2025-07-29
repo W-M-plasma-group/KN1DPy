@@ -56,9 +56,9 @@ from .common.Kinetic_H import Kinetic_H_Common
 #	atomic neutral (H), molecular neutral (H2), molecular ion (HP), proton (i) or (P) 
 
 def kinetic_h(mesh : kinetic_mesh, mu, vxi, fHBC, GammaxHBC, fH2, fSH, nHP, THP, jh_coeffs : JH_Coef, KH_Common : Kinetic_H_Common, fH = None,
-			  truncate = 1e-4,Compute_Errors = 0,plot = 0,debug = 0,pause = 0,debrief = 0,
-			  Simple_CX = 1,Max_Gen = 50,No_Johnson_Hinnov = 0,Use_Collrad_Ionization = 0,
-			  No_Recomb = 0,H_H_EL = 0,H_P_EL = 0,_H_H2_EL = 0,H_P_CX = 0,ni_correct = 0): # changed fH default to None and Use_Collrad_Ionization capitalization
+			  truncate = 1e-4, Compute_Errors = 0, plot = 0, debug = 0, pause = 0, debrief = 0,
+			  Simple_CX = 1, Max_Gen = 50, No_Johnson_Hinnov = 0, Use_Collrad_Ionization = 0,
+			  No_Recomb = 0, H_H_EL = 0, H_P_EL = 0, _H_H2_EL = 0, H_P_CX = 0, ni_correct = 0): # changed fH default to None and Use_Collrad_Ionization capitalization
 
 	vx = mesh.vx
 	vr = mesh.vr
@@ -354,7 +354,7 @@ def kinetic_h(mesh : kinetic_mesh, mu, vxi, fHBC, GammaxHBC, fH2, fSH, nHP, THP,
 
 	#	Internal Debug switches
 
-	Shifted_Maxwellian_Debug = 0 # changed capitalization
+	Shifted_Maxwellian_Debug = 0
 	CI_Test = 1
 	Do_Alpha_CX_Test = 0
 
@@ -376,195 +376,139 @@ def kinetic_h(mesh : kinetic_mesh, mu, vxi, fHBC, GammaxHBC, fH2, fSH, nHP, THP,
 	if No_Recomb:
 		Recomb = 0
 	error = 0
+
 	nvr = vr.size
 	nvx = vx.size
 	nx = x.size
-	dx = x-np.roll(x,1)
-	dx = dx[1:] # moved to new line- fixed error
 
-	while error == 0:
-		notpos = dx[dx<=0]
-		if notpos.size>0:
-			print(prompt+'x[*] must be increasing with index!')
-			error = 1
-			break
-		if nvx % 2 != 0:
-			print(prompt+'Number of elements in vx must be even!') 
-			error = 1
-			break
-		if Ti.size != nx:
-			print(prompt+'Number of elements in Ti and x do not agree!')
-			error = 1
-			break
-		#	if type_of(vxi) eq 0 then vxi=dblarr(nx) - Doesn't really work in Python
-		if vxi.size != nx:
-			print(prompt+'Number of elements in vxi and x do not agree!')
-			error = 1
-			break
-		if Te.size != nx:
-			print(prompt+'Number of elements in Te and x do not agree!')
-			error = 1
-			break
-		if n.size != nx:
-			print('Number of elements in n and x do not agree!')
-			error = 1
-			break
-		if PipeDia.size != nx:
-			print('Number of elements in PipeDia and x do not agree!') # Fixed error message- previously copied from n.size!=nx
-			error = 1
-			break
-		if fHBC[0,:].size != nvr:
-			print(prompt+'Number of elements in fHBC[0,:] and vr do not agree!')
-			error = 1
-			break
-		if fHBC[:,0].size != nvx:
-			print(prompt+'Number of elements in fHBC[:,0] and vx do not agree!')
-			error = 1
-			break
-		if fH2[0,0,:].size != nvr:
-			print(prompt+'Number of elements in fH2[0,0,:] and vr do not agree!')
-			error = 1
-			break
-		if fH2[0,:,0].size != nvx:
-			print(prompt+'Number of elements in fH2[0,:,0] and vx do not agree!')
-			error = 1
-			break
-		if fH2[:,0,0].size != nx:
-			print(prompt+'Number of elements in fH2[:,0,0] and x do not agree!')
-			error = 1
-			break
-		if fSH[0,0,:].size != nvr:
-			print(prompt+'Number of elements in fSH[0,0,:] and vr do not agree!')
-			error = 1
-			break
-		if fSH[0,:,0].size != nvx:
-			print(prompt+'Number of elements in fSH[0,:,0] and vx do not agree!')
-			error = 1
-			break
-		if fSH[:,0,0].size != nx:
-			print(prompt+'Number of elements in fSH[:,0,0] and x do not agree!')
-			error = 1
-			break
-		if nHP.size != nx:
-			print(prompt+'Number of elements in nHP and x do not agree!')
-			error = 1
-			break
-		if THP.size != nx:
-			print(prompt+'Number of elements in nHP and x do not agree!')
-			error = 1
-			break
-		if fH is None:
-			fH = np.zeros((nx,nvx,nvr)) # Set fH if not left as None in function call
-		if fH[0,0,:].size != nvr:
-			print(prompt+'Number of elements in fH[0,0,:] and vr do not agree!')
-			error = 1
-			break
-		if fH[0,:,0].size != nvx:
-			print(prompt+'Number of elements in fH[0,:,0] and vx do not agree!')
-			error = 1
-			break
-		if fH[:,0,0].size != nx:
-			print(prompt+'Number of elements in fH[:,0,0] and x do not agree!')
-			error = 1
-			break
-		if np.sum(abs(vr)) == 0:
-			print(prompt+'vr is all 0!')
-			error = 1
-			break
-		ii = vr[vr<=0]
-		if ii.size > 0:
-			print(prompt+'vr contains zero or negative element(s)!')
-			error = 1
-			break
-		if np.sum(abs(vx)) == 0:
-			print(prompt+'vx is all 0!')
-			error = 1
-			break
-		if np.sum(x) <= 0:
-			print(prompt+'Total(x) is less than or equal to 0!')
-			error = 1
-			break
-		if mu not in [1,2]:
-			print(prompt+'mu must be 1 or 2!')
-			error = 1
-			break
-		break
-	if error == 1:
-		if debug>0:
-			print(prompt+'Finished')
-		return
-	_e = 'e!U-!N'
-	_hv = 'hv'
-	if mu == 1:
-		_p = 'H!U+!N'
-		_H = 'H!U0!N'
-		_H1s = 'H(1s)'
-		_Hs = 'H!U*!N(2s)'
-		_Hp = 'H!U*!N(2p)'
-		_Hn2 = 'H!U*!N(n=2)'
-		_Hn3 = 'H!U*!N(n=3)'
-		_Hn = 'H!U*!N(n>=2)'
-		_HH = 'H!D2!N'
-		_Hp = 'H!D2!U+!N'
-	else:
-		_p = 'D!U+!N'
-		_H = 'D!U0!N'
-		_H1s = 'D(1s)'
-		_Hs = 'D!U*!N(2s)'
-		_Hp = 'D!U*!N(2p)'
-		_Hn2 = 'D!U*!N(n=2)'
-		_Hn3 = 'D!U*!N(n=3)'
-		_Hn = 'D!U*!N(n>=2)'
-		_HH = 'D!D2!N'
-		_Hp='D!D2!U+!N'
-	plus = ' + '
-	arrow = ' -> '
-	elastic = ' (elastic)'
-	_R1 = _e+plus+_H1s+arrow+_e+plus+_p+plus+_e
-	_R2 = _e+plus+_p+arrow+plus+_H1s+plus+_hv
-	_R3 = _p+plus+_H1s+arrow+_H1s+plus+_p
-	_R4 = _H+plus+_p+arrow+_H+plus+_p+elastic
-	_R5 = _H+plus+_HH+arrow+_H+plus+_HH+elastic
-	_R6 = _H+plus+_H+arrow+_H+plus+_H+elastic
-	_Rn = [' ',_R1,_R2,_R3,_R4,_R5,_R6]
-	while error == 0:
-		#i_n=vx[vx<0] was original version; now rewritten
-		i_n,count = np.nonzero(vx<0)[0],np.count_nonzero(vx<0)
-		if count<1:
-			print(prompt+'vx contains no negative elements!')
-			error = 1
-			break
-		#i_p=vx[vx>0] was original version; now rewritten
-		i_p, count = np.nonzero(vx>0)[0],np.count_nonzero(vx>0)
-		if count<1:
-			print(prompt+'vx contains no positive elements!')
-			error = 1
-			break
-		#i_z=vx[vx==0] was original version; now rewritten
-		i_z,count = np.nonzero(vx==0)[0],np.count_nonzero(vx==0)
-		if count>0:
-			print(prompt+'vx contains one or more zero elements!')
-			error = 1
-			break
-		#	rewritten
-		if i_p.size == i_n.size:
-			for i in range(i_n.size):
-				if vx[i_n[i]] != -vx[i_p[i_p.size-i-1]]:
-					print(prompt+'vx array elements are not symmetric about zero!')
-					error = 1
-					break
-		fHBC_input = np.zeros(fHBC.shape)
-		fHBC_input[i_p,0] = fHBC[i_p,0]
-		test = np.sum(fHBC_input)
-		if test <= 0.0 and abs(GammaxHBC) > 0:
-			print(prompt+'Values for fHBC(*,*) with vx > 0 are all zero!')
-			error = 1
-			break
-		break
-	if error == 1:
-		if debug>0:
-			print(prompt+'Finished')
-		return
+	dx = x-np.roll(x,1)
+	dx = dx[1:]
+	notpos = np.argwhere(dx <= 0)
+	if notpos.size > 0:
+		raise Exception(prompt+'x[*] must be increasing with index!')
+		# error = 1
+	if nvx % 2 != 0:
+		raise Exception(prompt+'Number of elements in vx must be even!') 
+		# error = 1
+	if Ti.size != nx:
+		raise Exception(prompt+'Number of elements in Ti and x do not agree!')
+		# error = 1
+	if vxi is None:
+		vxi = np.zeros(nx)
+	if vxi.size != nx:
+		raise Exception(prompt+'Number of elements in vxi and x do not agree!')
+		# error = 1
+	if Te.size != nx:
+		raise Exception(prompt+'Number of elements in Te and x do not agree!')
+		# error = 1
+	if n.size != nx:
+		raise Exception('Number of elements in n and x do not agree!')
+		# error = 1
+	if GammaxHBC is None:
+		raise Exception(prompt+'GammaxHBC is not defined!')
+	if PipeDia is None:
+		PipeDia = np.zeros(nx)
+	if PipeDia.size != nx:
+		raise Exception('Number of elements in PipeDia and x do not agree!') # Fixed error message- previously copied from n.size!=nx
+		# error = 1
+	if len(fHBC[:,0]) != nvr:
+		raise Exception(prompt+'Number of elements in fHBC[:,0] and vr do not agree!')
+		# error = 1
+	if len(fHBC[0,:]) != nvx:
+		raise Exception(prompt+'Number of elements in fHBC[0,:] and vx do not agree!')
+		# error = 1
+	if fH2 is None:
+		fH2 = np.zeros((nvr, nvx, nx))
+	if fH2[:,0,0].size != nvr:
+		raise Exception(prompt+'Number of elements in fH2[:,0,0] and vr do not agree!')
+		# error = 1
+	if fH2[0,:,0].size != nvx:
+		raise Exception(prompt+'Number of elements in fH2[0,:,0] and vx do not agree!')
+		# error = 1
+	if fH2[0,0,:].size != nx:
+		raise Exception(prompt+'Number of elements in fH2[0,0,:] and x do not agree!')
+		# error = 1
+	if fSH is None:
+		fSH = np.zeros((nvr, nvx, nx))
+	if fSH[:,0,0].size != nvr:
+		raise Exception(prompt+'Number of elements in fSH[:,0,0] and vr do not agree!')
+		# error = 1
+	if fSH[0,:,0].size != nvx:
+		raise Exception(prompt+'Number of elements in fSH[0,:,0] and vx do not agree!')
+		# error = 1
+	if fSH[0,0,:].size != nx:
+		raise Exception(prompt+'Number of elements in fSH[0,0,:] and x do not agree!')
+		# error = 1
+	if nHP is None:
+		nHP = np.zeros(nx)
+	if nHP.size != nx:
+		raise Exception(prompt+'Number of elements in nHP and x do not agree!')
+		# error = 1
+	if THP is None:
+		THP = np.full(nx, 1.0)
+	if THP.size != nx:
+		raise Exception(prompt+'Number of elements in nHP and x do not agree!')
+		# error = 1
+	if fH is None:
+		fH = np.zeros((nvr,nvx,nx))
+	if fH[:,0,0].size != nvr:
+		raise Exception(prompt+'Number of elements in fH[:,0,0] and vr do not agree!')
+		# error = 1
+	if fH[0,:,0].size != nvx:
+		raise Exception(prompt+'Number of elements in fH[0,:,0] and vx do not agree!')
+		# error = 1
+	if fH[0,0,:].size != nx:
+		raise Exception(prompt+'Number of elements in fH[0,0,:] and x do not agree!')
+		# error = 1
+	if np.sum(abs(vr)) <= 0:
+		raise Exception(prompt+'vr is all 0!')
+		# error = 1
+	ii = np.argwhere(vr <= 0)
+	if ii.size > 0:
+		raise Exception(prompt+'vr contains zero or negative element(s)!')
+		# error = 1
+	if np.sum(abs(vx)) <= 0:
+		raise Exception(prompt+'vx is all 0!')
+		# error = 1
+	if np.sum(x) <= 0:
+		raise Exception(prompt+'Total(x) is less than or equal to 0!')
+		# error = 1
+	if mu is None:
+		raise Exception(prompt+'mu is not defined!')
+	if mu not in [1,2]:
+		raise Exception(prompt+'mu must be 1 or 2!')
+		# error = 1
+
+	#NOTE Removed Plotting formatting, bring back once the program actually works
+
+	i_n = np.where(vx < 0)[0]
+	if i_n.size < 1:
+		print(prompt+'vx contains no negative elements!')
+		# error = 1
+	i_p = np.where(vx > 0)[0]
+	if i_p.size < 1:
+		print(prompt+'vx contains no positive elements!')
+		# error = 1
+	i_z = np.where(vx==0)[0]
+	if i_z.size > 0:
+		print(prompt+'vx contains one or more zero elements!')
+		# error = 1
+	diff = np.argwhere(vx[i_p] != -np.flipud(vx[i_n]))
+	if diff.size > 0:
+		raise Exception(prompt + " vx array elements are not symmetric about zero!")
+        # error = 1
+	# print("i_p", i_p)
+	# print("i_n", i_n)
+	# print("i_z", i_z)
+	# input()
+
+
+	fHBC_input = np.zeros(fHBC.shape)
+	fHBC_input[0,i_p] = fHBC[0,i_p]
+	test = np.sum(fHBC_input)
+	if test <= 0.0 and abs(GammaxHBC) > 0:
+		raise Exception(prompt+'Values for fHBC(*,*) with vx > 0 are all zero!')
+		# error = 1
 
 	#	Output variables
 
@@ -599,24 +543,24 @@ def kinetic_h(mesh : kinetic_mesh, mu, vxi, fHBC, GammaxHBC, fH2, fSH, nHP, THP,
 
 	#	Internal variables
 
-	Work = np.zeros((nvx*nvr))
-	fHG = np.zeros((nx,nvx,nvr))
-	NHG = np.zeros((Max_Gen+1,nx)) # fixed capitalization
-	Vth = np.sqrt(2*CONST.Q*Tnorm/(mu*CONST.H_MASS))
+	Work = np.zeros((nvr*nvx))
+	fHG = np.zeros((nvr,nvx,nx))
+	NHG = np.zeros((nx,Max_Gen+1))
+	Vth = np.sqrt((2*CONST.Q*Tnorm) / (mu*CONST.H_MASS))
 	Vth2 = Vth*Vth
 	Vth3 = Vth2*Vth
 	fHs = np.zeros(nx)
 	nHs = np.zeros(nx)
-	Alpha_H_H = np.zeros((nvx,nvr))
+	Alpha_H_H = np.zeros((nvr,nvx))
 	Omega_H_P = np.zeros(nx)
 	Omega_H_H2 = np.zeros(nx)
 	Omega_H_H = np.zeros(nx)
 	VxHG = np.zeros(nx)
 	THG = np.zeros(nx)
 	Wperp_paraH = np.zeros(nx)
-	vr2vx2_ran2 = np.zeros((nvx,nvr))
-	vr2_2vx_ran2 = np.zeros((nvx,nvr))
-	vr2_2vx2_2D = np.zeros((nvx,nvr))
+	vr2vx2_ran2 = np.zeros((nvr,nvx))
+	vr2_2vx_ran2 = np.zeros((nvr,nvx))
+	vr2_2vx2_2D = np.zeros((nvr,nvx))
 	RxCI_CX = np.zeros(nx)
 	RxCI_H2_H = np.zeros(nx)
 	RxCI_P_H = np.zeros(nx)
@@ -625,9 +569,21 @@ def kinetic_h(mesh : kinetic_mesh, mu, vxi, fHBC, GammaxHBC, fH2, fSH, nHP, THP,
 	CI_H2_H_error = np.zeros(nx)
 	CI_P_H_error = np.zeros(nx)
 	CI_H_H_error = np.zeros(nx)
-	Maxwell = np.zeros((nx,nvx,nvr))
+	Maxwell = np.zeros((nvr,nvx,nx))
 
-	Vr2pidVr,VrVr4pidVr,dVx,vrL,vrR,vxL,vxR,Vol,Vth_DVx,Vx_DVx,Vr_DVr,Vr2Vx2_2D,jpa,jpb,jna,jnb = make_dvr_dvx(vr,vx)
+	Vr2pidVr, VrVr4pidVr, dVx, vrL, vrR, vxL, vxR, vol, Vth_DeltaVx, Vx_DeltaVx, Vr_DeltaVr, Vr2Vx2_2D, jpa, jpb, jna, jnb = make_dvr_dvx(vr,vx)
+	# print("Vr2pidVr", Vr2pidVr)
+	# print("VrVr4pidVr", VrVr4pidVr)
+	# print("dVx", dVx)
+	# print("vol", vol.T)
+	# print("Vth_DeltaVx", Vth_DeltaVx.T)
+	# print("Vx_DeltaVx", Vx_DeltaVx.T)
+	# print("Vr_DeltaVr", Vr_DeltaVr.T)
+	# print("jpa", jpa)
+	# print("jpb", jpb)
+	# print("jna", jna)
+	# print("jnb", jnb)
+	# input()
 
 	#	Vr^2-2*Vx^2
 

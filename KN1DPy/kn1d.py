@@ -453,6 +453,7 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
                     truncate=truncate, Simple_CX=Simple_CX, Max_Gen=max_gen, Compute_H_Source=Compute_H_Source,\
                     H2_H2_EL=H2_H2_EL,H2_P_EL=H2_P_EL,H2_H_EL=H2_H_EL,H2_HP_CX=H2_HP_CX, ni_correct=ni_correct,\
                     Compute_Errors=H2compute_errors, plot=H2plot,debug=H2debug,debrief=H2debrief,pause=H2pause)
+            
             fH2, nHP, THP, nH2, GammaxH2, VxH2, pH2, TH2, qxH2, qxH2_total, Sloss, \
                 QH2, RxH2, QH2_total, AlbedoH2, WallH2, fSH, SH, SP, SHP, NuE, NuDis, ESH, Eaxis, error = kh2_results
 
@@ -490,11 +491,10 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
 
             # Compute fH using Kinetic_H
             GammaxHBC = 0
-            fHBC = np.zeros((nvxA,nvrA)) # original used (nxH, nvxA, nvrA) but kinetic_h requires shape (nvxA,nvrA)
-            H2_H2_EL= H2_H_EL # fixed typo - GG 2/19
+            fHBC = np.zeros((nvrA,nvxA,nxH))
+            H2_H2_EL = H2_H_EL
             ni_correct = 1
             Hcompute_errors = compute_errors and Hdebrief
-
 
             kh_results = kinetic_h(
                     kh_mesh, mu, vxiA, fHBC, GammaxHBC, fH2A, fSHA, nHPA, THPA, jh_coefficients, KH_Common, fH=fH,\
