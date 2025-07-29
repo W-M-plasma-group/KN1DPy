@@ -606,7 +606,11 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
         # print(prompt, 'Values for fH2BC(*,*) with vx > 0 are all zero!')
         # error = 1
         raise Exception(prompt + " Values for fH2BC(:,:) with vx > 0 are all zero!")
-    
+    # print("i_p", i_p)
+    # print("i_n", i_n)
+    # print("i_z", i_z)
+    # input()
+
     # Output variables 
     nH2 = np.zeros(nx)
     GammaxH2 = np.zeros(nx)
@@ -693,7 +697,7 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
     
     # Vr^2-2*Vx^2
     for i in range(0, nvr):
-        vr2_2vx2_2D[i, :] = (vr[i]**2) - 2*(vx**2)
+        vr2_2vx2_2D[i,:] = (vr[i]**2) - 2*(vx**2)
     # print("vr2_2vx2_2D", vr2_2vx2_2D.T)
     # input()
     
@@ -774,7 +778,7 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
     if fH_s is not None:
         ii = np.argwhere(fH_s != fH)
         if np.size(ii) <= 0:
-            New_fH=0
+            New_fH = 0
     New_Simple_CX = 1
     if Simple_CX_s is not None:
         ii = np.argwhere(Simple_CX_s != Simple_CX)

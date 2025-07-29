@@ -491,7 +491,8 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
 
             # Compute fH using Kinetic_H
             GammaxHBC = 0
-            fHBC = np.zeros((nvrA,nvxA,nxH))
+            # fHBC = np.zeros((nvrA,nvxA,nxH))
+            fHBC = np.zeros((nvrA,nvxA))
             H2_H2_EL = H2_H_EL
             ni_correct = 1
             Hcompute_errors = compute_errors and Hdebrief
