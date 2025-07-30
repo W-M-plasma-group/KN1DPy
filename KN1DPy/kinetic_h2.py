@@ -801,16 +801,6 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
         ii = np.argwhere(ni_correct_s != ni_correct)
         if np.size(ii) <= 0:
             New_ni_correct = 0 
-    
-    print("New_Grid", New_Grid)
-    print("New_Protons", New_Protons)
-    print("New_Electrons", New_Electrons)
-    print("New_fH", New_fH)
-    print("New_Simple_CX", New_Simple_CX)
-    print("New_H2_Seed", New_H2_Seed)
-    print("New_HP_Seed", New_HP_Seed)
-    print("New_ni_correct", New_ni_correct)
-    # input()
 
     Do_sigv = New_Grid | New_Electrons
     Do_fH_moments = (New_Grid | New_fH) & (np.sum(fH) > 0.0)
@@ -824,22 +814,37 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
     # Do_Alpha_H2_P is updated in fH2_iteration loop
     Do_SIG_H2_P =   (New_Grid | (SIG_H2_P is None)) & Do_Alpha_H2_P
     Do_v_v2 =      (New_Grid or (v_v2 is None)) & (CI_Test | Do_SIG_CX | Do_SIG_H2_H | Do_SIG_H2_H2 | Do_SIG_H2_P)
-    print("Do_sigv", Do_sigv)
-    print("Do_fH_moments", Do_fH_moments)
-    print("Do_Alpha_CX", Do_Alpha_CX)
-    print("Do_SIG_CX", Do_SIG_CX)
-    print("Simple_CX", Simple_CX)
-    print("Do_Alpha_H2_H", Do_Alpha_H2_H)
-    print("Do_SIG_H2_H", Do_SIG_H2_H)
-    print("Do_SIG_H2_H2", Do_SIG_H2_H2)
-    print("Do_Alpha_H2_P", Do_Alpha_H2_P)
-    print("Do_SIG_H2_P", Do_SIG_H2_P)
-    print("Do_v_v2", Do_v_v2)
-    input()
+
+    # print("Kinetic H2 Settings")
+    # print("H2_H2_EL", H2_H2_EL)
+    # print("H2_P_EL", H2_P_EL)
+    # print("H2_H_EL", H2_H_EL)
+    # print("H2_HP_CX", H2_HP_CX)
+    # print("New_Grid", New_Grid)
+    # print("New_Protons", New_Protons)
+    # print("New_Electrons", New_Electrons)
+    # print("New_fH", New_fH)
+    # print("New_Simple_CX", New_Simple_CX)
+    # print("New_H2_Seed", New_H2_Seed)
+    # print("New_HP_Seed", New_HP_Seed)
+    # print("New_ni_correct", New_ni_correct)
+    # print("Do_sigv", Do_sigv)
+    # print("Do_fH_moments", Do_fH_moments)
+    # print("Do_Alpha_CX", Do_Alpha_CX)
+    # print("Do_SIG_CX", Do_SIG_CX)
+    # print("Simple_CX", Simple_CX)
+    # print("Do_Alpha_H2_H", Do_Alpha_H2_H)
+    # print("Do_SIG_H2_H", Do_SIG_H2_H)
+    # print("Do_SIG_H2_H2", Do_SIG_H2_H2)
+    # print("Do_Alpha_H2_P", Do_Alpha_H2_P)
+    # print("Do_SIG_H2_P", Do_SIG_H2_P)
+    # print("Do_v_v2", Do_v_v2)
+    # input()
 
     nH = np.zeros(nx)
     VxH = np.zeros(nx)
     TH = np.zeros(nx) + 1.0
+
     if Do_fH_moments:
         if debrief > 1:
             print(prompt, 'Computing vx and T moments of fH')
@@ -851,7 +856,7 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
                 VxH[k] = Vth*np.sum(Vr2pidVr*(fH[:,:,k] @ (vx*dVx)))/nH[k]
                 for i in range(0, nvr):
                     vr2vx2_ran2[i,:] = vr[i]**2 + (vx - VxH[k]/Vth)**2
-                TH[k] = (mu*CONST.H_MASS)*Vth2*np.sum(Vr2pidVr*(vr2vx2_ran2*(fH[:,:,k] @ dVx)))/(3*CONST.Q*nH[k])
+                TH[k] = (mu*CONST.H_MASS)*Vth2*np.sum(Vr2pidVr*(vr2vx2_ran2*(fH[:,:,k] @ dVx))) / (3*CONST.Q*nH[k])
     
     if New_Grid:
         if debrief > 1:

@@ -681,7 +681,7 @@ def kinetic_h(mesh : kinetic_mesh, mu, vxi, fHBC, GammaxHBC, fH2, fSH, nHP, THP,
         ii = np.argwhere(Simple_CX_s != Simple_CX)
         if np.size(ii) <= 0:
             New_Simple_CX = 0
-    New_H_Seed=1
+    New_H_Seed = 1
     if fH_s is not None:
         ii = np.argwhere(fH_s != fH)
         if np.size(ii) <= 0:
@@ -698,6 +698,20 @@ def kinetic_h(mesh : kinetic_mesh, mu, vxi, fHBC, GammaxHBC, fH2, fSH, nHP, THP,
     Do_Alpha_H_P = 		(New_Grid | (Alpha_H_P is None) | Do_ni) & H_P_EL
     Do_SIG_H_P = 		(New_Grid | (SIG_H_P is None)) & Do_Alpha_H_P
     Do_v_v2 = 			(New_Grid | (v_v2 is None)) & (CI_Test | Do_SIG_CX | Do_SIG_H_H2 | Do_SIG_H_H | Do_SIG_H_P)
+    
+    print("Kinetic H Settings")
+    print("H_H_EL", H_H_EL)
+    print("H_P_EL", H_P_EL)
+    print("_H_H2_EL", _H_H2_EL)
+    print("H_P_CX", H_P_CX)
+    print("New_Grid", New_Grid)
+    print("New_Protons", New_Protons)
+    print("New_Molecular_Ions", New_Molecular_Ions)
+    print("New_Electrons", New_Electrons)
+    print("New_fH2", New_fH2)
+    print("New_fSH", New_fSH)
+    print("New_Simple_CX", New_Simple_CX)
+    print("New_H_Seed", New_H_Seed)
     print("Do_sigv", Do_sigv)
     print("Do_ni", Do_ni)
     print("Do_fH2_moments", Do_fH2_moments)
@@ -714,57 +728,60 @@ def kinetic_h(mesh : kinetic_mesh, mu, vxi, fHBC, GammaxHBC, fH2, fSH, nHP, THP,
 
     nH2 = np.zeros(nx)
     vxH2 = np.zeros(nx)
-    TH2 = np.zeros(nx)+1.0
+    TH2 = np.full(nx, 1.0)
+
     if Do_fH2_moments:
-        if debrief>1:
+        if debrief > 1:
             print(prompt+'Computing vx and T moments of fH2')
 
         #	Compute x flow velocity and temperature of molecular species
-
         for k in range(nx):
-            nH2[k] = np.sum(Vr2pidVr*np.matmul(dVx,fH2[k,:,:])) #NOTE Difference with kh2
-            if nH2[k]>0:
-                vxH2[k] = Vth*np.sum(Vr2pidVr*np.matmul(vx*dVx,fH2[k,:,:]))/nH2[k]
+            nH2[k] = np.sum(Vr2pidVr*(fH2[:,:,k] @ dVx))
+            if nH2[k] > 0:
+                vxH2[k] = Vth*np.sum(Vr2pidVr*(fH2[:,:,k] @ (vx*dVx)))/nH2[k]
                 for i in range(nvr):
-                    vr2vx2_ran2[:,i] = vr[i]**2+(vx-vxH2[k]/Vth)**2
-                TH2[k] = (2*mu*CONST.H_MASS)*Vth2*np.sum(Vr2pidVr*np.matmul(dVx,vr2vx2_ran2*fH2[k,:,:]))/(3*CONST.Q*nH2[k])
+                    vr2vx2_ran2[i,:] = vr[i]**2 + (vx - vxH2[k]/Vth)**2
+                TH2[k] = (2*mu*CONST.H_MASS)*Vth2*np.sum(Vr2pidVr*((vr2vx2_ran2*fH2[:,:,k]) @ dVx)) / (3*CONST.Q*nH2[k])
+        # print("TH2", TH2)
+        # print("vxH2", vxH2)
+        # input()
 
     if New_Grid:
-        if debrief>1:
+        if debrief > 1:
             print(prompt+'Computing vr2vx2, vr2vx_vxi2, ErelH_P')
 
         #	Magnitude of total normalized v^2 at each mesh point
-
-        vr2vx2 = np.zeros((nx,nvx,nvr)) #NOTE Difference with kh2
+        vr2vx2 = np.zeros((nvr,nvx,nx))
         for i in range(nvr):
             for k in range(nx):
-                vr2vx2[k,:,i] = vr[i]**2+vx**2
+                vr2vx2[i,:,k] = vr[i]**2 + vx**2
 
         #	Magnitude of total normalized (v-vxi)^2 at each mesh point
-
-        vr2vx_vxi2 = np.zeros((nx,nvx,nvr))
+        vr2vx_vxi2 = np.zeros((nvr,nvx,nx))
         for i in range(nvr):
             for k in range(nx):
-                vr2vx_vxi2[k,:,i] = vr[i]**2+(vx-vxi[k]/Vth)**2
+                vr2vx_vxi2[i,:,k] = vr[i]**2 + (vx - vxi[k]/Vth)**2
 
         #	Atomic hydrogen ion energy in local rest frame of plasma at each mesh point
+        ErelH_P = (0.5*CONST.H_MASS*vr2vx_vxi2*Vth2) / CONST.Q
+        ErelH_P = np.maximum(ErelH_P, 0.1) # sigmav_cx does not handle neutral energies below 0.1 eV
+        ErelH_P = np.minimum(ErelH_P, 2e4) # sigmav_cx does not handle neutral energies above 20 keV
 
-        ErelH_P = 0.5*CONST.H_MASS*vr2vx_vxi2*Vth2/CONST.Q # fixed Vth2 capitalization
-        ErelH_P = np.maximum(ErelH_P,.1) # sigmav_cx does not handle neutral energies below 0.1 eV
-        ErelH_P = np.minimum(ErelH_P,2e4) # sigmav_cx does not handle neutral energies above 20 keV
+        # print("ErelH_P", ErelH_P[:,10,10].T)
+        # print("vr2vx2", vr2vx2[:,10,10].T)
+        # print("vr2vx_vxi2", vr2vx_vxi2[:,10,10].T)
+        # input()
 
     if New_Protons:
         if debrief>1:
             print(prompt+'Computing Ti/mu at each mesh point')
 
         #	Ti/mu at each mesh point
-
-        Ti_mu = np.zeros((nx,nvx,nvr))
+        Ti_mu = np.zeros((nvr,nvx,nx))
         for k in range(nx):
-            Ti_mu[k,:,:] = Ti[k]/mu
+            Ti_mu[:,:,k] = Ti[k]/mu
 
         #	Compute Fi_hat
-
         if debrief>1:
             print(prompt+'Computing fi_Hat')
         vx_shift = vxi
@@ -772,8 +789,12 @@ def kinetic_h(mesh : kinetic_mesh, mu, vxi, fHBC, GammaxHBC, fH2, fSH, nHP, THP,
         mol = 1
         Maxwell = create_shifted_maxwellian_include(vr,vx,Tnorm,vx_shift,Tmaxwell,Shifted_Maxwellian_Debug,mu,mol,
                                       nx,nvx,nvr,Vth,Vth2,Maxwell,vr2vx2_ran2,
-                                      Vr2pidVr,dVx,Vol,Vth_DVx,Vx_DVx,Vr_DVr,Vr2Vx2_2D,jpa,jpb,jna,jnb) # changed Vr2Vx2_2D capitalization, updated function call
-        fi_hat = Maxwell
+                                      Vr2pidVr,dVx,vol,Vth_DeltaVx,Vx_DeltaVx,Vr_DeltaVr,Vr2Vx2_2D,jpa,jpb,jna,jnb)
+        fi_hat = np.copy(Maxwell)
+        
+        # print("ti_mu", Ti_mu[:,10,10].T)
+        # print("fi_hat", fi_hat[:,10,10].T)
+        # input()
 
     if Compute_Errors:
         if debrief>1:
@@ -786,21 +807,22 @@ def kinetic_h(mesh : kinetic_mesh, mu, vxi, fHBC, GammaxHBC, fH2, fSH, nHP, THP,
         mol = 1
         Maxwell = create_shifted_maxwellian_include(vr,vx,Tnorm,vx_shift,Tmaxwell,Shifted_Maxwellian_Debug,mu,mol,
                                       nx,nvx,nvr,Vth,Vth2,Maxwell,vr2vx2_ran2,
-                                      Vr2pidVr,dVx,Vol,Vth_DVx,Vx_DVx,Vr_DVr,Vr2Vx2_2D,jpa,jpb,jna,jnb) # changed Vr2Vx2_2D capitalization, updated function call
-        vbar_test = np.zeros((ntheta,nvx,nvr))
+                                      Vr2pidVr,dVx,vol,Vth_DeltaVx,Vx_DeltaVx,Vr_DeltaVr,Vr2Vx2_2D,jpa,jpb,jna,jnb)
+        vbar_test = np.zeros((nvr,nvx,ntheta))
         vbar_error = np.zeros(nx)
         for m in range(ntheta):
-            vbar_test[m,:,:] = vr2vx2[0,:,:]
-        _vbar_test = np.zeros(ntheta,nvr*nvx)
-        _vbar_test[:] = Vth*np.sqrt(vbar_test)
-        vbar_test = np.zeros((nvx,nvr))
-        vbar_test[:] = np.matmul(dTheta,_vbar_test)
+            vbar_test[:,:,m] = vr2vx2[:,:,0]
+        _vbar_test = np.zeros((nvr*nvx,ntheta))
+        _vbar_test[:] = (Vth*np.sqrt(vbar_test)).reshape(_vbar_test.shape, order='F')
+        vbar_test = np.zeros((nvr,nvx))
+        vbar_test[:] = (_vbar_test @ dTheta).reshape(vbar_test.shape, order='F')
         for k in range(nx):
-            vbar = np.sum(Vr2pidVr*np.matmul(dVx,vbar_test*Maxwell[k,:,:]))
-            vbar_exact = 2*Vth*np.sqrt(Ti[k]/Tnorm)/np.sqrt(np.pi)
-            vbar_error[k] = abs(vbar-vbar_exact)/vbar_exact
-        if debrief>0:
-            print(prompt+'Maximum Vbar error = '+str(max(vbar_error)))
+            vbar = np.sum(Vr2pidVr*((vbar_test*Maxwell[:,:,k]) @ dVx))
+            vbar_exact = 2*Vth*np.sqrt(Ti[k]/Tnorm) / np.sqrt(np.pi)
+            vbar_error[k] = abs(vbar-vbar_exact) / vbar_exact
+        if debrief > 0:
+            print(prompt+'Maximum Vbar error = ', sval(max(vbar_error)))
+            # input()
 
     if Do_ni:
         if debrief>1:
@@ -808,7 +830,9 @@ def kinetic_h(mesh : kinetic_mesh, mu, vxi, fHBC, GammaxHBC, fH2, fSH, nHP, THP,
         ni = n
         if ni_correct:
             ni = n-nHP
-        ni = np.maximum(ni,.01*n)
+        ni = np.maximum(ni, 0.01*n)
+        # print("ni", ni)
+        # input()
 
     if Do_sigv:
         if debrief>1:
@@ -817,32 +841,38 @@ def kinetic_h(mesh : kinetic_mesh, mu, vxi, fHBC, GammaxHBC, fH2, fSH, nHP, THP,
         #	Compute sigmav rates for each reaction with option to use rates
         #	from CR model of Johnson-Hinnov
 
-        sigv = np.zeros((3,nx))
+        sigv = np.zeros((nx,3))
 
         #	Reaction R1:  e + H -> e + H(+) + e   (ionization)
-
-        if Use_Collrad_Ionization:
-            sigv[1,:] = collrad_sigmav_ion_h0(n,Te) # from COLLRAD code (DEGAS-2)
+        #NOTE Replace Use_Collrad_Ionization with constant for consistency across program, check with someone who knows what they are doing if this is correct
+        if CONST.USE_COLLRAD_IONIZATION:
+            sigv[:,1] = collrad_sigmav_ion_h0(n,Te) # from COLLRAD code (DEGAS-2)
         else:
-            if JH:
-                sigv[1,:] = jhs_coef(n, Te, jh_coeffs, no_null=True) # Johnson-Hinnov, limited Te range; fixed JHS_coef capitalization
+            #NOTE Replace JH with constant for consistency across program, check with someone who knows what they are doing if this is correct
+            if CONST.USE_JH:
+                sigv[:,1] = jhs_coef(n, Te, jh_coeffs, no_null=True) # Johnson-Hinnov, limited Te range; fixed JHS_coef capitalization #NOTE Not tested yet
             else:
-                sigv[1,:] = sigmav_ion_h0(Te) # from Janev et al., up to 20keV
+                sigv[:,1] = sigmav_ion_h0(Te) # from Janev et al., up to 20keV #NOTE Not Tested Yet
 
         #	Reaction R2:  e + H(+) -> H(1s) + hv  (radiative recombination)
-
-        if JH:
-            sigv[2,:] = jhalpha_coef(n, Te, jh_coeffs, no_null=True) # fixed JHAlpha_coef capitalization
+        #NOTE Replace JH with constant for consistency across program, check with someone who knows what they are doing if this is correct
+        if CONST.USE_JH:
+            sigv[:,2] = jhalpha_coef(n, Te, jh_coeffs, no_null=True)
+            print("a")
         else:
-            sigv[2,:] = sigmav_rec_h1s(Te)
+            sigv[:,2] = sigmav_rec_h1s(Te)
+            print("b")
 
         #	H ionization rate (normalized by vth) = reaction 1
-
-        alpha_ion = n*sigv[1,:]/Vth
+        alpha_ion = (n*sigv[:,1]) / Vth
 
         #	Recombination rate (normalized by vth) = reaction 2
+        Rec = (n*sigv[:,2]) / Vth
 
-        Rec = n*sigv[2,:]/Vth
+        # print("sigv", sigv.T)
+        # print("alpha_ion", alpha_ion)
+        # print("Rec", Rec)
+        # input()
 
     #	Compute Total Atomic Hydrogen Source
 

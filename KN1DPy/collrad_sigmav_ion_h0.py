@@ -16,18 +16,18 @@ from scipy import interpolate
 def collrad_sigmav_ion_h0(N_e, T_e): # removed unused argument p - nh
     if np.size(N_e) != np.size(T_e):
         raise Exception('Number of elements in inputs do not match.')
-    temp = T_e # changes precision to float this might be unnecessary in python  
-    dens = N_e # removed type conversions - nh
-    #convert from m^-3 to cm^-3
-    dens = dens/1e6
+    temp = T_e
+    dens = N_e
+    dens = dens/1e6 #convert from m^-3 to cm^-3
 
     # compute indices for interpolation on sigmav grid:
-    indte=np.maximum(10*(np.log10(temp)+1.2),0) # changed log base - GG
-    indte=np.minimum(indte,59) 
-    indne=np.maximum(2*(np.log10(dens)-10),0) # changed log base - GG
-    indne=np.minimum(indne,14) # replaced > and < with np.maximum and np.minimum - nh
+    indte = np.maximum(10*(np.log10(temp)+1.2), 0)
+    indte = np.minimum(indte, 59) 
+    indne = np.maximum(2*(np.log10(dens)-10), 0)
+    indne = np.minimum(indne,14)
 
-    column_1 = np.array( \
+    sigmav = np.zeros((15,60))
+    sigmav[0,:] = np.array( \
         [1.00000e-99,  1.93923e-83,  6.89061e-68,  4.81352e-56,  2.12250e-46,  9.93199e-39, \
          1.25671e-32,  9.04277e-28,  6.67852e-24,  8.09280e-21,  2.33560e-18,  2.15831e-16, \
          8.07713e-15,  1.47468e-13,  1.52339e-12,  9.98880e-12,  4.56713e-11,  1.56457e-10, \
@@ -39,7 +39,7 @@ def collrad_sigmav_ion_h0(N_e, T_e): # removed unused argument p - nh
          1.34241e-08,  1.23219e-08,  1.12919e-08,  1.03333e-08,  9.44439e-09,  8.62253e-09, \
          7.86463e-09,  7.16725e-09,  6.52676e-09,  5.93948e-09,  5.40175e-09,  4.90998e-09])
 
-    column_2 = np.array( \
+    sigmav[1,:] = np.array( \
         [1.00000e-99,  3.08801e-83,  1.44609e-68,  6.61093e-56,  2.75895e-46,  1.23330e-38, \
          1.50372e-32,  1.05015e-27,  7.57152e-24,  8.99868e-21,  2.55656e-18,  2.33242e-16, \
          8.63712e-15,  1.56316e-13,  1.60290e-12,  1.04452e-11,  4.75051e-11,  1.62007e-10, \
@@ -51,7 +51,7 @@ def collrad_sigmav_ion_h0(N_e, T_e): # removed unused argument p - nh
          1.35157e-08,  1.24044e-08,  1.13659e-08,  1.03997e-08,  9.50370e-09,  8.67547e-09, \
          7.91178e-09,  7.20916e-09,  6.56393e-09,  5.97238e-09,  5.43080e-09,  4.93558e-09])
 
-    column_3 = np.array( \
+    sigmav[2,:] = np.array( \
         [5.02155e-94,  5.61298e-83,  2.01483e-68,  1.01676e-55,  3.96596e-46,  1.67642e-38, \
          1.95224e-32,  1.31341e-27,  9.18722e-24,  1.06529e-20,  2.96557e-18,  2.65962e-16, \
          9.70465e-15,  1.73375e-13,  1.75725e-12,  1.13324e-11,  5.10556e-11,  1.72647e-10, \
@@ -63,7 +63,7 @@ def collrad_sigmav_ion_h0(N_e, T_e): # removed unused argument p - nh
          1.36402e-08,  1.25165e-08,  1.14668e-08,  1.04902e-08,  9.58494e-09,  8.74826e-09, \
          7.97693e-09,  7.26741e-09,  6.61595e-09,  6.01878e-09,  5.47214e-09,  4.97237e-09])
 
-    column_4 = np.array( \
+    sigmav[3,:] = np.array( \
         [5.02155e-94,  1.21407e-82,  2.72028e-67,  1.85445e-55,  6.72737e-46,  2.66857e-38, \
          2.94291e-32,  1.89009e-27,  1.27059e-23,  1.42341e-20,  3.84394e-18,  3.35462e-16, \
          1.19403e-14,  2.08505e-13,  2.06925e-12,  1.30910e-11,  5.79549e-11,  1.92922e-10, \
@@ -75,7 +75,7 @@ def collrad_sigmav_ion_h0(N_e, T_e): # removed unused argument p - nh
          1.38115e-08,  1.26705e-08,  1.16050e-08,  1.06142e-08,  9.69599e-09,  8.84763e-09, \
          8.06578e-09,  7.34678e-09,  6.68680e-09,  6.08199e-09,  5.52848e-09,  5.02256e-09])
 
-    column_5 = np.array( \
+    sigmav[4,:] = np.array( \
         [1.00000e-99,  3.19565e-82,  4.18721e-67,  4.17673e-55,  1.40099e-45,  5.15844e-38, \
          5.30819e-32,  3.19983e-27,  2.03100e-23,  2.16062e-20,  5.57007e-18,  4.66256e-16, \
          1.59854e-14,  2.69884e-13,  2.59804e-12,  1.59955e-11,  6.91065e-11,  2.25123e-10, \
@@ -87,7 +87,7 @@ def collrad_sigmav_ion_h0(N_e, T_e): # removed unused argument p - nh
          1.40528e-08,  1.28870e-08,  1.17991e-08,  1.07879e-08,  9.85127e-09,  8.98633e-09, \
          8.18954e-09,  7.45712e-09,  6.78510e-09,  6.16949e-09,  5.60633e-09,  5.09177e-09])
 
-    column_6 = np.array( \
+    sigmav[5,:] = np.array( \
         [1.00000e-99,  9.52529e-82,  1.19701e-66,  1.07741e-54,  3.31427e-45,  1.11936e-37, \
          1.06082e-31,  5.92680e-27,  3.51233e-23,  3.51436e-20,  8.57944e-18,  6.84166e-16, \
          2.24629e-14,  3.64844e-13,  3.39221e-12,  2.02490e-11,  8.51006e-11,  2.70549e-10, \
@@ -99,7 +99,7 @@ def collrad_sigmav_ion_h0(N_e, T_e): # removed unused argument p - nh
          1.44023e-08,  1.32000e-08,  1.20790e-08,  1.10379e-08,  1.00744e-08,  9.18520e-09, \
          8.36663e-09,  7.61467e-09,  6.92516e-09,  6.29390e-09,  5.71676e-09,  5.18974e-09])
 
-    column_7 = np.array( \
+    sigmav[6,:] = np.array( \
         [5.02155e-94,  1.27796e-79,  3.53013e-66,  3.02561e-54,  8.53989e-45,  2.63882e-37, \
          2.29129e-31,  1.17818e-26,  6.46754e-23,  6.03915e-20,  1.38638e-17,  1.04711e-15, \
          3.27702e-14,  5.10164e-13,  4.56794e-12,  2.63735e-11,  1.07611e-10,  3.33347e-10, \
@@ -111,7 +111,7 @@ def collrad_sigmav_ion_h0(N_e, T_e): # removed unused argument p - nh
          1.49318e-08,  1.36728e-08,  1.25005e-08,  1.14132e-08,  1.04081e-08,  9.48171e-09, \
          8.62980e-09,  7.84806e-09,  7.13197e-09,  6.47704e-09,  5.87884e-09,  5.33309e-09])
 
-    column_8 = np.array( \
+    sigmav[7,:] = np.array( \
         [1.00000e-99,  9.49905e-81,  1.21157e-65,  9.63177e-54,  2.50897e-44,  7.07421e-37, \
          5.58076e-31,  2.61346e-26,  1.31537e-22,  1.13546e-19,  2.42899e-17,  1.72162e-15, \
          5.08790e-14,  7.52327e-13,  6.43388e-12,  3.56797e-11,  1.40576e-10,  4.22650e-10, \
@@ -123,7 +123,7 @@ def collrad_sigmav_ion_h0(N_e, T_e): # removed unused argument p - nh
          1.57892e-08,  1.44348e-08,  1.31767e-08,  1.20125e-08,  1.09387e-08,  9.95088e-09, \
          9.04435e-09,  8.21404e-09,  7.45483e-09,  6.76166e-09,  6.12960e-09,  5.55389e-09])
 
-    column_9 = np.array( \
+    sigmav[8,:] = np.array( \
         [5.02157e-94,  1.52401e-79,  4.64668e-65,  3.52562e-53,  8.60248e-44,  2.23707e-36, \
          1.61239e-30,  6.86706e-26,  3.13746e-22,  2.45906e-19,  4.78939e-17,  3.10847e-15, \
          8.48355e-14,  1.17030e-12,  9.43638e-12,  4.98402e-11,  1.88682e-10,  5.49278e-10, \
@@ -135,7 +135,7 @@ def collrad_sigmav_ion_h0(N_e, T_e): # removed unused argument p - nh
          1.73042e-08,  1.57766e-08,  1.43625e-08,  1.30585e-08,  1.18598e-08,  1.07608e-08, \
          9.75556e-09,  8.83789e-09,  8.00154e-09,  7.24040e-09,  6.54854e-09,  5.92032e-09])
 
-    column_10 = np.array( \
+    sigmav[9,:] = np.array( \
         [6.57984e-99,  3.12266e-79,  1.90237e-64,  1.39798e-52,  3.26114e-43,  7.99326e-36, \
          5.34708e-30,  2.08169e-25,  8.59191e-22,  6.04879e-19,  1.05911e-16,  6.21818e-15, \
          1.55015e-13,  1.97574e-12,  1.48881e-11,  7.42751e-11,  2.68099e-10,  7.50404e-10, \
@@ -147,7 +147,7 @@ def collrad_sigmav_ion_h0(N_e, T_e): # removed unused argument p - nh
          2.00446e-08,  1.82117e-08,  1.65205e-08,  1.49659e-08,  1.35419e-08,  1.22411e-08, \
          1.10557e-08,  9.97781e-09,  8.99934e-09,  8.11247e-09,  7.30968e-09,  6.58379e-09])
 
-    column_11 = np.array( \
+    sigmav[10,:] = np.array( \
         [5.02165e-94,  7.23483e-79,  7.18473e-64,  5.20288e-52,  1.18541e-42,  2.80684e-35, \
          1.78891e-29,  6.54358e-25,  2.50868e-21,  1.62582e-18,  2.59802e-16,  1.38202e-14, \
          3.11275e-13,  3.59539e-12,  2.47501e-11,  1.14059e-10,  3.85018e-10,  1.02035e-09, \
@@ -159,7 +159,7 @@ def collrad_sigmav_ion_h0(N_e, T_e): # removed unused argument p - nh
          2.44691e-08,  2.22162e-08,  2.01291e-08,  1.82046e-08,  1.64373e-08,  1.48205e-08, \
          1.33459e-08,  1.20049e-08,  1.07884e-08,  9.68734e-09,  8.69263e-09,  7.79552e-09])
 
-    column_12 = np.array( \
+    sigmav[11,:] = np.array( \
         [5.02166e-94,  2.11229e-78,  2.24556e-63,  1.64685e-51,  3.76181e-42,  8.83729e-35, \
          5.53407e-29,  1.96853e-24,  7.23477e-21,  4.38191e-18,  6.32570e-16,  2.95914e-14, \
          5.81675e-13,  5.92425e-12,  3.66632e-11,  1.55190e-10,  4.90717e-10,  1.23849e-09, \
@@ -171,7 +171,7 @@ def collrad_sigmav_ion_h0(N_e, T_e): # removed unused argument p - nh
          2.92571e-08,  2.67223e-08,  2.43489e-08,  2.21372e-08,  2.00847e-08,  1.81872e-08, \
          1.64392e-08,  1.48339e-08,  1.33641e-08,  1.20222e-08,  1.08000e-08,  9.68976e-09])
 
-    column_13 = np.array( \
+    sigmav[12,:] = np.array( \
         [1.02081e-98,  4.47311e-78,  5.34817e-63,  4.14904e-51,  9.77616e-42,  2.35249e-34, \
          1.48572e-28,  5.25591e-24,  1.86340e-20,  1.02703e-17,  1.27333e-15,  5.03562e-14, \
          8.56836e-13,  7.82720e-12,  4.48312e-11,  1.79786e-10,  5.47667e-10,  1.34709e-09, \
@@ -183,7 +183,7 @@ def collrad_sigmav_ion_h0(N_e, T_e): # removed unused argument p - nh
          3.22823e-08,  2.96795e-08,  2.72292e-08,  2.49320e-08,  2.27865e-08,  2.07890e-08, \
          1.89348e-08,  1.72182e-08,  1.56327e-08,  1.41717e-08,  1.28281e-08,  1.15951e-08])
 
-    column_14 = np.array( \
+    sigmav[13,:] = np.array( \
         [7.36093e-99,  6.06931e-78,  8.53837e-63,  7.35153e-51,  1.85978e-41,  4.68546e-34, \
          3.08545e-28,  1.10201e-23,  3.74288e-20,  1.81668e-17,  1.90634e-15,  6.56158e-14, \
          1.01772e-12,  8.77381e-12,  4.84655e-11,  1.89940e-10,  5.69929e-10,  1.38795e-09, \
@@ -195,7 +195,7 @@ def collrad_sigmav_ion_h0(N_e, T_e): # removed unused argument p - nh
          3.35705e-08,  3.09666e-08,  2.85124e-08,  2.62086e-08,  2.40536e-08,  2.20439e-08, \
          2.01749e-08,  1.84406e-08,  1.68348e-08,  1.53508e-08,  1.39816e-08,  1.27203e-08])
 
-    column_15 = np.array( \
+    sigmav[14,:] = np.array( \
         [6.38105e-99,  6.80257e-78,  8.60837e-63,  7.83728e-51,  2.31015e-41,  6.54058e-34, \
          4.51976e-28,  1.65716e-23,  5.46805e-20,  2.40282e-17,  2.26542e-15,  7.26816e-14, \
          1.08308e-12,  9.13105e-12,  4.97793e-11,  1.93504e-10,  5.77529e-10,  1.40178e-09, \
@@ -206,14 +206,17 @@ def collrad_sigmav_ion_h0(N_e, T_e): # removed unused argument p - nh
          5.21785e-08,  4.89525e-08,  4.57666e-08,  4.26572e-08,  3.96516e-08,  3.67696e-08, \
          3.40243e-08,  3.14241e-08,  2.89729e-08,  2.66715e-08,  2.45184e-08,  2.25100e-08, \
          2.06417e-08,  1.89076e-08,  1.73014e-08,  1.58163e-08,  1.44454e-08,  1.31819e-08])
-    sigmav = np.column_stack([column_1, column_2, column_3, column_4, column_5, column_6, column_7, \
-        column_8, column_9, column_10, column_11, column_12, column_13, column_14, column_15]) # removed extra copy of column_11
 
     logsigmav = np.log(sigmav)
-    #sigmav_out = np.exp(np.interp(logsigmav, indne, indte)) - Rewrote interpolation to work with python
+    #sigmav_out = np.exp(np.interp(logsigmav, indne, indte))
     xs, ys = logsigmav.shape
-    interpfunc=interpolate.RectBivariateSpline(np.arange(xs),np.arange(ys),logsigmav)
-    sigmav_out=np.exp(np.array([interpfunc(indne[i],indte[i])[0][0] for i in range(indne.size)]))
+
+    # interpfunc = interpolate.RectBivariateSpline(np.arange(xs), np.arange(ys), logsigmav) #NOTE Better mimics IDL, but not necessarily a better calculation
+    # sigmav_out=np.exp(np.array([interpfunc(indne[i],indte[i])[0][0] for i in range(indne.size)]))
+    interpfunc = interpolate.RectBivariateSpline(np.arange(xs), np.arange(ys), logsigmav, kx=1, ky=1)
+    sigmav_out = np.exp(np.diagonal(interpfunc(indne, indte)))
     # convert from cm^3 to m^3 
     sigmav_out = sigmav_out/1e6
+    # print("sigmav_out", sigmav_out.T)
+    # input()
     return sigmav_out

@@ -124,13 +124,13 @@ class kinetic_mesh:
             minE0 = 0.5 * CONST.H_MASS * minVr * minVr / CONST.Q
             if CONST.USE_COLLRAD_IONIZATION:
                 ioniz_rate = collrad_sigmav_ion_h0(nfine, Tefine)
-            elif CONST.USE_JH:
+            elif CONST.USE_JH: #NOTE not tested yet
                 #Checks that the JH_Coef class has been passed into the function before calling jhs_coef
                 if (jh_coeffs == None):
                     raise Exception("kinetic_h_mesh generated using JH, but no JH coefficients given")
                 ioniz_rate = jhs_coef(nfine, Tefine, jh_coeffs, no_null = True) # deleted unecessary variable - GG
             else:
-                ioniz_rate = sigmav_ion_h0(Tefine)
+                ioniz_rate = sigmav_ion_h0(Tefine) #NOTE Not tested yet
             RR = nfine * ioniz_rate + nfine * sigma_cx_h0(Tifine, np.array([minE0] * nxfine)) + gamma_wall # replaced size(nxfine) with nxfine
 
         elif mesh_type == 'h2':

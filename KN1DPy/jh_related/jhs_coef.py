@@ -24,6 +24,8 @@ from KN1DPy.common.JH_Coef import JH_Coef
 def jhs_coef(Density : NDArray, Te : NDArray, jh_coeffs : JH_Coef, create = 0, no_null = 0) -> NDArray:
 
     generate_jh_coeffs(jh_coeffs, create)
+    print(jh_coeffs)
+    input()
 
     # Evaluate S coefficients 
     if np.size(Density) != np.size(Te):
