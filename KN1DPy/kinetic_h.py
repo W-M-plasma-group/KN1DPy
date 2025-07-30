@@ -858,10 +858,8 @@ def kinetic_h(mesh : kinetic_mesh, mu, vxi, fHBC, GammaxHBC, fH2, fSH, nHP, THP,
         #NOTE Replace JH with constant for consistency across program, check with someone who knows what they are doing if this is correct
         if CONST.USE_JH:
             sigv[:,2] = jhalpha_coef(n, Te, jh_coeffs, no_null=True)
-            print("a")
         else:
             sigv[:,2] = sigmav_rec_h1s(Te)
-            print("b")
 
         #	H ionization rate (normalized by vth) = reaction 1
         alpha_ion = (n*sigv[:,1]) / Vth
@@ -875,57 +873,61 @@ def kinetic_h(mesh : kinetic_mesh, mu, vxi, fHBC, GammaxHBC, fH2, fSH, nHP, THP,
         # input()
 
     #	Compute Total Atomic Hydrogen Source
-
-    Sn = np.zeros((nx,nvx,nvr))
+    Sn = np.zeros((nvr,nvx,nx))
 
     #	Add Recombination (optionally) and User-Supplied Hydrogen Source (velocity space distribution)
-
     for k in range(nx):
-        Sn[k,:,:] = fSH[k,:,:]/Vth
+        Sn[:,:,k] = fSH[:,:,k]/Vth
         if Recomb:
-            Sn[k,:,:] = Sn[k,:,:]+fi_hat[k,:,:]+ni[k]*Rec[k]
+            Sn[:,:,k] = Sn[:,:,k] + fi_hat[:,:,k]*ni[k]*Rec[k]
+    # print("Sn", Sn.T)
+    # input()
 
     #	Set up arrays for charge exchange and elastic collision computations, if needed
 
     if Do_v_v2 == 1:
-        if debrief>1:
+        if debrief > 1:
             print(prompt+'Computing v_v2, v_v, vr2_vx2, and vx_vx')
 
         #	v_v2=(v-v_prime)^2 at each double velocity space mesh point, including theta angle
-
-        v_v2 = np.zeros((ntheta,nvx,nvr,nvx,nvr)) #NOTE Difference with kh2
+        v_v2 = np.zeros((nvr,nvx,nvr,nvx,ntheta))
 
         #	vr2_vx2=0.125* [ vr2 + vr2_prime - 2*vr*vr_prime*cos(theta) - 2*(vx-vx_prime)^2 ]
         #		at each double velocity space mesh point, including theta angle
-
-        vr2_vx2 = np.zeros((ntheta,nvx,nvr,nvx,nvr)) #NOTE Difference with kh2
+        vr2_vx2 = np.zeros((nvr,nvx,nvr,nvx,ntheta))
         for m in range(ntheta):
             for l in range(nvx):
                 for k in range(nvr):
                     for i in range(nvr):
-                        v_v2[m,l,k,:,i] = vr[i]**2 + vr[k]**2 - 2*vr[i]*vr[k]*cos_theta[m] + (vx[:]-vx[l])**2
-                        vr2_vx2[m,l,k,:,i] = vr[i]**2 + vr[k]**2 - 2*vr[i]*vr[k]*cos_theta[m] - 2*(vx[:]-vx[l])**2
+                        v_starter = vr[i]**2 + vr[k]**2 - 2*vr[i]*vr[k]*cos_theta[m]
+                        v_v2[i,:,k,l,m] = v_starter + (vx[:] - vx[l])**2
+                        vr2_vx2[i,:,k,l,m] = v_starter - 2*(vx[:] - vx[l])**2
 
         #	v_v=|v-v_prime| at each double velocity space mesh point, including theta angle
-
         v_v = np.sqrt(v_v2)
+        # print("V_V", v_v.T[0,0,0])
+        # print("v_v shape", v_v.shape)
+        # input()
 
         #	vx_vx=(vx-vx_prime) at each double velocity space mesh point
-
-        vx_vx = np.zeros((nvx,nvr,nvx,nvr)) #NOTE Difference with kh2
+        vx_vx = np.zeros((nvr,nvx,nvr,nvx))
         for j in range(nvx):
             for l in range(nvx):
-                vx_vx[l,:,j,:] = vx[j]-vx[l]
+                vx_vx[:,j,:,l] = vx[j]-vx[l]
+        # print("vx_vx", vx_vx.T)
+        # input()
 
         #	Set Vr'2pidVr'*dVx' for each double velocity space mesh point
 
-        Vr2pidVrdVx = np.zeros((nvx,nvr,nvx,nvr)) #NOTE Difference with kh2
+        Vr2pidVrdVx = np.zeros((nvr,nvx,nvr,nvx))
         for k in range(nvr):
-            Vr2pidVrdVx[:,k,:,:] = Vr2pidVr[k]
+            Vr2pidVrdVx[:,:,k,:] = Vr2pidVr[k]
         for l in range(nvx):
-            Vr2pidVrdVx[l,:,:,:] = Vr2pidVrdVx[l,:,:,:]*dVx[l] # fixed assignment
+            Vr2pidVrdVx[:,:,:,l] = Vr2pidVrdVx[:,:,:,l]*dVx[l]
+        # print("Vr2pidVrdVx", Vr2pidVrdVx.T)
+        # input()
 
-    if Simple_CX == 0 and Do_SIG_CX == 1:
+    if Simple_CX == 0 and Do_SIG_CX == 1: #NOTE Not Tested Yet
         if debrief>1:
             print(prompt+'Computing SIG_CX')
 
@@ -934,15 +936,13 @@ def kinetic_h(mesh : kinetic_mesh, mu, vxi, fHBC, GammaxHBC, fH2, fSH, nHP, THP,
         #	already been computed with the present input parameters
 
         #	Compute sigma_cx * v_v at all possible relative velocities
-
-        _Sig = np.zeros((ntheta,nvr*nvx*nvr*nvx)) #NOTE Difference with kh2
-        _Sig[:] = (v_v*sigma_cx_h0(v_v2*(.5*CONST.H_MASS*Vth2/CONST.Q))).reshape(_Sig.shape) # Not sure if this is the correct way to fix the issues with projecting here but this is how it was handled in kinetic h2
+        _Sig = np.zeros((nvr*nvx*nvr*nvx, ntheta))
+        _Sig[:] = (v_v*sigma_cx_h0(v_v2*(0.5*CONST.H_MASS*Vth2/CONST.Q))).reshape(_Sig.shape, order='F')
 
         #	Set SIG_CX = vr' x Integral{v_v*sigma_cx} 
         #		over theta=0,2pi times differential velocity space element Vr'2pidVr'*dVx'
-
-        SIG_CX = np.zeros((nvr*nvx,nvr*nvx)) #NOTE Difference with kh2
-        SIG_CX[:] = (Vr2pidVrdVx*(np.matmul(dTheta,_Sig).reshape(Vr2pidVrdVx.shape))).reshape(SIG_CX.shape) #NOTE Difference with kh2
+        SIG_CX = np.zeros((nvr*nvx, nvr*nvx))
+        SIG_CX[:] = (Vr2pidVrdVx*((_Sig @ dTheta).reshape(Vr2pidVrdVx.shape, order='F'))).reshape(SIG_CX.shape, order='F')
 
         #	SIG_CX is now vr' * sigma_cx(v_v) * v_v (intergated over theta) for all possible ([vr,vx],[vr',vx'])
 
@@ -950,25 +950,22 @@ def kinetic_h(mesh : kinetic_mesh, mu, vxi, fHBC, GammaxHBC, fH2, fSH, nHP, THP,
         if debrief>1:
             print(prompt+'Computing SIG_H_H')
 
-        #	Compute SIG_H_H for present velocity space grid, if it is needed and has not
-        #		already been computed with the present input parameters
+        #	Compute SIG_H_H for present velocity space grid, if it is needed and has not already been computed with the present input parameters
 
         #	Compute sigma_H_H * vr2_vx2 * v_v at all possible relative velocities
+        _Sig = np.zeros((nvr*nvx*nvr*nvx,ntheta))
+        _Sig[:] = (vr2_vx2*v_v*sigma_el_h_h(v_v2*(0.5*CONST.H_MASS*mu*Vth2/CONST.Q), vis=True) / 8).reshape(_Sig.shape, order='F')
+        # print("_SIG", _Sig[239,4].T)
+        # input()
 
-        _Sig = np.zeros((ntheta,nvr*nvx*nvr*nvx))
-        _Sig[:] = (vr2_vx2*v_v*sigma_el_h_h(v_v2*(.5*CONST.H_MASS*mu*Vth2/CONST.Q),vis=True)/8).reshape(_Sig.shape)
+        #	Note: For viscosity, the cross section for D -> D is the same function of center of mass energy as H -> H.
 
-        #	Note: For viscosity, the cross section for D -> D is the same function of
-        #		center of mass energy as H -> H.
-
-        #	Set SIG_H_H = vr' x Integral{vr2_vx2*v_v*sigma_H_H} 
-        #		over theta=0,2pi times differential velocity space element Vr'2pidVr'*dVx'
-
+        #	Set SIG_H_H = vr' x Integral{vr2_vx2*v_v*sigma_H_H} over theta=0,2pi times differential velocity space element Vr'2pidVr'*dVx'
         SIG_H_H = np.zeros((nvr*nvx,nvr*nvx))
-        SIG_H_H[:] = (Vr2pidVrdVx*np.matmul(dTheta,_Sig).reshape(Vr2pidVrdVx.shape)).reshape(SIG_H_H.shape)
-
-        #	SIG_H_H is now vr' * sigma_H_H(v_v) * vr2_vx2 * v_v (intergated over theta) 
-        #		for all possible ([vr,vx],[vr',vx'])
+        SIG_H_H[:] = (Vr2pidVrdVx*(_Sig @ dTheta).reshape(Vr2pidVrdVx.shape, order='F')).reshape(SIG_H_H.shape, order='F')
+        # print("SIG_H_H", SIG_H_H.T)
+        # input()
+        #	SIG_H_H is now vr' * sigma_H_H(v_v) * vr2_vx2 * v_v (intergated over theta) for all possible ([vr,vx],[vr',vx'])
 
     if Do_SIG_H_H2 == 1:
         if debrief>1:

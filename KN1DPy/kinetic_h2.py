@@ -1037,11 +1037,11 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
 
         # compute SIGMA_CX * v_v at all possible relative velocities
         _Sig = np.zeros((nvr*nvx*nvr*nvx, ntheta))
-        _Sig[:] = (v_v*sigma_cx_hh(v_v2*(CONST.H_MASS*Vth2/CONST.Q))).reshape(_Sig.shape)
+        _Sig[:] = (v_v*sigma_cx_hh(v_v2*(CONST.H_MASS*Vth2/CONST.Q))).reshape(_Sig.shape, order='F')
 
         # Set SIG_CX = vr' x Integral{v_v*sigma_cx} over theta=0,2pi times differential velocity space element Vr'2pidVr'*dVx'
         SIG_CX = np.zeros((nvr*nvx, nvr*nvx))
-        SIG_CX[:] = (Vr2pidVrdVx*((_Sig @ dTheta).reshape(Vr2pidVrdVx.shape))).reshape(SIG_CX.shape) 
+        SIG_CX[:] = (Vr2pidVrdVx*((_Sig @ dTheta).reshape(Vr2pidVrdVx.shape, order='F'))).reshape(SIG_CX.shape, order='F') 
 
         # SIG_CX is now vr' * sigma_cx(v_v) * v_v (intergated over theta) for all possible ([vr,vx],[vr',vx'])
 
@@ -1058,7 +1058,7 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
         # Note: using H energy here for cross-section tabulated as H -> H2
         # Set SIG_H2_H = vr' x vx_vx x Integral{v_v * sigma_H2_H} over theta = 0, 2pi times differential velocity space element Vr'2pidVr'*dVx
         SIG_H2_H = np.zeros((nvr*nvx, nvr*nvx))
-        SIG_H2_H[:] = (Vr2pidVrdVx*vx_vx*(np.dot(_Sig @ dTheta).reshape(vx_vx.shape))).reshape(SIG_H2_H.shape)
+        SIG_H2_H[:] = (Vr2pidVrdVx*vx_vx*((_Sig @ dTheta).reshape(vx_vx.shape))).reshape(SIG_H2_H.shape)
 
         # SIG_H2_H is now vr' * vx_vx * sigma_H2_H(v_V) ( integrated over theta ) for all possible ([vr, vx], [vr', vx'])
 
