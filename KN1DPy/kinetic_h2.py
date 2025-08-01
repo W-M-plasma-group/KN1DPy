@@ -25,7 +25,7 @@ from .sigma.sigma_el_hh_hh import sigma_el_hh_hh
 from .create_shifted_maxwellian_include import create_shifted_maxwellian_include
 from .sigma.sigmav_cx_hh import sigmav_cx_hh
 
-from .sign import sign
+from .sign import sign #NOTE Replace sign with np.sign
 from .sval import sval
 from .locate import locate
 
@@ -1147,9 +1147,9 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
     for k in range(0, nx):
         if PipeDia[k] > 0.0:
             for j in range(0, nvx):
-                gamma_wall[k][j] = 2*vr/PipeDia[k]
+                gamma_wall[:,j,k] = 2*vr/PipeDia[k]
     # print("nH2", nH2)
-    # print("gamma_wall", gamma_wall)
+    # print("gamma_wall", gamma_wall.T)
     # input()
 
     #fH2 Iteration - I dont know where the fH2_iterate is coming from 
@@ -1234,6 +1234,7 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
                     VxH2[k] = Vth*np.sum(Vr2pidVr*(fH2[:,:,k] @ (vx*dVx))) / nH2[k]
             # print("VxH2", VxH2)
             # input()
+
             # compute Omega_H2_P for present fH2 and Alpha_H2_P if H2_P elastic collisions are included
             if H2_P_EL:
                 if debrief > 1:
@@ -1326,7 +1327,7 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
         # input()
 
         if ilarge.size > 0:
-            print(prompt,'x mesh spacing is too large!') #Fix error formatting here
+            print(prompt,'x mesh spacing is too large!') #NOTE Check Formatting
             debug = 1
             out = ''
             jj = 0
@@ -1354,15 +1355,15 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
         for k in range(0, nx-1):
             for j in range(i_p[0][0], nvx): # double check some of the ranges in for statements I might have some typos
                 denom = 2*vx[j] + (x[k+1] - x[k])*alpha_c[:,j,k+1]
-                Ak[:,j,k] = (2*vx[j] - (x[k+1] - x[k])*alpha_c[:,j,k])/denom
-                Bk[:,j,k] = (x[k+1] - x[k])/denom
-                Fk[:,j,k] = (x[k+1] - x[k])*fw_hat[:,j]*(SH2[k+1]+SH2[k])/(Vth*denom)
+                Ak[:,j,k] = (2*vx[j] - (x[k+1] - x[k])*alpha_c[:,j,k]) / denom
+                Bk[:,j,k] = (x[k+1] - x[k]) / denom
+                Fk[:,j,k] = (x[k+1] - x[k])*fw_hat[:,j]*(SH2[k+1]+SH2[k]) / (Vth*denom)
         for k in range(1, nx):
             for j in range(0, i_p[0][0]):
                 denom = -2*vx[j] + (x[k] - x[k-1])*alpha_c[:,j,k-1]
-                Ck[:,j,k] = (-2*vx[j] - (x[k] - x[k -1])*alpha_c[:,j,k])/denom
-                Dk[:,j,k] = (x[k] - x[k-1])/denom
-                Gk[:,j,k] = (x[k] - x[k-1])*fw_hat[:,j]*(SH2[k]+SH2[k-1])/(Vth*denom)
+                Ck[:,j,k] = (-2*vx[j] - (x[k] - x[k -1])*alpha_c[:,j,k]) / denom
+                Dk[:,j,k] = (x[k] - x[k-1]) / denom
+                Gk[:,j,k] = (x[k] - x[k-1])*fw_hat[:,j]*(SH2[k]+SH2[k-1]) / (Vth*denom)
         # print("Ak", Ak.T)
         # print("Bk", Bk.T)
         # print("Ck", Ck.T)

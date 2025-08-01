@@ -16,7 +16,7 @@ from .sigma.sigma_el_h_hh import sigma_el_h_hh
 from .sigma.sigma_el_p_h import sigma_el_p_h
 from .sigma.sigmav_cx_h0 import sigmav_cx_h0
 
-from .sign import sign
+from .sign import sign #NOTE replace sign with np.sign
 from .sval import sval
 
 from .common import constants as CONST
@@ -967,8 +967,9 @@ def kinetic_h(mesh : kinetic_mesh, mu, vxi, fHBC, GammaxHBC, fH2, fSH, nHP, THP,
         # input()
         #	SIG_H_H is now vr' * sigma_H_H(v_v) * vr2_vx2 * v_v (intergated over theta) for all possible ([vr,vx],[vr',vx'])
 
+    #NOTE LAST CHECKED WITH IDL HERE
     if Do_SIG_H_H2 == 1:
-        if debrief>1:
+        if debrief > 1:
             print(prompt+'Computing SIG_H_H2')
 
         #	Compute SIG_H_H2 for present velocity space grid, if it is needed and has not
@@ -976,8 +977,8 @@ def kinetic_h(mesh : kinetic_mesh, mu, vxi, fHBC, GammaxHBC, fH2, fSH, nHP, THP,
 
         #	Compute sigma_H_H2 * v_v at all possible relative velocities
 
-        _Sig = np.zeros((ntheta,nvr*nvx*nvr*nvx))
-        _Sig[:] = (v_v*sigma_el_h_hh(v_v2*(.5*CONST.H_MASS*Vth2/CONST.Q))).reshape(_Sig.shape)
+        _Sig = np.zeros((nvr*nvx*nvr*nvx,ntheta))
+        _Sig[:] = (v_v*sigma_el_h_hh(v_v2*(0.5*CONST.H_MASS*Vth2/CONST.Q))).reshape(_Sig.shape, order='F')
 
         #	NOTE: using H energy here for cross-sections tabulated as H->H2
 
@@ -985,8 +986,9 @@ def kinetic_h(mesh : kinetic_mesh, mu, vxi, fHBC, GammaxHBC, fH2, fSH, nHP, THP,
         #		2pi times differential velocity space element Vr'2pidVr'*dVx'
 
         SIG_H_H2 = np.zeros((nvr*nvx,nvr*nvx))
-        SIG_H_H2[:] = (Vr2pidVrdVx*vx_vx*np.matmul(dTheta,_Sig).reshape(Vr2pidVrdVx.shape)).reshape(SIG_H_H2.shape)
-
+        SIG_H_H2[:] = (Vr2pidVrdVx*vx_vx*(_Sig @ dTheta).reshape(Vr2pidVrdVx.shape, order='F')).reshape(SIG_H_H2.shape, order='F')
+        # print("SIG_H_H2", SIG_H_H2.T)
+        # input()
         #	SIG_H_H2 is now vr' *vx_vx * sigma_H_H2(v_v) * v_v 
         #		(intergated over theta) for all possible ([vr,vx],[vr',vx'])
 
@@ -999,23 +1001,25 @@ def kinetic_h(mesh : kinetic_mesh, mu, vxi, fHBC, GammaxHBC, fH2, fSH, nHP, THP,
 
         #	Compute sigma_H_P * v_v at all possible relative velocities
 
-        _Sig = np.zeros((ntheta,nvr*nvx*nvr*nvx)) #NOTE Difference with kh2
-        _Sig[:] = (v_v*sigma_el_p_h(v_v2*(.5*CONST.H_MASS*Vth2/CONST.Q))).reshape(_Sig.shape)
+        _Sig = np.zeros((nvr*nvx*nvr*nvx,ntheta))
+        _Sig[:] = (v_v*sigma_el_p_h(v_v2*(0.5*CONST.H_MASS*Vth2/CONST.Q))).reshape(_Sig.shape, order='F')
 
         #	Set SIG_H_P = vr' x vx_vx x Integral{v_v*sigma_H_P} over theta=0,
         #		2pi times differential velocity space element Vr'2pidVr'*dVx'
 
-        SIG_H_P = np.zeros((nvr*nvx,nvr*nvx)) #NOTE Difference with kh2
-        SIG_H_P[:] = (Vr2pidVrdVx*vx_vx*np.matmul(dTheta,_Sig).reshape(Vr2pidVrdVx.shape)).reshape(SIG_H_P.shape)
+        SIG_H_P = np.zeros((nvr*nvx,nvr*nvx))
+        SIG_H_P[:] = (Vr2pidVrdVx*vx_vx*(_Sig @ dTheta).reshape(Vr2pidVrdVx.shape, order='F')).reshape(SIG_H_P.shape, order='F')
+        # print("SIG_H_H2", SIG_H_P.T)
+        # input()
 
         #	SIG_H_P is now vr' *vx_vx * sigma_H_P(v_v) * v_v (intergated over theta) 
         #		for all possible ([vr,vx],[vr',vx'])
 
+
     #	Compute Alpha_CX for present Ti and ni, if it is needed and has not
     #		already been computed with the present parameters
-
     if Do_Alpha_CX == 1:
-        if debrief>1:
+        if debrief > 1:
             print(prompt+'Computing Alpha_CX')
 
         if Simple_CX:
@@ -1024,160 +1028,184 @@ def kinetic_h(mesh : kinetic_mesh, mu, vxi, fHBC, GammaxHBC, fH2, fSH, nHP, THP,
 
             #	Charge Exchange sink rate
 
-            Alpha_CX = sigmav_cx_h0(Ti_mu,ErelH_P)/Vth
+            Alpha_CX = sigmav_cx_h0(Ti_mu, ErelH_P) / Vth
             for k in range(nx):
-                Alpha_CX[k,:,:] = Alpha_CX[k,:,:]*ni[k]
+                Alpha_CX[:,:,k] = Alpha_CX[:,:,k]*ni[k]
 
         else:
 
             #	Option (A): Compute SigmaV_CX from sigma directly via SIG_CX
 
-            Alpha_CX = np.zeros((nx,nvx,nvr))
+            Alpha_CX = np.zeros((nvr,nvx,nx))
             for k in range(nx):
-                Work[:] = (fi_hat[k,:,:]*ni[k]).reshape(Work.shape)
-                Alpha_CX[k,:,:] = np.matmul(Work,SIG_CX).reshape(Alpha_CX[k].shape)
+                Work[:] = (fi_hat[:,:,k]*ni[k]).reshape(Work.shape, order='F')
+                Alpha_CX[:,:,k] = (SIG_CX @ Work).reshape(Alpha_CX[:,:,k].shape, order='F')
+            
             if Do_Alpha_CX_Test:
-                Alpha_CX_Test = sigmav_cx_h0(Ti_mu,ErelH_P)/Vth
+                Alpha_CX_Test = sigmav_cx_h0(Ti_mu, ErelH_P) / Vth
                 for k in range(nx):
-                    Alpha_CX_Test[k,:,:] = Alpha_CX_Test[k,:,:]*ni[k]
+                    Alpha_CX_Test[:,:,k] = Alpha_CX_Test[:,:,k]*ni[k]
                 print('Compare alpha_cx and alpha_cx_test')
+        # print("Alpha_CX", Alpha_CX.T)
+        # input()
+            
 
     #	Compute Alpha_H_H2 for inputted fH, if it is needed and has not
     #		already been computed with the present input parameters
 
     if Do_Alpha_H_H2 == 1:
-        if debrief>1:
+        if debrief > 1:
             print(prompt+'Computing Alpha_H_H2')
-        Alpha_H_H2 = np.zeros((nx,nvx,nvr)) #NOTE Difference with kh2
+        Alpha_H_H2 = np.zeros((nvr,nvx,nx))
         for k in range(nx):
-            Work[:] = fH2[k,:,:].reshape(Work.shape)
-            Alpha_H_H2[k,:,:] = np.matmul(Work,SIG_H_H2).reshape(Alpha_H_H2[k].shape)
+            Work[:] = fH2[:,:,k].reshape(Work.shape, order='F')
+            Alpha_H_H2[:,:,k] = (SIG_H_H2 @ Work).reshape(Alpha_H_H2[:,:,k].shape, order='F')
+        # print("Alpha_H_H2", Alpha_H_H2.T)
+        # input()
 
     #	Compute Alpha_H_P for present Ti and ni 
     #		if it is needed and has not already been computed with the present parameters
 
     if Do_Alpha_H_P == 1:
-        if debrief>1:
+        if debrief > 1:
             print(prompt+'Computing Alpha_H_P')
-        Alpha_H_P = np.zeros((nx,nvx,nvr))
+        Alpha_H_P = np.zeros((nvr,nvx,nx))
         for k in range(nx):
-            Work[:] = (fi_hat[k,:,:]*ni[k]).reshape(Work.shape)
-            Alpha_H_P[k,:,:] = np.matmul(Work,SIG_H_P).reshape(Alpha_H_P[k].shape)
+            Work[:] = (fi_hat[:,:,k]*ni[k]).reshape(Work.shape, order='F')
+            Alpha_H_P[:,:,k] = (SIG_H_P @ Work).reshape(Alpha_H_P[:,:,k].shape, order='F')
+        # print("Alpha_H_P", Alpha_H_P.T)
+        # input()
 
     #	Compute nH
 
     for k in range(nx):
-        nH[k] = np.sum(Vr2pidVr*np.matmul(dVx,fH[k,:,:]))
+        nH[k] = np.sum(Vr2pidVr*(fH[:,:,k] @ dVx))
+    
 
     if New_H_Seed:
-        MH_H_sum = np.zeros((nx,nvx,nvr))
+        MH_H_sum = np.zeros((nvr,nvx,nx))
         Delta_nHs = 1
 
     #	Compute Side-Wall collision rate
 
-    gamma_wall = np.zeros((nx,nvx,nvr))
+    gamma_wall = np.zeros((nvr,nvx,nx))
     for k in range(nx):
-        if PipeDia[k]>0:
+        if PipeDia[k] > 0:
             for j in range(nvx):
-                gamma_wall[k,j,:] = 2*vr/PipeDia[k]
+                gamma_wall[:,j,k] = 2*vr / PipeDia[k]
+
+    # print("nH", nH)
+    # print("gamma_wall", gamma_wall.T)
+    # input()
 
     do_fH_Iterate = True
 
     #	This is the entry point for fH iteration.
     #	Save 'seed' values for comparison later
 
-    while do_fH_Iterate:
+    while do_fH_Iterate: #NOTE Alpha_CX done before here, but done inside iteration in kh2, does it change per iteration? Is this an error?
         do_fH_Iterate = False
         fHs = fH
         nHs = nH
 
         #	Compute Omega values if nH is non-zero
-
-        ii = nH[nH<=0]
-        if ii.size <= 0:
+        ii = np.argwhere(nH <= 0)
+        if ii.size <= 0: #NOTE Not Tested Yet, return on iteration
 
             #	Compute VxH
-
             if H_P_EL or H_H2_EL or H_H_EL:
                 for k in range(nx):
-                    VxH[k] = Vth*np.sum(Vr2pidVr*np.matmul(vx*dVx,fH[k,:,:]))/nH[k]
+                    VxH[k] = Vth*np.sum(Vr2pidVr*(fH[:,:,k] @ vx*dVx)) / nH[k]
+                # print("VxH", VxH)
+                # input()
 
             #	Compute Omega_H_P for present fH and Alpha_H_P if H_P elastic collisions are included
-
             if H_P_EL:
-                if debrief>1:
+                if debrief > 1:
                     print(prompt+'Computing Omega_H_P')
                 for k in range(nx):
-                    DeltaVx = (VxH[k]-vxi[k])/Vth
-                    MagDeltaVx = np.maximum(abs(DeltaVx),DeltaVx_tol)
+                    DeltaVx = (VxH[k] - vxi[k]) / Vth
+                    MagDeltaVx = np.maximum(abs(DeltaVx), DeltaVx_tol)
                     DeltaVx = sign(DeltaVx)*MagDeltaVx
-                    Omega_H_P[k] = np.sum(Vr2pidVr*np.matmul(dVx,Alpha_H_P[k,:,:]*fH[k,:,:]))/(nH[k]*DeltaVx)
-                Omega_H_P = np.maximum(Omega_H_P,0)
+                    Omega_H_P[k] = np.sum(Vr2pidVr*((Alpha_H_P[:,:,k]*fH[:,:,k]) @ dVx)) / (nH[k]*DeltaVx)
+                Omega_H_P = np.maximum(Omega_H_P, 0)
+                # print("Omega_H_P", Omega_H_P)
+                # input()
 
             #	Compute Omega_H_H2 for present fH and Alpha_H_H2 if H_H2 elastic collisions are included
 
             if H_H2_EL:
-                if debrief>1:
+                if debrief > 1:
                     print(prompt+'Computing Omega_H_H2')
                 for k in range(nx):
-                    DeltaVx = (VxH[k]-vxH2[k])/Vth
-                    MagDeltaVx = np.maximum(abs(DeltaVx),DeltaVx_tol)
+                    DeltaVx = (VxH[k] - vxH2[k]) / Vth
+                    MagDeltaVx = np.maximum(abs(DeltaVx), DeltaVx_tol)
                     DeltaVx = sign(DeltaVx)*MagDeltaVx
-                    Omega_H_H2[k] = np.sum(Vr2pidVr*np.matmul(dVx,Alpha_H_H2[k,:,:]*fH[k,:,:]))/(nH[k]*DeltaVx)
-                Omega_H_H2 = np.maximum(Omega_H_H2,0)
+                    Omega_H_H2[k] = np.sum(Vr2pidVr*((Alpha_H_H2[:,:,k]*fH[:,:,k]) @ dVx)) / (nH[k]*DeltaVx)
+                Omega_H_H2 = np.maximum(Omega_H_H2, 0)
+                # print("Omega_H_H2", Omega_H_H2)
+                # input()
 
             #	Compute Omega_H_H for present fH if H_H elastic collisions are included
 
             if H_H_EL:
-                if debrief>1:
+                if debrief > 1:
                     print(prompt+'Computing Omega_H_H')
                 if np.sum(MH_H_sum) <= 0:
                     for k in range(nx):
                         for i in range(nvr):
-                            vr2_2vx_ran2[:,i] = vr[i]**2-2*(vx-VxH[k]/Vth)**2
-                            Wperp_paraH[k] = np.sum(Vr2pidVr*np.matmul(dVx,vr2_2vx_ran2*fH[k,:,:]))/nH[k]
+                            vr2_2vx_ran2[i,:] = vr[i]**2 - 2*((vx - (VxH[k]/Vth))**2)
+                        Wperp_paraH[k] = np.sum(Vr2pidVr*((vr2_2vx_ran2*fH[:,:,k]) @ dVx))/nH[k]
                 else:
                     for k in range(nx):
-                        M_fH = MH_H_sum[k,:,:]-fH[k,:,:]
-                        Wperp_paraH[k] = -np.sum(Vr2pidVr*np.matmul(dVx,vr2_2vx2_2D*M_fH))/nH[k]
+                        M_fH = MH_H_sum[:,:,k] - fH[:,:,k]
+                        Wperp_paraH[k] = -np.sum(Vr2pidVr*((vr2_2vx2_2D*M_fH) @ dVx))/nH[k]
                 for k in range(nx):
-                    Work[:] = fH[k,:,:].reshape(Work.shape)
-                    Alpha_H_H[:] = np.matmul(Work,SIG_H_H).reshape(Alpha_H_H.shape)
+                    Work[:] = fH[:,:,k].reshape(Work.shape, order='F')
+                    Alpha_H_H[:] = (SIG_H_H @ Work).reshape(Alpha_H_H.shape, order='F')
                     Wpp = Wperp_paraH[k]
-                    MagWpp = np.maximum(Wpp,Wpp_tol)
+                    MagWpp = np.maximum(np.abs(Wpp), Wpp_tol)
                     Wpp = sign(Wpp)*MagWpp
-                    Omega_H_H[k] = np.sum(Vr2pidVr*np.matmul(dVx,Alpha_H_H*Work.reshape(Alpha_H_H.shape)))/(nH[k]*Wpp)
-                Omega_H_H = np.maximum(Omega_H_H,0)
+                    Omega_H_H[k] = np.sum(Vr2pidVr*((Alpha_H_H*Work.reshape(Alpha_H_H.shape)) @ dVx)) / (nH[k]*Wpp)
+                Omega_H_H = np.maximum(Omega_H_H, 0)
+                # print("Omega_H_H", Omega_H_H)
+                # input()
 
         #	Total Elastic scattering frequency
 
-        Omega_EL = Omega_H_P+Omega_H_H2+Omega_H_H
+        Omega_EL = Omega_H_P + Omega_H_H2 + Omega_H_H
+        # print("Omega_EL", Omega_EL)
+        # input()
 
         #	Total collision frequency
 
-        alpha_c = np.zeros((nx,nvx,nvr))
+        alpha_c = np.zeros((nvr,nvx,nx))
         if H_P_CX:
             for k in range(nx):
-                alpha_c[k,:,:] = Alpha_CX[k,:,:]+alpha_ion[k]+Omega_EL[k]+gamma_wall[k,:,:]
+                alpha_c[:,:,k] = Alpha_CX[:,:,k] + alpha_ion[k] + Omega_EL[k] + gamma_wall[:,:,k]
         else:
             for k in range(nx):
-                alpha_c[k,:,:] = alpha_ion[k]+Omega_EL[k]+gamma_wall[k,:,:]
+                alpha_c[:,:,k] = alpha_ion[k] + Omega_EL[k] + gamma_wall[:,:,k]
+        # print("alpha_c", alpha_c.T)
+        # input()
 
         #	Test x grid spacing based on Eq.(27) in notes
 
         if debrief>1:
             print(prompt+'Testing x grid spacing')
-        Max_dx = np.full(nx,1e32)
+        Max_dx = np.full(nx, 1e32)
         for k in range(nx):
-            for j in range(i_p[0],nvx): # changed ip to i_p
-                Max_dx[k] = np.minimum(Max_dx[k],min(2*vx[j]/alpha_c[k,j,:]))
-        dx = np.roll(x,-1)-x
+            for j in range(i_p[0][0], nvx): # changed ip to i_p
+                Max_dx[k] = np.minimum(Max_dx[k], min(2*vx[j] / alpha_c[:,j,k]))
+
+        dx = np.roll(x,-1) - x
         Max_dxL = Max_dx[0:nx-1]
         Max_dxR = Max_dx[1:nx]
-        Max_dx = np.minimum(Max_dxL,Max_dxR)
-        ilarge = np.argwhere(Max_dx<dx[0:nx-1])
-        if ilarge.size>0:
-            print(prompt+'x mesh spacing is too large!')
+        Max_dx = np.minimum(Max_dxL, Max_dxR)
+        ilarge = np.argwhere(Max_dx < dx[0:nx-1])
+
+        if ilarge.size > 0:
+            print(prompt+'x mesh spacing is too large!') #NOTE Check Formatting
             debug = 1
             out = ""
             jj = 0
@@ -1194,61 +1222,70 @@ def kinetic_h(mesh : kinetic_mesh, mu, vxi, fHBC, GammaxHBC, fH2, fSH, nHP, THP,
                     out = "\t"
             if jj>0:
                 print(out)
-                error = 1
-                print(prompt+'Finished')
-                return
+            error = 1
+            raise Exception("x mesh spacing is too large")
 
         #	Define parameters Ak, Bk, Ck, Dk, Fk, Gk
 
-        Ak = np.zeros((nx,nvx,nvr))
-        Bk = np.zeros((nx,nvx,nvr))
-        Ck = np.zeros((nx,nvx,nvr))
-        Dk = np.zeros((nx,nvx,nvr))
-        Fk = np.zeros((nx,nvx,nvr))
-        Gk = np.zeros((nx,nvx,nvr))
+        Ak = np.zeros((nvr,nvx,nx))
+        Bk = np.zeros((nvr,nvx,nx))
+        Ck = np.zeros((nvr,nvx,nx))
+        Dk = np.zeros((nvr,nvx,nx))
+        Fk = np.zeros((nvr,nvx,nx))
+        Gk = np.zeros((nvr,nvx,nx))
 
-        for k in range(nx-1):
-            for j in range(i_p[0],nvx):
-                denom = 2*vx[j]+(x[k+1]-x[k])*alpha_c[k+1,j,:]
-                Ak[k,j,:] = (2*vx[j]-(x[k+1]-x[k])*alpha_c[k,j,:])/denom
-                Bk[k,j,:] = (x[k+1]-x[k])/denom
-                Fk[k,j,:] = (x[k+1]-x[k])*(Sn[k+1,j,:]+Sn[k,j,:])/denom
-        for k in range(1,nx):
-            for j in range(i_p[0]):
-                denom = -2*vx[j]+(x[k]-x[k-1])*alpha_c[k-1,j,:]
-                Ck[k,j,:] = (-2*vx[j]-(x[k]-x[k-1])*alpha_c[k,j,:])/denom
-                Dk[k,j,:] = (x[k]-x[k-1])/denom
-                Gk[k,j,:] = (x[k]-x[k-1])*(Sn[k,j,:]+Sn[k-1,j,:])/denom
+        for k in range(0, nx-1):
+            for j in range(i_p[0][0], nvx): # double check some of the ranges in for statements I might have some typos
+                denom = 2*vx[j] + (x[k+1] - x[k])*alpha_c[:,j,k+1]
+                Ak[:,j,k] = (2*vx[j] - (x[k+1] - x[k])*alpha_c[:,j,k]) / denom
+                Bk[:,j,k] = (x[k+1] - x[k]) / denom
+                Fk[:,j,k] = (x[k+1] - x[k])*(Sn[:,j,k+1]+Sn[:,j,k]) / denom
+        for k in range(1, nx):
+            for j in range(0, i_p[0][0]):
+                denom = -2*vx[j] + (x[k] - x[k-1])*alpha_c[:,j,k-1]
+                Ck[:,j,k] = (-2*vx[j] - (x[k] - x[k -1])*alpha_c[:,j,k]) / denom
+                Dk[:,j,k] = (x[k] - x[k-1]) / denom
+                Gk[:,j,k] = (x[k] - x[k-1])*(Sn[:,j,k]+Sn[:,j,k-1]) / denom
+        # print("Ak", Ak.T)
+        # print("Bk", Bk.T)
+        # print("Ck", Ck.T)
+        # print("Dk", Dk.T)
+        # print("Fk", Fk.T)
+        # print("Gk", Gk.T)
+        # input()
                         
         #	Compute first-flight (0th generation) neutral distribution function
-
-        Beta_CX_sum = np.zeros((nx,nvx,nvr))
-        MH_P_sum = np.zeros((nx,nvx,nvr))
-        MH_H2_sum = np.zeros((nx,nvx,nvr))
-        MH_H_sum = np.zeros((nx,nvx,nvr))
+        Beta_CX_sum = np.zeros((nvr,nvx,nx))
+        MH_P_sum = np.zeros((nvr,nvx,nx))
+        MH_H2_sum = np.zeros((nvr,nvx,nx))
+        MH_H_sum = np.zeros((nvr,nvx,nx))
         igen = 0
-        if debrief>0:
+        if debrief > 0:
             print(prompt+'Computing atomic neutral generation#'+sval(igen))
-        fHG[0,i_p,:] = fH[0,i_p,:]
+        fHG[:,i_p,0] = fH[:,i_p,0]
         for k in range(nx-1):
-            fHG[k+1,i_p,:] = fHG[k,i_p,:]*Ak[k,i_p,:]+Fk[k,i_p,:]
+            fHG[:,i_p,k+1] = fHG[:,i_p,k]*Ak[:,i_p,k]+Fk[:,i_p,k]
         for k in range(nx-1,0,-1):
-            fHG[k-1,i_n,:] = fHG[k,i_n,:]*Ck[k,i_n,:]+Gk[k,i_n,:] # changed FHG to fHG- typo
+            fHG[:,i_n,k-1] = fHG[:,i_n,k]*Ck[:,i_n,k]+Gk[:,i_n,k]
+        # print("fHG", fHG.T)
+        # input()
                 
         #	Compute first-flight neutral density profile
-
         for k in range(nx):
-            NHG[igen,k] = np.sum(Vr2pidVr*np.matmul(dVx,fHG[k,:,:])) # changed gHG to fHG- typo
+            NHG[k,igen] = np.sum(Vr2pidVr*(fHG[:,:,k] @ dVx))
+        # print("NHG", NHG.T)
+        # input()
 
-        if plot >1:
-            pass	#	Will possibly add later
+        # NOTE Add plotting once program is working
+        # if plot >1:
+        #     pass
 
         #	Set total atomic neutral distribution function to first flight generation
 
         fH = fHG
-        nH = NHG[0,:]
+        nH = NHG[:,0]
 
-        do_fH_done = fH_generations==0
+        do_fH_done = fH_generations == 0
 
         if not do_fH_done:
             do_next_generation = True
