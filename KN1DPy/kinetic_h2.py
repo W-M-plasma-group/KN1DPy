@@ -1710,7 +1710,7 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
     if H2_H2_EL or H2_P_EL or H2_H_EL: 
         # Compute VxH2G, TH2G
         for k in range(0, nx):
-            VxH2G[k] = Vth*np.sum(Vr2pidVr*(fH2G[:,:,k] @ (vx*dVx)))/NH2G[k,igen]
+            VxH2G[k] = Vth*np.sum(Vr2pidVr*(fH2G[:,:,k] @ (vx*dVx))) / NH2G[k,igen]
             for i in range(0, nvr):
                 vr2vx2_ran2[i,:] = vr[i]**2 + (vx - VxH2G[k]/Vth)**2
             TH2G[k] = (2*mu*CONST.H_MASS)*Vth2*np.sum(Vr2pidVr*((vr2vx2_ran2*fH2G[:,:,k]) @ dVx))/(3*CONST.Q*NH2G[k,igen])
@@ -1739,7 +1739,7 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
                 print(prompt, 'Computing MH2_P')
             # Compute MH2_P
             vx_shift = (2*VxH2G + vxi)/3
-            Tmaxwell = TH2G + (4/9)*(Ti - TH2G + mu*CONST.H_MASS*((vxi - VxH2G)**2)/(6*CONST.Q))
+            Tmaxwell = TH2G + (4/9)*(Ti - TH2G + mu*CONST.H_MASS*((vxi - VxH2G)**2) / (6*CONST.Q))
             mol = 2
             Maxwell = create_shifted_maxwellian_include(vr,vx,Tnorm,vx_shift,Tmaxwell,shifted_Maxwellian_debug,mu,mol,
                                     nx,nvx,nvr,Vth,Vth2,Maxwell,vr2vx2_ran2,

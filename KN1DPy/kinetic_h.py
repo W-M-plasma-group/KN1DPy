@@ -1,4 +1,5 @@
 import numpy as np
+import copy
 
 from .reverse import reverse
 from .make_dvr_dvx import make_dvr_dvx
@@ -1445,191 +1446,226 @@ def kinetic_h(mesh : kinetic_mesh, mu, vxi, fHBC, GammaxHBC, fH2, fSH, nHP, THP,
     # input() 
 
     #	Update Beta_CX_sum using last generation
-    Beta_CX = np.zeros((nx,nvx,nvr))
     if H_P_CX:
-        if debrief>1:
-            print(prompt+'Computing Beta_CX')
+        if debrief > 1:
+            print(prompt, 'Computing Beta_CX')
         if Simple_CX:
-
-            #	Option (B): Compute charge exchange source with assumption that CX source neutrals have
-            #		ion distribution function
-
-            for k in range(nx):
-                Beta_CX[k,:,:] = fi_hat[k,:,:]*np.sum(Vr2pidVr*np.matmul(dVx,Alpha_CX[k,:,:]*fHG[k,:,:]))
-
+            # Option (B): Compute charge exchange source with assumption that CX source neutrals have
+            # ion distribution function
+            for k in range(0, nx):
+                Beta_CX[:,:,k] = fi_hat[:,:,k]*np.sum(Vr2pidVr*(Alpha_CX[:,:,k]*fHG[:,:,k] @ dVx))
+                # print((Alpha_CX[:,:,k]*fH2G[:,:,k] @ dVx).T)
+                # input()
         else:
-
-            #	Option (A): Compute charge exchange source using fH and vr x sigma x v_v at each velocity mesh point
-
-            for k in range(nx):
-                Work[:] = fHG[k,:,:]
-                Beta_CX[k,:,:] = ni[k]*fi_hat[k,:,:]*np.matmul(Work,SIG_CX)
-
-        #	Sum charge exchange source over all generations
-
-        Beta_CX_sum += Beta_CX
+            # Option (A): Compute charge exchange source using fH2 and vr x sigma x v_v at each velocity mesh point
+            for k in range(0, nx):
+                Work[:] = fHG[:,:,k]
+                Beta_CX[:,:,k] = ni[k]*fi_hat[:,:,k]*(SIG_CX @ Work)
+        Beta_CX_sum = Beta_CX_sum + Beta_CX
+    # print("Beta_CX", Beta_CX.T)
+    # print("Beta_CX_sum", Beta_CX_sum.T)
+    # input()
             
     #	Update MH_*_sum using last generation
+    MH_H2 = np.zeros((nvr,nvx,nx))
+    MH_P = np.zeros((nvr,nvx,nx))
+    MH_H = np.zeros((nvr,nvx,nx))
+    OmegaM = np.zeros((nvr,nvx,nx))
+    if H_H_EL or H_P_EL or H_H2_EL: 
+        # Compute VxH2G, TH2G
+        for k in range(0, nx):
+            VxHG[k] = Vth*np.sum(Vr2pidVr*(fHG[:,:,k] @ (vx*dVx))) / NHG[k,igen]
+            for i in range(0, nvr):
+                vr2vx2_ran2[i,:] = vr[i]**2 + (vx - VxHG[k]/Vth)**2
+            THG[k] = (mu*CONST.H_MASS)*Vth2*np.sum(Vr2pidVr*((vr2vx2_ran2*fHG[:,:,k]) @ dVx)) / (3*CONST.Q*NHG[k,igen])
+        # print("THG", THG)
+        # input()
 
-    MH_H = np.zeros((nx,nvx,nvr))
-    MH_P = np.zeros((nx,nvx,nvr))
-    MH_H2 = np.zeros((nx,nvx,nvr))
-    OmegaM = np.zeros((nx,nvx,nvr))
-    if H_H_EL or H_P_EL or H_H2_EL:
-
-        #	Compute VxHG, THG
-
-        for k in range(nx):
-            VxHG[k] = Vth*np.sum(Vr2pidVr*np.matmul(vx*dVx,fHG[k,:,:])/NHG[igen,k])
-            for i in range(nvr):
-                vr2vx2_ran2[:,i] = vr[i]**2+(vx-VxHG[k]/Vth)**2
-            THG[k] = mu*CONST.H_MASS*Vth2*np.sum(Vr2pidVr*np.matmul(dVx,vr2vx2_ran2*fHG[k,:,:]))/(3*CONST.Q*NHG[igen,k])
         if H_H_EL:
-            if debrief>1:
-                print(prompt+'Computing MH_H')
-
-            #	Compute MH_H 
-
+            if debrief > 1: 
+                print(prompt, 'Computing MH_H')
+            # Compute MH_H
             vx_shift = VxHG
-            Tmaxwell = THG
+            Tmaxwell = np.copy(THG)
             mol = 1
             Maxwell = create_shifted_maxwellian_include(vr,vx,Tnorm,vx_shift,Tmaxwell,Shifted_Maxwellian_Debug,mu,mol,
-                                    nx,nvx,nvr,Vth,Vth2,Maxwell,vr2vx2_ran2,
-                                    Vr2pidVr,dVx,Vol,Vth_DVx,Vx_DVx,Vr_DVr,Vr2Vx2_2D,jpa,jpb,jna,jnb)
-            for k in range(nx):
-                MH_H[k,:,:] = Maxwell[k,:,:]*NHG[igen,k]
-                OmegaM[k,:,:] = OmegaM[k,:,:]+Omega_H_H[k]*MH_H[k,:,:]
-            MH_H_sum += MH_H
+                                      nx,nvx,nvr,Vth,Vth2,Maxwell,vr2vx2_ran2,
+                                      Vr2pidVr,dVx,vol,Vth_DeltaVx,Vx_DeltaVx,Vr_DeltaVr,vr2_2vx2_2D,jpa,jpb,jna,jnb)
+            for k in range(0, nx):
+                MH_H[:,:,k] = Maxwell[:,:,k]*NHG[k,igen]
+                OmegaM[:,:,k] = OmegaM[:,:,k] + Omega_H_H[k]*MH_H[:,:,k]
+            MH_H_sum = MH_H_sum + MH_H
+            # print("MH_H_sum", MH_H_sum.T)
+            # input()
+
         if H_P_EL:
-            if debrief>1:
-                print(prompt+'Computing MH_P')
-
-            #	Compute MH_P 
-
-            vx_shift = (VxHG+vxi)/2
-            Tmaxwell = THG+(2./4.)*(Ti-THG +mu*CONST.H_MASS*(vxi-VxHG)**2/(6*CONST.Q))
+            if debrief > 1:
+                print(prompt, 'Computing MH_P')
+            # Compute MH_P
+            vx_shift = (VxHG + vxi)/2
+            Tmaxwell = THG + (2/4)*(Ti - THG + mu*CONST.H_MASS*((vxi - VxHG)**2) / (6*CONST.Q))
             mol = 1
             Maxwell = create_shifted_maxwellian_include(vr,vx,Tnorm,vx_shift,Tmaxwell,Shifted_Maxwellian_Debug,mu,mol,
                                     nx,nvx,nvr,Vth,Vth2,Maxwell,vr2vx2_ran2,
-                                    Vr2pidVr,dVx,Vol,Vth_DVx,Vx_DVx,Vr_DVr,Vr2Vx2_2D,jpa,jpb,jna,jnb)
-            for k in range(nx):
-                MH_P[k,:,:] = Maxwell[k,:,:]*NHG[igen,k]
-                OmegaM[k,:,:] = OmegaM[k,:,:]+Omega_H_P[k]*MH_P[k,:,:]
-            MH_P_sum += MH_P
-        if H_H2_EL:
-            if debrief>1:
-                print(prompt+'Computing MH_H2')
+                                    Vr2pidVr,dVx,vol,Vth_DeltaVx,Vx_DeltaVx,Vr_DeltaVr,vr2_2vx2_2D,jpa,jpb,jna,jnb)
+            for k in range(0, nx):
+                MH_P[:,:,k] = Maxwell[:,:,k]*NHG[k,igen]
+                OmegaM[:,:,k] = OmegaM[:,:,k] + Omega_H_P[k]*MH_P[:,:,k]
+            MH_P_sum = MH_P_sum + MH_P
+            # print("MH_P_sum", MH_P_sum.T)
+            # input()
 
-            #	Compute MH_H2
-
-            vx_shift = (VxHG+2*vxH2)/3
-            Tmaxwell = THG+(4./9.)*(TH2-THG +2*mu*CONST.H_MASS*(vxH2-VxHG)**2/(6*CONST.Q))
-            mol = 1
-            Maxwell = create_shifted_maxwellian_include(vr,vx,Tnorm,vx_shift,Tmaxwell,Shifted_Maxwellian_Debug,mu,mol,
-                                    nx,nvx,nvr,Vth,Vth2,Maxwell,vr2vx2_ran2,
-                                    Vr2pidVr,dVx,Vol,Vth_DVx,Vx_DVx,Vr_DVr,Vr2Vx2_2D,jpa,jpb,jna,jnb)
-            for k in range(nx):
-                MH_H2[k,:,:] = Maxwell[k,:,:]*NHG[igen,k]
-                OmegaM[k,:,:] = OmegaM[k,:,:]+Omega_H_H2[k]*MH_H2[k,:,:]
-            MH_H2_sum += MH_H2
+            if H_H2_EL: #NOTE Not Tested Yet
+                if debrief > 1:
+                    print(prompt, 'Computing MH_H2')
+                # Compute MH_H
+                vx_shift = (VxHG + 2*vxH2)/3
+                Tmaxwell = THG + (4/9)*(TH2 - THG + 2*mu*CONST.H_MASS*((vxH2 - VxHG)**2) / (6*CONST.Q))
+                mol = 1
+                Maxwell = create_shifted_maxwellian_include(vr,vx,Tnorm,vx_shift,Tmaxwell,Shifted_Maxwellian_Debug,mu,mol,
+                                        nx,nvx,nvr,Vth,Vth2,Maxwell,vr2vx2_ran2,
+                                        Vr2pidVr,dVx,vol,Vth_DeltaVx,Vx_DeltaVx,Vr_DeltaVr,vr2_2vx2_2D,jpa,jpb,jna,jnb)
+                for k in range(0, nx):
+                    MH_H2[:,:,k] = Maxwell[:,:,k]*NHG[k,igen]
+                    OmegaM[:,:,k] = OmegaM[:,:,k] + Omega_H_H2[k]*MH_H2[:,:,k]
+                MH_H2_sum = MH_H2_sum + MH_H2
+                # print("MH_H2_sum", MH_H2_sum.T)
+                # input()
 
     #	Compute remaining moments
 
+    #NOTE In kinetic_h2, these are calculated in the iteration, does that matter?
     #	GammaxH - particle flux in x direction
-
-    for k in range(nx):
-        GammaxH[k] = Vth*np.sum(Vr2pidVr*np.matmul(vx*dVx,fH[k,:,:]))
+    for k in range(0, nx):
+            GammaxH[k] = Vth*np.sum(Vr2pidVr*(fH[:,:,k] @ (vx*dVx)))
+    # print("GammaxH", GammaxH)
+    # input()
 
     #	VxH - x velocity
-
-    VxH = GammaxH/nH
-    _VxH = VxH/Vth
+    VxH = GammaxH / nH
+    _VxH = VxH / Vth 
+    # print("VxH", VxH)
+    # print("_VxH", _VxH)
+    # input()
 
     #	magnitude of random velocity at each mesh point
-
-    vr2vx2_ran = np.zeros((nx,nvx,nvr))
-    for i in range(nvr):
-        for k in range(nx):
-            vr2vx2_ran[k,:,i] = vr[i]**2+(vx-_VxH[k])**2
+    vr2vx2_ran = np.zeros((nvr,nvx,nx))
+    for i in range(0, nvr):
+        for k in range(0, nx):
+            vr2vx2_ran[i,:,k] = vr[i]**2 + (vx - _VxH[k])**2
+    # print("vr2vx2_ran", vr2vx2_ran.T)
+    # input()
 
     #	pH - pressure 
-
     for k in range(nx):
-        pH[k] = mu*CONST.H_MASS*Vth2*np.sum(Vr2pidVr*np.matmul(dVx,vr2vx2_ran[k,:,:]*fH[k,:,:]))/(3*CONST.Q)
+        pH[k] = ((mu*CONST.H_MASS)*Vth2*np.sum(Vr2pidVr*((vr2vx2_ran[:,:,k]*fH[:,:,k]) @ dVx))) / (3*CONST.Q)
+    # print("pH", pH)
+    # input()
 
     #	TH - temperature
-
     TH = pH/nH
+    # print("TH", TH)
+    # input()
 
     #	piH_xx
-
     for k in range(nx):
-        piH_xx[k] = mu*CONST.H_MASS*Vth2*np.sum(Vr2pidVr*np.matmul(dVx*(vx-_VxH[k])**2,fH[k,:,:]))/CONST.Q-pH[k]
-
+        piH_xx[k] = (((mu*CONST.H_MASS)*Vth2*np.sum(Vr2pidVr*(fH[:,:,k] @ (dVx*(vx - _VxH[k])**2)))) / CONST.Q) - pH[k]
     #	piH_yy
-
     for k in range(nx):
-        piH_yy[k] = mu*CONST.H_MASS*Vth2*.5*np.sum(Vr2pidVr*vr**2*np.matmul(dVx,fH[k,:,:]))/CONST.Q-pH[k]
-
+        piH_yy[k] = (((mu*CONST.H_MASS)*Vth2*0.5*np.sum((Vr2pidVr*(vr**2))*(fH[:,:,k] @ dVx))) / CONST.Q) - pH[k]
     #	piH_zz
-
-    piH_zz = piH_yy # fixed typo
-
+    piH_zz = copy.copy(piH_yy)
     #	qxH
-
     for k in range(nx):
-        qxH[k] = .5*mu*CONST.H_MASS*Vth3*np.sum(Vr2pidVr*np.matmul(dVx*(vx-_VxH[k]),vr2vx2_ran[k,:,:]*fH[k,:,:]))
+        qxH[k] = 0.5*(mu*CONST.H_MASS)*Vth3*np.sum(Vr2pidVr*((vr2vx2_ran[:,:,k]*fH2[:,:,k]) @ (dVx*(vx - _VxH[k]))))
+    # print("piH2_xx", piH_xx)
+    # print("piH2_yy", piH_yy)
+    # print("qxH2", qxH)
+    # input()
 
     #	C = RHS of Boltzman equation for total fH
 
     for k in range(nx):
-        C = Vth*(Sn[k,:,:]+Beta_CX_sum[k,:,:]-alpha_c[k,:,:]+fH[k,:,:]+Omega_H_P[k]*MH_P_sum[k,:,:]+Omega_H_H2[k]*MH_H2_sum[k,:,:]+Omega_H_H[k]*MH_H_sum[k,:,:])
-        QH[k] = .5*mu*CONST.H_MASS*Vth2*np.sum(Vr2pidVr*np.matmul(dVx,vr2vx2_ran[k,:,:]*C))
-        RxH[k] = mu*CONST.H_MASS*Vth*np.sum(Vr2pidVr*np.matmul(dVx*(vx-_VxH[k]),C)) # changed _VxH to _VxH[k]
-        NetHSource[k] = np.sum(Vr2pidVr*np.matmul(dVx,C))
+        C = Vth*(Sn[:,:,k] + Beta_CX_sum[:,:,k] - alpha_c[:,:,k]*fH[:,:,k] + \
+                 Omega_H_P[k]*MH_P_sum[:,:,k] + Omega_H_H2[k]*MH_H2_sum[:,:,k] + Omega_H_H[k]*MH_H_sum[:,:,k])
+        # print("C", C.T)
+        # input()
+        QH[k] = 0.5*(mu*CONST.H_MASS)*Vth2*np.sum(Vr2pidVr*((vr2vx2_ran[:,:,k]*C) @ dVx))
+        RxH[k] = (mu*CONST.H_MASS)*Vth*np.sum(Vr2pidVr*(C @ (dVx*(vx - _VxH[k]))))
+        NetHSource[k] = np.sum(Vr2pidVr*(C @ dVx))
         Sion[k] = Vth*nH[k]*alpha_ion[k]
-        SourceH[k] = np.sum(Vr2pidVr*np.matmul(dVx,fSH[k,:,:]))
-        WallH[k] = Vth*np.sum(Vr2pidVr*np.matmul(dVx,gamma_wall[k,:,:]*fH[k,:,:]))
+        SourceH[k] = np.sum(Vr2pidVr*(fSH[:,:,k] @ dVx))
+        WallH[k] = np.sum(Vr2pidVr*((gamma_wall[:,:,k]*fH[:,:,k]) @ dVx))
+
         if Recomb:
             SRecomb[k] = Vth*ni[k]*Rec[k]
         else:
             SRecomb[k] = 0
+
         if H_P_CX:
-            CCX = Vth*(Beta_CX_sum[k,:,:]-Alpha_CX[k,:,:]*fH[k,:,:])
-            RxHCX[k] = mu*CONST.H_MASS*Vth*np.sum(Vr2pidVr*np.matmul(dVx*(vx-_VxH[k]),CCX))
-            EHCX[k] = .5*mu*CONST.H_MASS*Vth2*np.sum(Vr2pidVr*np.matmul(dVx,vr2vx2*CCX))
+            CCX = Vth*(Beta_CX_sum[:,:,k] - Alpha_CX[:,:,k]*fH[:,:,k])
+            RxHCX[k] = (mu*CONST.H_MASS)*Vth*np.sum(Vr2pidVr*(CCX @ (dVx*(vx - _VxH[k]))))
+            EHCX[k] = 0.5*(mu*CONST.H_MASS)*Vth2*np.sum(Vr2pidVr*((vr2vx2[:,:,k]*CCX) @ dVx))
+
         if H_H2_EL:
-            CH_H2 = Vth*Omega_H_H2[k]*(MH_H2_sum[k,:,:]-fH[k,:,:])
-            RxH2_H[k] = mu*CONST.H_MASS*Vth*np.sum(Vr2pidVr*np.matmul(dVx*(vx-_VxH[k]),CH_H2))
-            EH2_H[k] = .5*mu*CONST.H_MASS*Vth2*np.sum(Vr2pidVr*np.matmul(dVx,vr2vx2[k,:,:]*CH_H2))
+            CH_H2 = Vth*Omega_H_H2[k]*(MH_H2_sum[:,:,k] - fH[:,:,k])
+            RxH2_H[k] = (mu*CONST.H_MASS)*Vth*np.sum(Vr2pidVr*(CH_H2 @ (dVx*(vx - _VxH[k]))))
+            EH2_H[k] = 0.5*(mu*CONST.H_MASS)*Vth2*np.sum(Vr2pidVr*((vr2vx2[:,:,k]*CH_H2) @ dVx))
+
         if H_P_EL:
-            CH_P = Vth*Omega_H_P[k]*(MH_P_sum[k,:,:]-fH[k,:,:])
-            RxP_H[k] = mu*CONST.H_MASS*Vth*np.sum(Vr2pidVr*np.matmul(dVx*(vx-_VxH[k]),CH_P))
-            EP_H[k] = .5*mu*CONST.H_MASS*Vth2*np.sum(Vr2pidVr*np.matmul(dVx,vr2vx2[k,:,:]*CH_P))
-        CW_H = -Vth*(gamma_wall[k,:,:]*fH[k,:,:])
-        RxW_H[k] = mu*CONST.H_MASS*Vth*np.sum(Vr2pidVr*np.matmul(dVx*(vx-_VxH[k]),CW_H))
-        EW_H[k] = .5*mu*CONST.H_MASS*Vth2*np.sum(Vr2pidVr*np.matmul(dVx,vr2vx2[k,:,:]*CW_H))
+            CH_P = Vth*Omega_H_P[k]*(MH_P_sum[:,:,k] - fH[:,:,k])
+            RxP_H[k] = (mu*CONST.H_MASS)*Vth*np.sum(Vr2pidVr*(CH_P @ (dVx*(vx - _VxH[k]))))
+            EP_H[k] = 0.5*(mu*CONST.H_MASS)*Vth2*np.sum(Vr2pidVr*((vr2vx2[:,:,k]*CH_P) @ dVx))
+
+        CW_H = -Vth*(gamma_wall[:,:,k]*fH[:,:,k])
+        RxW_H[k] = (mu*CONST.H_MASS)*Vth*np.sum(Vr2pidVr*(CW_H @ (dVx*(vx - _VxH[k]))))
+        EW_H[k] = 0.5*(mu*CONST.H_MASS)*Vth2*np.sum(Vr2pidVr*((vr2vx2[:,:,k]*CW_H) @ dVx))
+        
         if H_H_EL:
-            CH_H = Vth*Omega_H_H[k]*(MH_H_sum[k,:,:]-fH[k,:,:])
-            for i in range(nvr):
-                vr2_2vx_ran2[:,i] = vr[i]**2-2*(vx-_VxH[k])**2
-            Epara_PerpH_H[k] = -.5*mu*CONST.H_MASS*Vth2*np.sum(Vr2pidVr*np.matmul(dVx,vr2_2vx_ran2*CH_H))
+            CH_H = Vth*Omega_H_H[k]*(MH_H_sum[:,:,k] - fH2[:,:,k])
+            for i in range(0, nvr):
+                vr2_2vx_ran2[i,:] = vr[i]**2 - 2*((vx - _VxH[k])**2)
+            Epara_PerpH_H[k] = -0.5*(mu*CONST.H_MASS)*Vth2*np.sum(Vr2pidVr*((vr2_2vx_ran2*CH_H) @ dVx))
+    # print("QH", QH)
+    # print("RxH", RxH)
+    # print("NetHSource", NetHSource)
+    # print("Sion", Sion)
+    # print("SourceH", SourceH)
+    # print("WallH", WallH)
+    # print("SRecomb", SRecomb)
+    # input()
+    # print("RxHCX", RxHCX)
+    # print("EHCX", EHCX)
+    # input()
+    # print("RxH2_H", RxH2_H)
+    # print("EH2_H", EH2_H)
+    # input()
+    # print("RxP_H", RxP_H)
+    # print("EP_H", EP_H)
+    # input()
+    # print("RxW_H", RxW_H)
+    # print("EW_H", EW_H)
+    # input()
+    # print("Epara_PerpH_H", Epara_PerpH_H)
+    # input()
 
     #	qxH_total
-
-    qxH_total = (.5*nH*(mu*CONST.H_MASS)*VxH*VxH+2.5*pH*CONST.Q)*VxH+CONST.Q*piH_xx*VxH+qxH
+    qxH_total = (0.5*nH*(mu*CONST.H_MASS)*VxH*VxH + 2.5*pH*CONST.Q)*VxH + CONST.Q*piH_xx*VxH + qxH
+    # print("qxH_total", qxH_total)
+    # input()
 
     #	QH_total
-
-    QH_total = QH+RxH*VxH+.5*(mu*CONST.H_MASS)*NetHSource*VxH*VxH
+    QH_total = QH + RxH*VxH - 0.5*(mu*CONST.H_MASS)*NetHSource*VxH*VxH
+    # print("QH_total", QH_total)
+    # input()
 
     #	Albedo
-
-    AlbedoH = 0
-    gammax_plus = Vth*np.sum(Vr2pidVr*np.matmul(vx[i_p]*dVx[i_p],fH[0,i_p,:]))
-    gammax_minus = Vth*np.sum(Vr2pidVr*np.matmul(vx[i_n]*dVx[i_n],fH[0,i_n,:]))
-    if abs(gammax_plus)>0: # fixed typo
+    gammax_plus = Vth*np.sum(Vr2pidVr*(fH[:,i_p[:,0],0] @ (vx[i_p[:,0]]*dVx[i_p[:,0]]))) #NOTE Had to reference i_p and i_n in a weird way, fix how they are called in the first place
+    gammax_minus = Vth*np.sum(Vr2pidVr*(fH[:,i_n[:,0],0] @ (vx[i_n[:,0]]*dVx[i_n[:,0]]))) #This is awful and should not be allowed to remain
+    if np.abs(gammax_plus) > 0:
         AlbedoH = -gammax_minus/gammax_plus
+    # print("AlbedoH", AlbedoH)
+    # input()
 
     #	Compute Mesh Errors
 
