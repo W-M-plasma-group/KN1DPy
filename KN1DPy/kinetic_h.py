@@ -1285,155 +1285,164 @@ def kinetic_h(mesh : kinetic_mesh, mu, vxi, fHBC, GammaxHBC, fH2, fSH, nHP, THP,
         fH = fHG
         nH = NHG[:,0]
 
-        do_fH_done = fH_generations == 0
+# next_generation #########################################################################################################################################################################
+        while True:
+            #print('check next_generation')
+            if igen+1 > Max_Gen or fH_generations == 0:
+                if debrief > 0:
+                    print(prompt+'Completed '+sval(Max_Gen)+' generations. Returning present solution...')
+                break
+            igen += 1
+            if debrief > 0:
+                print(prompt+'Computing atomic neutral generation#'+sval(igen))
 
-        if not do_fH_done:
-            do_next_generation = True
-            while do_next_generation:
-                #print('check next_generation')
-                if igen+1> Max_Gen:
-                    if debrief>0:
-                        print(prompt+'Completed '+sval(Max_Gen)+' generations. Returning present solution...')
-                        do_fH_done = True
-                        break
-                igen += 1
-                if debrief>0:
-                    print(prompt+'Computing atomic neutral generation#'+sval(igen))
+            #	Compute Beta_CX from previous generation
 
-                #	Compute Beta_CX from previous generation
+            Beta_CX = np.zeros((nvr,nvx,nx))
+            if H_P_CX:
+                if debrief>1:
+                    print(prompt+'Computing Beta_CX')
 
-                Beta_CX = np.zeros((nx,nvx,nvr))
-                if H_P_CX:
-                    if debrief>1:
-                        print(prompt+'Computing Beta_CX')
-                    if Simple_CX:
-
-                        #	Option (B): Compute charge exchange source with assumption that CX source 
-                        #		neutrals have ion distribution function
-
-                        for k in range(nx):
-                            Beta_CX[k,:,:] = fi_hat[k,:,:]*np.sum(Vr2pidVr*np.matmul(dVx,Alpha_CX[k,:,:]*fHG[k,:,:]))
-                    else:
-
-                        #	Option (A): Compute charge exchange source using fH and vr x sigma x v_v at 
-                        #		each velocity mesh point
-
-                        for k in range(nx):
-                            Work[:] = fHG[k,:,:]
-                            Beta_CX[k,:,:] = ni[k]*fi_hat[k,:,:]*np.matmul(Work,SIG_CX)
-
-                    #	Sum charge exchange source over all generations
-
-                    Beta_CX_sum += Beta_CX
-
-                #	Compute MH from previous generation
-
-                MH_H = np.zeros((nx,nvx,nvr))
-                MH_P = np.zeros((nx,nvx,nvr))
-                MH_H2 = np.zeros((nx,nvx,nvr))
-                OmegaM = np.zeros((nx,nvx,nvr))
-                if H_H_EL or H_P_EL or H_H2_EL:
-
-                    #	Compute VxHG, THG
-
+                if Simple_CX:
+                    #	Option (B): Compute charge exchange source with assumption that CX source 
+                    #		neutrals have ion distribution function
                     for k in range(nx):
-                        VxHG[k] = Vth*np.sum(Vr2pidVr*np.matmul(vx*dVx,fHG[k,:,:]))/NHG[igen-1,k]
-                        for i in range(nvr):
-                            vr2vx2_ran2[:,i] = vr[i]**2+(vx-VxHG[k]/Vth)**2
-                        THG[k] = mu*CONST.H_MASS*Vth2*np.sum(Vr2pidVr*np.matmul(dVx,vr2vx2_ran2*fHG[k,:,:]))/(3*CONST.Q*NHG[igen-1,k])
-                    if H_H_EL:
-                        if debrief>1:
-                            print(prompt+'Computing MH_H')
+                        Beta_CX[:,:,k] = fi_hat[:,:,k]*np.sum(Vr2pidVr*((Alpha_CX[:,:,k]*fHG[:,:,k]) @ dVx))
+                else:
+                    #	Option (A): Compute charge exchange source using fH and vr x sigma x v_v at 
+                    #		each velocity mesh point
+                    for k in range(nx):
+                        Work[:] = fHG[:,:,k]
+                        Beta_CX[:,:,k] = ni[k]*fi_hat[:,:,k]*(SIG_CX @ Work)
 
-                        #	Compute MH_H 
+                #	Sum charge exchange source over all generations
+                Beta_CX_sum += Beta_CX
+            # print("Beta_CX_sum", Beta_CX_sum.T)
+            # input()  
 
-                        vx_shift = VxHG
-                        Tmaxwell = THG
-                        mol = 1
-                        Maxwell = create_shifted_maxwellian_include(vr, vx, Tnorm, vx_shift,Tmaxwell,Shifted_Maxwellian_Debug,mu,mol,
-                                    nx,nvx,nvr,Vth,Vth2,Maxwell,vr2vx2_ran2,
-                                    Vr2pidVr,dVx,Vol,Vth_DVx,Vx_DVx,Vr_DVr,Vr2Vx2_2D,jpa,jpb,jna,jnb)
-                        for k in range(nx):
-                            MH_H[k,:,:] = Maxwell[k,:,:]*NHG[igen-1,k]
-                            OmegaM[k,:,:] = OmegaM[k,:,:]+Omega_H_H[k]*MH_H[k,:,:]
-                        MH_H_sum += MH_H
-                    if H_P_EL:
-                        if debrief>1:
-                            print(prompt+'Computing MH_P')
+            #	Compute MH from previous generation
+            MH_H = np.zeros((nvr,nvx,nx))
+            MH_P = np.zeros((nvr,nvx,nx))
+            MH_H2 = np.zeros((nvr,nvx,nx))
+            OmegaM = np.zeros((nvr,nvx,nx))
+            if H_H_EL or H_P_EL or H_H2_EL:
 
-                        #	Compute MH_P 
+                #	Compute VxHG, THG
+                for k in range(0, nx):
+                    VxHG[k] = Vth*np.sum(Vr2pidVr*(fHG[:,:,k] @ (vx * dVx))) / NHG[k,igen-1]
+                    for i in range(0, nvr):
+                        vr2vx2_ran2[i,:] = vr[i]**2 + (vx - VxHG[k]/Vth)**2
+                    THG[k] = (2*mu*CONST.H_MASS)*Vth2*np.sum(Vr2pidVr*((vr2vx2_ran2*fHG[:,:,k]) @ dVx)) / (3*CONST.Q*NHG[k,igen-1])
+                # print("THG", THG)
+                # input()
 
-                        vx_shift = (VxHG+vxi)/2
-                        Tmaxwell = THG+(2/4)*(Ti-THG+mu*CONST.H_MASS*(vxi-VxHG)**2/(6*CONST.Q))
-                        mol = 1
-                        Maxwell = create_shifted_maxwellian_include(vr, vx, Tnorm,vx_shift,Tmaxwell,Shifted_Maxwellian_Debug,mu,mol,
-                                    nx,nvx,nvr,Vth,Vth2,Maxwell,vr2vx2_ran2,
-                                    Vr2pidVr,dVx,Vol,Vth_DVx,Vx_DVx,Vr_DVr,Vr2Vx2_2D,jpa,jpb,jna,jnb)
-                        for k in range(nx):
-                            MH_P[k,:,:] = Maxwell[k,:,:]*NHG[igen-1,k]
-                            OmegaM[k,:,:] = OmegaM[k,:,:]+Omega_H_P[k]*MH_P[k,:,:]
-                        MH_P_sum += MH_P
-                    if H_H2_EL:
-                        if debrief>1:
-                            print(prompt+'Computing MH_H2')
+                if H_H_EL:
+                    if debrief > 1:
+                        print(prompt+'Computing MH_H')
 
-                        #	Compute MH_H2
+                    #	Compute MH_H 
+                    vx_shift = VxHG
+                    Tmaxwell = THG
+                    mol = 1
+                    Maxwell = create_shifted_maxwellian_include(vr, vx, Tnorm, vx_shift,Tmaxwell,Shifted_Maxwellian_Debug,mu,mol,
+                                nx,nvx,nvr,Vth,Vth2,Maxwell,vr2vx2_ran2,
+                                Vr2pidVr,dVx,vol,Vth_DeltaVx,Vx_DeltaVx,Vr_DeltaVr,Vr2Vx2_2D,jpa,jpb,jna,jnb)
+                    for k in range(nx):
+                        MH_H[:,:,k] = Maxwell[:,:,k]*NHG[k,igen-1]
+                        OmegaM[:,:,k] = OmegaM[:,:,k] + Omega_H_H[k]*MH_H[:,:,k]
+                    MH_H_sum += MH_H
+                    # print("MH_H_sum", MH_H_sum.T)
+                    # print("OmegaM", OmegaM.T)
+                    # input()
 
-                        vx_shift = (VxHG+2*vxH2)/3
-                        Tmaxwell = THG+(4./9.)*(TH2-THG +2*mu*CONST.H_MASS*(vxH2-VxHG)**2/(6*CONST.Q))
-                        mol = 1
-                        Maxwell = create_shifted_maxwellian_include(vr, vx, Tnorm,vx_shift,Tmaxwell,Shifted_Maxwellian_Debug,mu,mol,
-                                    nx,nvx,nvr,Vth,Vth2,Maxwell,vr2vx2_ran2,
-                                    Vr2pidVr,dVx,Vol,Vth_DVx,Vx_DVx,Vr_DVr,Vr2Vx2_2D,jpa,jpb,jna,jnb)
-                        for k in range(nx):
-                            MH_H2[k,:,:] = Maxwell[k,:,:]*NHG[igen-1,k]
-                            OmegaM[k,:,:] = OmegaM[k,:,:]+Omega_H_H2[k]*MH_H2[k,:,:]
-                        MH_H2_sum += MH_H2
+                if H_P_EL:
+                    if debrief>1:
+                        print(prompt+'Computing MH_P')
 
-                #	Compute next generation atomic distribution
+                    #	Compute MH_P 
+                    vx_shift = (VxHG+vxi)/2
+                    Tmaxwell = THG + (2/4)*(Ti - THG + mu*CONST.H_MASS*((vxi - VxHG)**2) / (6*CONST.Q))
+                    mol = 1
+                    Maxwell = create_shifted_maxwellian_include(vr, vx, Tnorm,vx_shift,Tmaxwell,Shifted_Maxwellian_Debug,mu,mol,
+                                nx,nvx,nvr,Vth,Vth2,Maxwell,vr2vx2_ran2,
+                                Vr2pidVr,dVx,vol,Vth_DeltaVx,Vx_DeltaVx,Vr_DeltaVr,Vr2Vx2_2D,jpa,jpb,jna,jnb)
+                    for k in range(nx):
+                        MH_P[:,:,k] = Maxwell[:,:,k]*NHG[k,igen-1]
+                        OmegaM[:,:,k] = OmegaM[:,:,k] + Omega_H_P[k]*MH_P[:,:,k]
+                    MH_P_sum += MH_P
+                    # print("MH_P_sum", MH_P_sum.T)
+                    # print("OmegaM", OmegaM.T)
+                    # input()
 
-                fHG[:] = 0
-                for k in range(nx-1):
-                    fHG[k+1,i_p,:] = Ak[k,i_p,:]*fHG[k,i_p,:]+Bk[k,i_p,:]*(Beta_CX[k+1,i_p,:]+OmegaM[k+1,i_p,:]+Beta_CX[k,i_p,:]+OmegaM[k,i_p,:])
-                for k in range(nx-1,0,-1):
-                    fHG[k-1,i_n,:] = Ck[k,i_n,:]*fHG[k,i_n,:]+Dk[k,i_n,:]*(Beta_CX[k-1,i_n,:]+OmegaM[k-1,i_n,:]+Beta_CX[k,i_n,:]+OmegaM[k,i_n,:])
-                for k in range(nx):
-                    NHG[igen,k] = np.sum(Vr2pidVr*np.matmul(dVx,fHG[k,:,:]))
+                if H_H2_EL:
+                    if debrief>1:
+                        print(prompt+'Computing MH_H2')
 
-                if plot>1:
-                    pass	#	May add later
+                    #	Compute MH_H2
+                    vx_shift = (VxHG + 2*vxH2)/3
+                    Tmaxwell = THG + (4./9.)*(TH2 - THG + 2*mu*CONST.H_MASS*((vxH2 - VxHG)**2) / (6*CONST.Q))
+                    mol = 1
+                    Maxwell = create_shifted_maxwellian_include(vr, vx, Tnorm,vx_shift,Tmaxwell,Shifted_Maxwellian_Debug,mu,mol,
+                                nx,nvx,nvr,Vth,Vth2,Maxwell,vr2vx2_ran2,
+                                Vr2pidVr,dVx,vol,Vth_DeltaVx,Vx_DeltaVx,Vr_DeltaVr,Vr2Vx2_2D,jpa,jpb,jna,jnb)
+                    for k in range(nx):
+                        MH_H2[:,:,k] = Maxwell[:,:,k]*NHG[k,igen-1]
+                        OmegaM[:,:,k] = OmegaM[:,:,k] + Omega_H_H2[k]*MH_H2[:,:,k]
+                    MH_H2_sum += MH_H2
+                    # print("MH_H2_sum", MH_H2_sum.T)
+                    # print("OmegaM", OmegaM.T)
+                    # input()
 
-                #	Add result to total neutral distribution function
+            #	Compute next generation atomic distribution
 
-                fH += fHG
-                nH += NHG[igen,:]
+            fHG[:] = 0
+            for k in range(0, nx-1):
+                fHG[:,i_p,k+1] = Ak[:,i_p,k]*fHG[:,i_p,k] + Bk[:,i_p,k]*(Beta_CX[:,i_p,k+1] + OmegaM[:,i_p,k+1] + Beta_CX[:,i_p,k] + OmegaM[:,i_p,k])
+            for k in range(nx-1, 0, -1):
+                fHG[:,i_n,k-1] = Ck[:,i_n,k]*fHG[:,i_n,k] + Dk[:,i_n,k]*(Beta_CX[:,i_n,k-1] + OmegaM[:,i_n,k-1] + Beta_CX[:,i_n,k] + OmegaM[:,i_n,k])
+            for k in range(0, nx):
+                NHG[k,igen] = np.sum(Vr2pidVr*(fHG[:,:,k] @ dVx))
+            # print("fH2G", fHG.T)
+            # print("NH2G", NHG.T)
+            # input()
 
-                #	Compute 'generation error': Delta_nHG=max(NHG(*,igen)/max(nH))
-                #		and decide if another generation should be computed
+            # NOTE Add plotting once program is working
+            # if plot > 1:
+            #     pass
 
-                Delta_nHG = max(NHG[igen,:]/max(nH))
-                if fH_iterate:
+            #	Add result to total neutral distribution function
+            fH += fHG
+            nH += NHG[:,igen]
 
-                    #	If fH 'seed' is being iterated, then do another generation until the 'generation error'
-                    #		is less than 0.003 times the 'seed error' or is less than TRUNCATE
+            #	Compute 'generation error': Delta_nHG=max(NHG(*,igen)/max(nH))
+            #		and decide if another generation should be computed
+            Delta_nHG = max(NHG[:,igen]/max(nH))
+            if (Delta_nHG < truncate) or (fH_iterate and (Delta_nHG < 0.003*Delta_nHs)):
+                #	If fH 'seed' is being iterated, then do another generation until the 'generation error'
+                #		is less than 0.003 times the 'seed error' or is less than TRUNCATE
+                break
 
-                    do_fH_done = (Delta_nHG<.003*Delta_nHs) or (Delta_nHG<truncate)
-                    break
-        if plot>0:
-            pass	#	May add later
+# fH2_done #########################################################################################################################################################################
+        
+        # NOTE Add plotting once program is working
+        # if plot>0:
+        #     pass
 
         #	Compute H density profile
-
-        for k in range(nx):
-            nH[k] = np.sum(Vr2pidVr*np.matmul(dVx,fH[k,:,:]))
+        for k in range(0, nx):
+            nH[k] = np.sum(Vr2pidVr*(fH[:,:,k] @ dVx))
+        # print("nH2", nH2)
+        # input()
 
         if fH_iterate:
 
             #	Compute 'seed error': Delta_nHs=(|nHs-nH|)/max(nH) 
             #		If Delta_nHs is greater than 10*truncate then iterate fH
-
-            Delta_nHs = max(abs(nHs-nH))/max(nH)
-            do_fH_Iterate = Delta_nHs>10*truncate
+            Delta_nHs = np.max(np.abs(nHs - nH2))/np.max(nH2)
+            if Delta_nHs > 10*truncate:
+                do_fH_iterate = True
+    # print("Delta_nHs", Delta_nHs)
+    # input() 
 
     #	Update Beta_CX_sum using last generation
     Beta_CX = np.zeros((nx,nvx,nvr))

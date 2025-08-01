@@ -1416,7 +1416,7 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
         
 # next_generation #########################################################################################################################################################################
         while True:
-            if igen+1 > Max_Gen or fH2_generations==0: 
+            if igen+1 > Max_Gen or fH2_generations == 0: 
                 if debrief > 1:
                     print(prompt,'Completed ', sval(Max_Gen), ' generations. Returning present solution...')
                 break
@@ -1464,10 +1464,10 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
             if H2_H2_EL or H2_P_EL or H2_H_EL:
                 # Compute VxH2G, TH2G
                 for k in range(0, nx):
-                    VxH2G[k] = Vth*np.sum(Vr2pidVr*(fH2G[:,:,k] @ (vx * dVx)))/NH2G[k,igen-1]
+                    VxH2G[k] = Vth*np.sum(Vr2pidVr*(fH2G[:,:,k] @ (vx * dVx))) / NH2G[k,igen-1]
                     for i in range(0, nvr):
                         vr2vx2_ran2[i,:] = vr[i]**2 + (vx - VxH2G[k]/Vth)**2
-                    TH2G[k] = (2*mu*CONST.H_MASS)*Vth2*np.sum(Vr2pidVr*((vr2vx2_ran2*fH2G[:,:,k]) @ dVx))/(3*CONST.Q*NH2G[k,igen-1])
+                    TH2G[k] = (2*mu*CONST.H_MASS)*Vth2*np.sum(Vr2pidVr*((vr2vx2_ran2*fH2G[:,:,k]) @ dVx)) / (3*CONST.Q*NH2G[k,igen-1])
                 # print("TH2G", TH2G)
                 # input()
 
@@ -1574,7 +1574,7 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
             # Compute 'generation error': Delta_nH2G=max(NH2G(*,igen)/max(nH2))
             # and decide if another generation should be computed
             Delta_nH2G = np.max(NH2G[:,igen]/np.max(nH2))
-            if fH2_iterate and ((Delta_nH2G < 0.003 * Delta_nH2s) or (Delta_nH2G < truncate)):
+            if (Delta_nH2G < truncate) or (fH2_iterate and (Delta_nH2G < 0.003*Delta_nH2s)):
                 # If fH2 'seed' is being iterated, then do another generation until the 'generation error'
                 # is less than 0.003 times the 'seed error' or is less than TRUNCATE
                 break
@@ -1666,7 +1666,7 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
 
             Delta_nH2s = np.max(np.abs(nH2s - nH2))/np.max(nH2)
             if Delta_nH2s > 10*truncate:
-                do_fH2_iterate = True # not sure if this is correct
+                do_fH2_iterate = True
     # print("Delta_nH2s", Delta_nH2s)
     # input() 
     
