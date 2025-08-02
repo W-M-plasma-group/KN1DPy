@@ -56,7 +56,7 @@ from .common.Kinetic_H import Kinetic_H_Common
 # Note: Variable names contain characters to help designate species -
 #	atomic neutral (H), molecular neutral (H2), molecular ion (HP), proton (i) or (P) 
 
-def kinetic_h(mesh : kinetic_mesh, mu, vxi, fHBC, GammaxHBC, fH2, fSH, nHP, THP, jh_coeffs : JH_Coef, KH_Common : Kinetic_H_Common, fH = None,
+def kinetic_h(mesh : kinetic_mesh, mu, vxi, fHBC, GammaxHBC, fH2, fSH, nHP, THP, jh_coeffs : JH_Coef, KH : Kinetic_H_Common, fH = None,
               truncate = 1e-4, Compute_Errors = 0, plot = 0, debug = 0, pause = 0, debrief = 0,
               Simple_CX = 1, Max_Gen = 50, No_Johnson_Hinnov = 0, Use_Collrad_Ionization = 0,
               No_Recomb = 0, H_H_EL = 0, H_P_EL = 0, _H_H2_EL = 0, H_P_CX = 0, ni_correct = 0): # changed fH default to None and Use_Collrad_Ionization capitalization
@@ -293,65 +293,65 @@ def kinetic_h(mesh : kinetic_mesh, mu, vxi, fHBC, GammaxHBC, fH2, fSH, nHP, THP,
     prompt = 'Kinetic_H => '
 
     #	Set Kinetic_H_input common block variables 
-    vx_s = KH_Common.Input.vx_s
-    vr_s = KH_Common.Input.vr_s
-    x_s = KH_Common.Input.x_s
-    Tnorm_s = KH_Common.Input.Tnorm_s
-    mu_s = KH_Common.Input.mu_s
-    Ti_s = KH_Common.Input.Ti_s
-    Te_s = KH_Common.Input.Te_s
-    n_s = KH_Common.Input.n_s
-    vxi_s = KH_Common.Input.vxi_s
-    fHBC_s = KH_Common.Input.fHBC_s
-    GammaxHBC_s = KH_Common.Input.GammaxHBC_s # Fixed typo - changed to GammaxHBC_s
-    PipeDia_s = KH_Common.Input.PipeDia_s
-    fH2_s = KH_Common.Input.fH2_s
-    fSH_s = KH_Common.Input.fSH_s
-    nHP_s = KH_Common.Input.nHP_s
-    THP_s = KH_Common.Input.THP_s # Fixed typo - changed to THP_s
-    fH_s = KH_Common.Input.fH_s # Fixed typo - changed to fH_s
-    Simple_CX_s = KH_Common.Input.Simple_CX_s
-    JH_s = KH_Common.Input.JH_s
-    Collrad_s = KH_Common.Input.Collrad_s
-    Recomb_s = KH_Common.Input.Recomb_s
-    H_H_EL_s = KH_Common.Input.H_H_EL_s
-    H_P_EL_s = KH_Common.Input.H_P_EL_s
-    H_H2_EL_s = KH_Common.Input.H_H2_EL_s
-    H_P_CX_s = KH_Common.Input.H_P_CX_s
+    vx_s = KH.Input.vx_s
+    vr_s = KH.Input.vr_s
+    x_s = KH.Input.x_s
+    Tnorm_s = KH.Input.Tnorm_s
+    mu_s = KH.Input.mu_s
+    Ti_s = KH.Input.Ti_s
+    Te_s = KH.Input.Te_s
+    n_s = KH.Input.n_s
+    vxi_s = KH.Input.vxi_s
+    fHBC_s = KH.Input.fHBC_s
+    GammaxHBC_s = KH.Input.GammaxHBC_s # Fixed typo - changed to GammaxHBC_s
+    PipeDia_s = KH.Input.PipeDia_s
+    fH2_s = KH.Input.fH2_s
+    fSH_s = KH.Input.fSH_s
+    nHP_s = KH.Input.nHP_s
+    THP_s = KH.Input.THP_s # Fixed typo - changed to THP_s
+    fH_s = KH.Input.fH_s # Fixed typo - changed to fH_s
+    Simple_CX_s = KH.Input.Simple_CX_s
+    JH_s = KH.Input.JH_s
+    Collrad_s = KH.Input.Collrad_s
+    Recomb_s = KH.Input.Recomb_s
+    H_H_EL_s = KH.Input.H_H_EL_s
+    H_P_EL_s = KH.Input.H_P_EL_s
+    H_H2_EL_s = KH.Input.H_H2_EL_s
+    H_P_CX_s = KH.Input.H_P_CX_s
     #	FS: added collrad_s
 
     #	Kinetic_H_internal common block
 
-    vr2vx2 = KH_Common.Internal.vr2vx2
-    vr2vx_vxi2 = KH_Common.Internal.vr2vx_vxi2
-    fi_hat = KH_Common.Internal.fi_hat
-    ErelH_P = KH_Common.Internal.ErelH_P
-    Ti_mu = KH_Common.Internal.Ti_mu
-    ni = KH_Common.Internal.ni
-    sigv = KH_Common.Internal.sigv
-    alpha_ion = KH_Common.Internal.alpha_ion
-    v_v2 = KH_Common.Internal.v_v2
-    v_v = KH_Common.Internal.v_v
-    vr2_vx2 = KH_Common.Internal.vr2_vx2
-    vx_vx = KH_Common.Internal.vx_vx
-    Vr2pidVrdVx = KH_Common.Internal.Vr2pidVrdVx
-    SIG_CX = KH_Common.Internal.SIG_CX # Fixed typo - changed to SIG_CX
-    SIG_H_H = KH_Common.Internal.SIG_H_H
-    SIG_H_H2 = KH_Common.Internal.SIG_H_H2
-    SIG_H_P = KH_Common.Internal.SIG_H_P
-    Alpha_CX = KH_Common.Internal.Alpha_CX
-    Alpha_H_H2 = KH_Common.Internal.Alpha_H_H2
-    Alpha_H_P = KH_Common.Internal.Alpha_H_P
-    MH_H_sum = KH_Common.Internal.MH_H_sum
-    Delta_nHs = KH_Common.Internal.Delta_nHs
-    Sn = KH_Common.Internal.Sn
-    Rec = KH_Common.Internal.Rec
+    vr2vx2 = KH.Internal.vr2vx2
+    vr2vx_vxi2 = KH.Internal.vr2vx_vxi2
+    fi_hat = KH.Internal.fi_hat
+    ErelH_P = KH.Internal.ErelH_P
+    Ti_mu = KH.Internal.Ti_mu
+    ni = KH.Internal.ni
+    sigv = KH.Internal.sigv
+    alpha_ion = KH.Internal.alpha_ion
+    v_v2 = KH.Internal.v_v2
+    v_v = KH.Internal.v_v
+    vr2_vx2 = KH.Internal.vr2_vx2
+    vx_vx = KH.Internal.vx_vx
+    Vr2pidVrdVx = KH.Internal.Vr2pidVrdVx
+    SIG_CX = KH.Internal.SIG_CX # Fixed typo - changed to SIG_CX
+    SIG_H_H = KH.Internal.SIG_H_H
+    SIG_H_H2 = KH.Internal.SIG_H_H2
+    SIG_H_P = KH.Internal.SIG_H_P
+    Alpha_CX = KH.Internal.Alpha_CX
+    Alpha_H_H2 = KH.Internal.Alpha_H_H2
+    Alpha_H_P = KH.Internal.Alpha_H_P
+    MH_H_sum = KH.Internal.MH_H_sum
+    Delta_nHs = KH.Internal.Delta_nHs
+    Sn = KH.Internal.Sn
+    Rec = KH.Internal.Rec
 
     #	Kinetic_H_Moments
     
-    nH2 = KH_Common.Moments.nH2
-    vxH2 = KH_Common.Moments.VxH2
-    TH2 = KH_Common.Moments.TH2 # changed to fit current global_vars structure
+    nH2 = KH.Moments.nH2
+    vxH2 = KH.Moments.VxH2
+    TH2 = KH.Moments.TH2 # changed to fit current global_vars structure
 
     #	Internal Debug switches
 
@@ -526,21 +526,21 @@ def kinetic_h(mesh : kinetic_mesh, mu, vxi, fHBC, GammaxHBC, fH2, fSH, nHP, THP,
     QH = np.zeros(nx)
     RxH = np.zeros(nx)
     QH_total = np.zeros(nx)
-    piH_xx = np.zeros(nx)
-    piH_yy = np.zeros(nx)
-    piH_zz = np.zeros(nx)
-    RxHCX = np.zeros(nx)
-    RxH2_H = np.zeros(nx)
-    RxP_H = np.zeros(nx)
-    RxW_H = np.zeros(nx)
-    EHCX = np.zeros(nx)
-    EH2_H = np.zeros(nx)
-    EP_H = np.zeros(nx)
-    EW_H = np.zeros(nx)
-    Epara_PerpH_H = np.zeros(nx)
+    KH.Output.piH_xx = np.zeros(nx)
+    KH.Output.piH_yy = np.zeros(nx)
+    KH.Output.piH_zz = np.zeros(nx)
+    KH.Output.RxHCX = np.zeros(nx)
+    KH.Output.RxH2_H = np.zeros(nx)
+    KH.Output.RxP_H = np.zeros(nx)
+    KH.Output.RxW_H = np.zeros(nx)
+    KH.Output.EHCX = np.zeros(nx)
+    KH.Output.EH2_H = np.zeros(nx)
+    KH.Output.EP_H = np.zeros(nx)
+    KH.Output.EW_H = np.zeros(nx)
+    KH.Output.Epara_PerpH_H = np.zeros(nx)
     AlbedoH = 0.0e0
-    SourceH = np.zeros(nx)
-    SRecomb = np.zeros(nx)
+    KH.Output.SourceH = np.zeros(nx)
+    KH.Output.SRecomb = np.zeros(nx)
 
     #	Internal variables
 
@@ -653,8 +653,8 @@ def kinetic_h(mesh : kinetic_mesh, mu, vxi, fHBC, GammaxHBC, fH2, fSH, nHP, THP,
     New_Molecular_Ions = 1
     if nHP_s is not None:
         test = 0
-        test = np.argwhere(nHP_s != nHP).T ; test = test + np.size(ii)
-        test = np.argwhere(THP_s != THP).T ; test = test + np.size(ii)
+        ii = np.argwhere(nHP_s != nHP).T ; test = test + np.size(ii)
+        ii = np.argwhere(THP_s != THP).T ; test = test + np.size(ii)
         if test <= 0:
             New_Molecular_Ions = 0
     New_Electrons = 1
@@ -1576,17 +1576,17 @@ def kinetic_h(mesh : kinetic_mesh, mu, vxi, fHBC, GammaxHBC, fH2, fSH, nHP, THP,
 
     #	piH_xx
     for k in range(nx):
-        piH_xx[k] = (((mu*CONST.H_MASS)*Vth2*np.sum(Vr2pidVr*(fH[:,:,k] @ (dVx*(vx - _VxH[k])**2)))) / CONST.Q) - pH[k]
+        KH.Output.piH_xx[k] = (((mu*CONST.H_MASS)*Vth2*np.sum(Vr2pidVr*(fH[:,:,k] @ (dVx*(vx - _VxH[k])**2)))) / CONST.Q) - pH[k]
     #	piH_yy
     for k in range(nx):
-        piH_yy[k] = (((mu*CONST.H_MASS)*Vth2*0.5*np.sum((Vr2pidVr*(vr**2))*(fH[:,:,k] @ dVx))) / CONST.Q) - pH[k]
+        KH.Output.piH_yy[k] = (((mu*CONST.H_MASS)*Vth2*0.5*np.sum((Vr2pidVr*(vr**2))*(fH[:,:,k] @ dVx))) / CONST.Q) - pH[k]
     #	piH_zz
-    piH_zz = copy.copy(piH_yy)
+    KH.Output.piH_zz = copy.copy(KH.Output.piH_yy)
     #	qxH
     for k in range(nx):
         qxH[k] = 0.5*(mu*CONST.H_MASS)*Vth3*np.sum(Vr2pidVr*((vr2vx2_ran[:,:,k]*fH[:,:,k]) @ (dVx*(vx - _VxH[k]))))
-    # print("piH2_xx", piH_xx)
-    # print("piH2_yy", piH_yy)
+    # print("piH2_xx", KH.Output.piH_xx)
+    # print("piH2_yy", KH.Output.piH_yy)
     # print("qxH", qxH)
     # input()
 
@@ -1601,63 +1601,63 @@ def kinetic_h(mesh : kinetic_mesh, mu, vxi, fHBC, GammaxHBC, fH2, fSH, nHP, THP,
         RxH[k] = (mu*CONST.H_MASS)*Vth*np.sum(Vr2pidVr*(C @ (dVx*(vx - _VxH[k]))))
         NetHSource[k] = np.sum(Vr2pidVr*(C @ dVx))
         Sion[k] = Vth*nH[k]*alpha_ion[k]
-        SourceH[k] = np.sum(Vr2pidVr*(fSH[:,:,k] @ dVx))
+        KH.Output.SourceH[k] = np.sum(Vr2pidVr*(fSH[:,:,k] @ dVx))
         WallH[k] = np.sum(Vr2pidVr*((gamma_wall[:,:,k]*fH[:,:,k]) @ dVx))
 
         if Recomb:
-            SRecomb[k] = Vth*ni[k]*Rec[k]
+            KH.Output.SRecomb[k] = Vth*ni[k]*Rec[k]
         else:
-            SRecomb[k] = 0
+            KH.Output.SRecomb[k] = 0
 
         if H_P_CX:
             CCX = Vth*(Beta_CX_sum[:,:,k] - Alpha_CX[:,:,k]*fH[:,:,k])
-            RxHCX[k] = (mu*CONST.H_MASS)*Vth*np.sum(Vr2pidVr*(CCX @ (dVx*(vx - _VxH[k]))))
-            EHCX[k] = 0.5*(mu*CONST.H_MASS)*Vth2*np.sum(Vr2pidVr*((vr2vx2[:,:,k]*CCX) @ dVx))
+            KH.Output.RxHCX[k] = (mu*CONST.H_MASS)*Vth*np.sum(Vr2pidVr*(CCX @ (dVx*(vx - _VxH[k]))))
+            KH.Output.EHCX[k] = 0.5*(mu*CONST.H_MASS)*Vth2*np.sum(Vr2pidVr*((vr2vx2[:,:,k]*CCX) @ dVx))
 
         if H_H2_EL:
             CH_H2 = Vth*Omega_H_H2[k]*(MH_H2_sum[:,:,k] - fH[:,:,k])
-            RxH2_H[k] = (mu*CONST.H_MASS)*Vth*np.sum(Vr2pidVr*(CH_H2 @ (dVx*(vx - _VxH[k]))))
-            EH2_H[k] = 0.5*(mu*CONST.H_MASS)*Vth2*np.sum(Vr2pidVr*((vr2vx2[:,:,k]*CH_H2) @ dVx))
+            KH.Output.RxH2_H[k] = (mu*CONST.H_MASS)*Vth*np.sum(Vr2pidVr*(CH_H2 @ (dVx*(vx - _VxH[k]))))
+            KH.Output.EH2_H[k] = 0.5*(mu*CONST.H_MASS)*Vth2*np.sum(Vr2pidVr*((vr2vx2[:,:,k]*CH_H2) @ dVx))
 
         if H_P_EL:
             CH_P = Vth*Omega_H_P[k]*(MH_P_sum[:,:,k] - fH[:,:,k])
-            RxP_H[k] = (mu*CONST.H_MASS)*Vth*np.sum(Vr2pidVr*(CH_P @ (dVx*(vx - _VxH[k]))))
-            EP_H[k] = 0.5*(mu*CONST.H_MASS)*Vth2*np.sum(Vr2pidVr*((vr2vx2[:,:,k]*CH_P) @ dVx))
+            KH.Output.RxP_H[k] = (mu*CONST.H_MASS)*Vth*np.sum(Vr2pidVr*(CH_P @ (dVx*(vx - _VxH[k]))))
+            KH.Output.EP_H[k] = 0.5*(mu*CONST.H_MASS)*Vth2*np.sum(Vr2pidVr*((vr2vx2[:,:,k]*CH_P) @ dVx))
 
         CW_H = -Vth*(gamma_wall[:,:,k]*fH[:,:,k])
-        RxW_H[k] = (mu*CONST.H_MASS)*Vth*np.sum(Vr2pidVr*(CW_H @ (dVx*(vx - _VxH[k]))))
-        EW_H[k] = 0.5*(mu*CONST.H_MASS)*Vth2*np.sum(Vr2pidVr*((vr2vx2[:,:,k]*CW_H) @ dVx))
+        KH.Output.RxW_H[k] = (mu*CONST.H_MASS)*Vth*np.sum(Vr2pidVr*(CW_H @ (dVx*(vx - _VxH[k]))))
+        KH.Output.EW_H[k] = 0.5*(mu*CONST.H_MASS)*Vth2*np.sum(Vr2pidVr*((vr2vx2[:,:,k]*CW_H) @ dVx))
         
         if H_H_EL:
             CH_H = Vth*Omega_H_H[k]*(MH_H_sum[:,:,k] - fH[:,:,k])
             for i in range(0, nvr):
                 vr2_2vx_ran2[i,:] = vr[i]**2 - 2*((vx - _VxH[k])**2)
-            Epara_PerpH_H[k] = -0.5*(mu*CONST.H_MASS)*Vth2*np.sum(Vr2pidVr*((vr2_2vx_ran2*CH_H) @ dVx))
+            KH.Output.Epara_PerpH_H[k] = -0.5*(mu*CONST.H_MASS)*Vth2*np.sum(Vr2pidVr*((vr2_2vx_ran2*CH_H) @ dVx))
     # print("QH", QH)
     # print("RxH", RxH)
     # print("NetHSource", NetHSource)
     # print("Sion", Sion)
-    # print("SourceH", SourceH)
+    # print("SourceH", KH.Output.SourceH)
     # print("WallH", WallH)
-    # print("SRecomb", SRecomb)
+    # print("SRecomb", KH.Output.SRecomb)
     # input()
-    # print("RxHCX", RxHCX)
-    # print("EHCX", EHCX)
+    # print("RxHCX", KH.Output.RxHCX)
+    # print("EHCX", KH.Output.EHCX)
     # input()
-    # print("RxH2_H", RxH2_H)
-    # print("EH2_H", EH2_H)
+    # print("RxH2_H", KH.Output.RxH2_H)
+    # print("EH2_H", KH.Output.EH2_H)
     # input()
-    # print("RxP_H", RxP_H)
-    # print("EP_H", EP_H)
+    # print("RxP_H", KH.Output.RxP_H)
+    # print("EP_H", KH.Output.EP_H)
     # input()
-    # print("RxW_H", RxW_H)
-    # print("EW_H", EW_H)
+    # print("RxW_H", KH.Output.RxW_H)
+    # print("EW_H", KH.Output.EW_H)
     # input()
-    # print("Epara_PerpH_H", Epara_PerpH_H)
+    # print("Epara_PerpH_H", KH.Output.Epara_PerpH_H)
     # input()
 
     #	qxH_total
-    qxH_total = (0.5*nH*(mu*CONST.H_MASS)*VxH*VxH + 2.5*pH*CONST.Q)*VxH + CONST.Q*piH_xx*VxH + qxH
+    qxH_total = (0.5*nH*(mu*CONST.H_MASS)*VxH*VxH + 2.5*pH*CONST.Q)*VxH + CONST.Q*KH.Output.piH_xx*VxH + qxH
     # print("qxH_total", qxH_total)
     # input()
 
@@ -1694,7 +1694,7 @@ def kinetic_h(mesh : kinetic_mesh, mu, vxi, fHBC, GammaxHBC, fH2, fSH, nHP, THP,
     if Compute_Errors:
         if debrief > 1:
             print(prompt+'Computing Collision Operator, Mesh, and Moment Normalized Errors')
-        NetHSource2 = SourceH + SRecomb - Sion - WallH
+        NetHSource2 = KH.Output.SourceH + KH.Output.SRecomb - Sion - WallH
         for k in range(nx):
             C_error[k] = abs(NetHSource[k] - NetHSource2[k]) / max(abs(np.array([NetHSource[k], NetHSource2[k]])))
         # print("C_error", C_error)
@@ -1767,9 +1767,9 @@ def kinetic_h(mesh : kinetic_mesh, mu, vxi, fHBC, GammaxHBC, fH2, fSH, nHP, THP,
                 for k in range(0, nx):
                     RxCI_CX[k] = -(mu*CONST.H_MASS)*Vth2*np.sum(Vr2pidVr*((alpha_vx_cx[:,:,k]*fH[:,:,k]) @ dVx))
 
-                norm = np.max(np.abs(np.array([RxHCX, RxCI_CX])))
+                norm = np.max(np.abs(np.array([KH.Output.RxHCX, RxCI_CX])))
                 for k in range(0, nx):
-                    CI_CX_error[k] = np.abs(RxHCX[k] - RxCI_CX[k]) / norm
+                    CI_CX_error[k] = np.abs(KH.Output.RxHCX[k] - RxCI_CX[k]) / norm
 
                 print(prompt,'Maximum normalized momentum transfer error in CX collision operator: ', sval(np.max(CI_CX_error)))
 
@@ -1777,9 +1777,9 @@ def kinetic_h(mesh : kinetic_mesh, mu, vxi, fHBC, GammaxHBC, fH2, fSH, nHP, THP,
                 for k in range(0, nx):
                     RxCI_P_H[k] = -(1/2)*(mu*CONST.H_MASS)*Vth2*np.sum(Vr2pidVr*((Alpha_H_P[:,:,k]*fH[:,:,k]) @ dVx))
 
-                norm = np.max(np.abs(np.array([RxP_H, RxCI_P_H])))
+                norm = np.max(np.abs(np.array([KH.Output.RxP_H, RxCI_P_H])))
                 for k in range(0, nx):
-                    CI_P_H_error[k] = np.abs(RxP_H[k] - RxCI_P_H[k]) / norm 
+                    CI_P_H_error[k] = np.abs(KH.Output.RxP_H[k] - RxCI_P_H[k]) / norm 
 
                 print(prompt, 'Maximum normalized momentum transfer error in P -> H elastic BKG collision operator: ', sval(np.max(CI_P_H_error)))
 
@@ -1787,9 +1787,9 @@ def kinetic_h(mesh : kinetic_mesh, mu, vxi, fHBC, GammaxHBC, fH2, fSH, nHP, THP,
                 for k in range(0, nx):
                     RxCI_H2_H[k] = -(2/3)*(mu*CONST.H_MASS)*Vth2*np.sum(Vr2pidVr*((Alpha_H_H2[:,:,k]*fH[:,:,k]) @ dVx))
                 
-                norm = np.max(np.abs(np.array([RxH2_H, RxCI_H2_H])))
+                norm = np.max(np.abs(np.array([KH.Output.RxH2_H, RxCI_H2_H])))
                 for k in range(0, nx):
-                    CI_H2_H_error[k] = np.abs(RxH2_H[k] - RxCI_H2_H[k])/norm
+                    CI_H2_H_error[k] = np.abs(KH.Output.RxH2_H[k] - RxCI_H2_H[k])/norm
                 
                 print(prompt, 'Maximum normalized momentum transfer error in H2 -> H elastic BKG collision operator: ', sval(np.max(CI_H2_H_error)))
 
@@ -1799,9 +1799,9 @@ def kinetic_h(mesh : kinetic_mesh, mu, vxi, fHBC, GammaxHBC, fH2, fSH, nHP, THP,
                     Alpha_H_H[:] = (SIG_H_H @ Work).reshape(Alpha_H_H.shape, order='F')
                     Epara_Perp_CI[k] = 0.5*(mu*CONST.H_MASS)*Vth3*np.sum(Vr2pidVr*((Alpha_H_H*fH[:,:,k]) @ dVx)) 
                 
-                norm = np.max(np.abs(np.array([Epara_PerpH_H, Epara_Perp_CI])))
+                norm = np.max(np.abs(np.array([KH.Output.Epara_PerpH_H, Epara_Perp_CI])))
                 for k in range(0, nx):
-                    CI_H_H_error[k] = np.abs(Epara_PerpH_H[k] - Epara_Perp_CI[k]) / norm 
+                    CI_H_H_error[k] = np.abs(KH.Output.Epara_PerpH_H[k] - Epara_Perp_CI[k]) / norm 
                 
                 print(prompt, 'Maximum normalized perp/parallel energy transfer error in H -> H elastic BKG collision operator: ', sval(np.max(CI_H_H_error)))
 
@@ -1888,64 +1888,64 @@ def kinetic_h(mesh : kinetic_mesh, mu, vxi, fHBC, GammaxHBC, fH2, fSH, nHP, THP,
 
     #	Save input parameters in kinetic_H_input common block
 
-    KH_Common.Input.vx_s = vx
-    KH_Common.Input.vr_s = vr
-    KH_Common.Input.x_s = x
-    KH_Common.Input.Tnorm_s = Tnorm
-    KH_Common.Input.mu_s = mu
-    KH_Common.Input.Ti_s = Ti
-    KH_Common.Input.vxi_s = vxi
-    KH_Common.Input.Te_s = Te
-    KH_Common.Input.n_s = n
-    KH_Common.Input.vxi_s = vxi
-    KH_Common.Input.fHBC_s = fHBC
-    KH_Common.Input.GammaxHBC_s = GammaxHBC
-    KH_Common.Input.PipeDia_s = PipeDia
-    KH_Common.Input.fH2_s = fH2
-    KH_Common.Input.fSH_s = fSH
-    KH_Common.Input.nHP_s = nHP
-    KH_Common.Input.THP_s = THP
-    KH_Common.Input.fH_s = fH
-    KH_Common.Input.Simple_CX_s = Simple_CX
-    KH_Common.Input.JH_s = JH
-    KH_Common.Input.Collrad_s = Use_Collrad_Ionization
-    KH_Common.Input.Recomb_s = Recomb
-    KH_Common.Input.H_H_EL_s = H_H_EL
-    KH_Common.Input.H_P_EL_s = H_P_EL
-    KH_Common.Input.H_H2_EL_s = H_H2_EL
-    KH_Common.Input.H_P_CX_s = H_P_CX
+    KH.Input.vx_s = vx
+    KH.Input.vr_s = vr
+    KH.Input.x_s = x
+    KH.Input.Tnorm_s = Tnorm
+    KH.Input.mu_s = mu
+    KH.Input.Ti_s = Ti
+    KH.Input.vxi_s = vxi
+    KH.Input.Te_s = Te
+    KH.Input.n_s = n
+    KH.Input.vxi_s = vxi
+    KH.Input.fHBC_s = fHBC
+    KH.Input.GammaxHBC_s = GammaxHBC
+    KH.Input.PipeDia_s = PipeDia
+    KH.Input.fH2_s = fH2
+    KH.Input.fSH_s = fSH
+    KH.Input.nHP_s = nHP
+    KH.Input.THP_s = THP
+    KH.Input.fH_s = fH
+    KH.Input.Simple_CX_s = Simple_CX
+    KH.Input.JH_s = JH
+    KH.Input.Collrad_s = Use_Collrad_Ionization
+    KH.Input.Recomb_s = Recomb
+    KH.Input.H_H_EL_s = H_H_EL
+    KH.Input.H_P_EL_s = H_P_EL
+    KH.Input.H_H2_EL_s = H_H2_EL
+    KH.Input.H_P_CX_s = H_P_CX
 
     #	Save input parameters in kinetic_H_internal common block
 
-    KH_Common.Internal.vr2vx2 = vr2vx2
-    KH_Common.Internal.vr2vx_vxi2 = vr2vx_vxi2
-    KH_Common.Internal.fi_hat = fi_hat
-    KH_Common.Internal.ErelH_P = ErelH_P
-    KH_Common.Internal.Ti_mu = Ti_mu
-    KH_Common.Internal.ni = ni
-    KH_Common.Internal.sigv = sigv
-    KH_Common.Internal.alpha_ion = alpha_ion
-    KH_Common.Internal.v_v2 = v_v2
-    KH_Common.Internal.v_v = v_v
-    KH_Common.Internal.vr2_vx2 = vr2_vx2
-    KH_Common.Internal.vx_vx = vx_vx
-    KH_Common.Internal.Vr2pidVrdVx = Vr2pidVrdVx
-    KH_Common.Internal.SIG_CX = SIG_CX
-    KH_Common.Internal.SIG_H_H = SIG_H_H
-    KH_Common.Internal.SIG_H_H2 = SIG_H_H2
-    KH_Common.Internal.SIG_H_P = SIG_H_P
-    KH_Common.Internal.Alpha_CX = Alpha_CX
-    KH_Common.Internal.Alpha_H_H2 = Alpha_H_H2
-    KH_Common.Internal.Alpha_H_P = Alpha_H_P
-    KH_Common.Internal.MH_H_sum = MH_H_sum
-    KH_Common.Internal.Delta_nHs = Delta_nHs
-    KH_Common.Internal.Sn = Sn
-    KH_Common.Internal.Rec = Rec
+    KH.Internal.vr2vx2 = vr2vx2
+    KH.Internal.vr2vx_vxi2 = vr2vx_vxi2
+    KH.Internal.fi_hat = fi_hat
+    KH.Internal.ErelH_P = ErelH_P
+    KH.Internal.Ti_mu = Ti_mu
+    KH.Internal.ni = ni
+    KH.Internal.sigv = sigv
+    KH.Internal.alpha_ion = alpha_ion
+    KH.Internal.v_v2 = v_v2
+    KH.Internal.v_v = v_v
+    KH.Internal.vr2_vx2 = vr2_vx2
+    KH.Internal.vx_vx = vx_vx
+    KH.Internal.Vr2pidVrdVx = Vr2pidVrdVx
+    KH.Internal.SIG_CX = SIG_CX
+    KH.Internal.SIG_H_H = SIG_H_H
+    KH.Internal.SIG_H_H2 = SIG_H_H2
+    KH.Internal.SIG_H_P = SIG_H_P
+    KH.Internal.Alpha_CX = Alpha_CX
+    KH.Internal.Alpha_H_H2 = Alpha_H_H2
+    KH.Internal.Alpha_H_P = Alpha_H_P
+    KH.Internal.MH_H_sum = MH_H_sum
+    KH.Internal.Delta_nHs = Delta_nHs
+    KH.Internal.Sn = Sn
+    KH.Internal.Rec = Rec
 
     #	Save input parameters in kinetic_H_Moments common block
 
-    KH_Common.Moments.nH2 = nH2
-    KH_Common.Moments.VxH2 = vxH2
-    KH_Common.Moments.TH2 = TH2
+    KH.Moments.nH2 = nH2
+    KH.Moments.VxH2 = vxH2
+    KH.Moments.TH2 = TH2
 
     return fH,nH,GammaxH,VxH,pH,TH,qxH,qxH_total,NetHSource,Sion,QH,RxH,QH_total,AlbedoH,WallH,error

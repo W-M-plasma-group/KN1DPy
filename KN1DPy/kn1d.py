@@ -505,64 +505,91 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
             
             fH,nH,GammaxH,VxH,pH,TH,qxH,qxH_total,NetHSource,Sion,QH,RxH,QH_total,AlbedoH,SideWallH,error = kh_results
 
-            print("fH", fH.T)
-            input()
-            print("nH", nH)
-            print("GammaxH2", GammaxH2)
-            print("TH", TH)
-            print("qxH_total", qxH_total)
-            print("NetHSource", NetHSource)
-            print("Sion", Sion)
-            print("QH_total", QH_total)
-            print("SideWallH", SideWallH)
-            input()
+            # print("fH", fH.T)
+            # input()
+            # print("nH", nH)
+            # print("GammaxH2", GammaxH2)
+            # print("TH", TH)
+            # print("qxH_total", qxH_total)
+            # print("NetHSource", NetHSource)
+            # print("Sion", Sion)
+            # print("QH_total", QH_total)
+            # print("SideWallH", SideWallH)
+            # input()
 
 
             # Interpolate SideWallH data onto H2 mesh: SideWallH -> SideWallHM
-            SideWallHM= interp_scalarx(SideWallH, kh_mesh.x, kh2_mesh.x, do_warn=do_warn, debug=interp_debug)
+            SideWallHM = interp_scalarx(SideWallH, kh_mesh.x, kh2_mesh.x, do_warn=do_warn, debug=interp_debug)
+            # print("SideWallHM", SideWallHM)
+            # input()
+
             # Adjust SpH2 to achieve net zero hydrogen atom/molecule flux from wall
             # (See notes "Procedure to adjust the normalization of the molecular source at the 
             # limiters (SpH2) to attain a net zero atom/molecule flux from wall")
 
             # Compute SI, GammaH2Wall_minus, and GammaHWall_minus
             SI = integ_bl(kh2_mesh.x, SpH2, value_only=True)
-            SwallI = integ_bl(kh2_mesh.x,0.5*SideWallHM, value_only = True)
+            SwallI = integ_bl(kh2_mesh.x, 0.5*SideWallHM, value_only = True)
             GammaH2Wall_minus = AlbedoH2*GammaxH2BC
-            GammaHWall_minus=-GammaxH[0]
+            GammaHWall_minus = -GammaxH[0]
+            # print("SI", SI)
+            # print("SwallI", SwallI)
+            # print("GammaH2Wall_minus", GammaH2Wall_minus)
+            # print("GammaHWall_minus", GammaHWall_minus)
+            # input()
 
             # Compute Epsilon and alphaplus1RH0Dis
-            Epsilon = 2*GammaH2Wall_minus/(SI+SwallI)
-            alphaplus1RH0Dis = GammaHWall_minus/( (1-0.5*Epsilon)*(SI+SwallI)+GammaxH2BC)
+            Epsilon = 2*GammaH2Wall_minus / (SI+SwallI)
+            alphaplus1RH0Dis = GammaHWall_minus / ((1 - 0.5*Epsilon)*(SI + SwallI) + GammaxH2BC)
+            # print("Epsilon", Epsilon)
+            # print("alphaplus1RH0Dis", alphaplus1RH0Dis)
+            # input()
 
             # Compute flux error, EH, and dEHdSI
-            EH=2*GammaxH2[0]-GammaHWall_minus
-            dEHdSI=-Epsilon-alphaplus1RH0Dis*(1-0.5*Epsilon)
+            EH = 2*GammaxH2[0] - GammaHWall_minus
+            dEHdSI = -Epsilon - alphaplus1RH0Dis*(1 - 0.5*Epsilon)
+            # print("EH", EH)
+            # print("dEHdSI", dEHdSI)
+            # input()
 
             # Option: print normalized flux error
-            nEH=np.abs(EH)/np.max(np.abs( np.array([2*GammaxH2[0],GammaHWall_minus] )))
+            nEH = np.abs(EH) / np.max(np.abs(np.array([2*GammaxH2[0], GammaHWall_minus] )))
             if debrief and compute_errors:
                 print(prompt, 'Normalized Hydrogen Flux Error: ', sval(nEH))
             
             # Compute Adjustment 
-            Delta_SI=-EH/dEHdSI
-            SI=SI+Delta_SI
+            Delta_SI = -EH/dEHdSI
+            SI = SI + Delta_SI
+            # print("Delta_SI", GammaH2Wall_minus)
+            # print("SI", GammaHWall_minus)
+            # input()
 
             # Rescale SpH2 to have new integral value, SI
-            SpH2=SI*SpH2_hat
-            EH_hist=np.append(EH_hist,EH)
-            SI_hist=np.append(SI_hist,SI)
+            SpH2 = SI*SpH2_hat
+            EH_hist = np.append(EH_hist, EH)
+            SI_hist = np.append(SI_hist, SI)
+            # print("SpH2", SpH2)
+            # print("EH_hist", EH_hist)
+            # print("SI_hist", SI_hist)
+            # input()
 
             # Set total H2 source
-            SH2=SpH2+0.5*SideWallHM
+            SH2 = SpH2 + 0.5*SideWallHM
+            # print("SH2", SH2)
+            # input()
 
+            print("RxH_H2", KH2_Common.Output.RxH_H2)
+            print("RxH2_H", KH_Common.Output.RxH2_H)
+            input()
             if compute_errors:
-                _RxH_H2 = interp_scalarx(g.Kinetic_H2_Output_RxH_H2, kh2_mesh.x, kh_mesh.x, do_warn=do_warn, debug=interp_debug)
-                DRx=_RxH_H2+g.Kinetic_H_Output_RxH2_H
-                nDRx=np.max(np.abs(DRx))/np.max(np.abs(np.array([_RxH_H2,g.Kinetic_H_Output_RxH2_H])))
+                _RxH_H2 = interp_scalarx(KH2_Common.Output.RxH_H2, kh2_mesh.x, kh_mesh.x, do_warn=do_warn, debug=interp_debug)
+                DRx = _RxH_H2 + KH_Common.Output.RxH2_H
+                nDRx = np.max(np.abs(DRx)) / np.max(np.abs(np.array([_RxH_H2, KH_Common.Output.RxH2_H])))
                 if debrief:
                     print(prompt, 'Normalized H2 <-> H Momentum Transfer Error: ', sval(nDRx))
-            Delta_nH2 = np.abs(nH2-nH2s)
-            nDelta_nH2=np.max(Delta_nH2/np.max(nH2))
+            
+            Delta_nH2 = np.abs(nH2 - nH2s)
+            nDelta_nH2 = np.max(Delta_nH2/np.max(nH2))
     
     # fH_fH2_done code section  
 
