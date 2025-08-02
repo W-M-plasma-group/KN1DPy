@@ -1158,10 +1158,10 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
     do_fH2_iterate = True
     while do_fH2_iterate:
         do_fH2_iterate = False
-        fH2s = fH2
-        nH2s = nH2
-        THPs = THP
-        nHPs = nHP
+        fH2s = copy.copy(fH2)
+        nH2s = copy.copy(nH2)
+        THPs = copy.copy(THP)
+        nHPs = copy.copy(nHP)
 
         # Compute Alpha_CX for present THP and nHP, if it is needed and has not
         # already been computed with the present parameters

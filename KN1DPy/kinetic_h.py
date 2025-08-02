@@ -618,13 +618,11 @@ def kinetic_h(mesh : kinetic_mesh, mu, vxi, fHBC, GammaxHBC, fH2, fSH, nHP, THP,
     # input()
 
     #	if fH2 is zero, then turn off elastic H2 <-> H collisions
-
     H_H2_EL = _H_H2_EL
     if np.sum(fH2) <= 0:
         H_H2_EL = 0
 
     #	Set iteration scheme
-
     fH_iterate = 0
     if (H_H_EL != 0) or (H_P_EL != 0) or (H_H2_EL != 0): 
         fH_iterate = 1
@@ -634,7 +632,6 @@ def kinetic_h(mesh : kinetic_mesh, mu, vxi, fHBC, GammaxHBC, fH2, fSH, nHP, THP,
         fH_generations = 1
 
     #	Set flags to make use of previously computed local parameters 
-
     New_Grid = 1
     if vx_s is not None:
         test = 0 
@@ -968,7 +965,6 @@ def kinetic_h(mesh : kinetic_mesh, mu, vxi, fHBC, GammaxHBC, fH2, fSH, nHP, THP,
         # input()
         #	SIG_H_H is now vr' * sigma_H_H(v_v) * vr2_vx2 * v_v (intergated over theta) for all possible ([vr,vx],[vr',vx'])
 
-    #NOTE LAST CHECKED WITH IDL HERE
     if Do_SIG_H_H2 == 1:
         if debrief > 1:
             print(prompt+'Computing SIG_H_H2')
@@ -989,7 +985,9 @@ def kinetic_h(mesh : kinetic_mesh, mu, vxi, fHBC, GammaxHBC, fH2, fSH, nHP, THP,
         SIG_H_H2 = np.zeros((nvr*nvx,nvr*nvx))
         SIG_H_H2[:] = (Vr2pidVrdVx*vx_vx*(_Sig @ dTheta).reshape(Vr2pidVrdVx.shape, order='F')).reshape(SIG_H_H2.shape, order='F')
         # print("SIG_H_H2", SIG_H_H2.T)
+        # print(SIG_H_H2.shape)
         # input()
+
         #	SIG_H_H2 is now vr' *vx_vx * sigma_H_H2(v_v) * v_v 
         #		(intergated over theta) for all possible ([vr,vx],[vr',vx'])
 
@@ -1001,16 +999,16 @@ def kinetic_h(mesh : kinetic_mesh, mu, vxi, fHBC, GammaxHBC, fH2, fSH, nHP, THP,
         #		already been computed with the present input parameters
 
         #	Compute sigma_H_P * v_v at all possible relative velocities
-
         _Sig = np.zeros((nvr*nvx*nvr*nvx,ntheta))
-        _Sig[:] = (v_v*sigma_el_p_h(v_v2*(0.5*CONST.H_MASS*Vth2/CONST.Q))).reshape(_Sig.shape, order='F')
+        _Sig[:] = (v_v*sigma_el_p_h(v_v2*(0.5*CONST.H_MASS*Vth2/CONST.Q))).reshape(_Sig.shape, order='F') #NOTE Program slows significantly here
 
         #	Set SIG_H_P = vr' x vx_vx x Integral{v_v*sigma_H_P} over theta=0,
         #		2pi times differential velocity space element Vr'2pidVr'*dVx'
 
         SIG_H_P = np.zeros((nvr*nvx,nvr*nvx))
         SIG_H_P[:] = (Vr2pidVrdVx*vx_vx*(_Sig @ dTheta).reshape(Vr2pidVrdVx.shape, order='F')).reshape(SIG_H_P.shape, order='F')
-        # print("SIG_H_H2", SIG_H_P.T)
+        # print("SIG_H_P", SIG_H_P.T)
+        # print(SIG_H_P.shape)
         # input()
 
         #	SIG_H_P is now vr' *vx_vx * sigma_H_P(v_v) * v_v (intergated over theta) 
@@ -1024,7 +1022,6 @@ def kinetic_h(mesh : kinetic_mesh, mu, vxi, fHBC, GammaxHBC, fH2, fSH, nHP, THP,
             print(prompt+'Computing Alpha_CX')
 
         if Simple_CX:
-
             #	Option (B): Use maxwellian weighted <sigma v>
 
             #	Charge Exchange sink rate
@@ -1033,8 +1030,7 @@ def kinetic_h(mesh : kinetic_mesh, mu, vxi, fHBC, GammaxHBC, fH2, fSH, nHP, THP,
             for k in range(nx):
                 Alpha_CX[:,:,k] = Alpha_CX[:,:,k]*ni[k]
 
-        else:
-
+        else: #NOTE Not Tested Yet
             #	Option (A): Compute SigmaV_CX from sigma directly via SIG_CX
 
             Alpha_CX = np.zeros((nvr,nvx,nx))
@@ -1048,6 +1044,7 @@ def kinetic_h(mesh : kinetic_mesh, mu, vxi, fHBC, GammaxHBC, fH2, fSH, nHP, THP,
                     Alpha_CX_Test[:,:,k] = Alpha_CX_Test[:,:,k]*ni[k]
                 print('Compare alpha_cx and alpha_cx_test')
         # print("Alpha_CX", Alpha_CX.T)
+        # print(Alpha_CX.shape)
         # input()
             
 
@@ -1061,12 +1058,12 @@ def kinetic_h(mesh : kinetic_mesh, mu, vxi, fHBC, GammaxHBC, fH2, fSH, nHP, THP,
         for k in range(nx):
             Work[:] = fH2[:,:,k].reshape(Work.shape, order='F')
             Alpha_H_H2[:,:,k] = (SIG_H_H2 @ Work).reshape(Alpha_H_H2[:,:,k].shape, order='F')
-        # print("Alpha_H_H2", Alpha_H_H2.T)
+        # print("Alpha_H_H2", Alpha_H_H2[:,:,10].T)
+        # print(Alpha_H_H2.shape)
         # input()
 
     #	Compute Alpha_H_P for present Ti and ni 
     #		if it is needed and has not already been computed with the present parameters
-
     if Do_Alpha_H_P == 1:
         if debrief > 1:
             print(prompt+'Computing Alpha_H_P')
@@ -1075,26 +1072,23 @@ def kinetic_h(mesh : kinetic_mesh, mu, vxi, fHBC, GammaxHBC, fH2, fSH, nHP, THP,
             Work[:] = (fi_hat[:,:,k]*ni[k]).reshape(Work.shape, order='F')
             Alpha_H_P[:,:,k] = (SIG_H_P @ Work).reshape(Alpha_H_P[:,:,k].shape, order='F')
         # print("Alpha_H_P", Alpha_H_P.T)
+        # print(Alpha_H_P.shape)
         # input()
 
     #	Compute nH
-
     for k in range(nx):
         nH[k] = np.sum(Vr2pidVr*(fH[:,:,k] @ dVx))
     
-
     if New_H_Seed:
         MH_H_sum = np.zeros((nvr,nvx,nx))
         Delta_nHs = 1
 
     #	Compute Side-Wall collision rate
-
     gamma_wall = np.zeros((nvr,nvx,nx))
     for k in range(nx):
         if PipeDia[k] > 0:
             for j in range(nvx):
                 gamma_wall[:,j,k] = 2*vr / PipeDia[k]
-
     # print("nH", nH)
     # print("gamma_wall", gamma_wall.T)
     # input()
@@ -1106,8 +1100,8 @@ def kinetic_h(mesh : kinetic_mesh, mu, vxi, fHBC, GammaxHBC, fH2, fSH, nHP, THP,
 
     while do_fH_Iterate: #NOTE Alpha_CX done before here, but done inside iteration in kh2, does it change per iteration? Is this an error?
         do_fH_Iterate = False
-        fHs = fH
-        nHs = nH
+        fHs = copy.copy(fH)
+        nHs = copy.copy(nH)
 
         #	Compute Omega values if nH is non-zero
         ii = np.argwhere(nH <= 0)
@@ -1116,7 +1110,7 @@ def kinetic_h(mesh : kinetic_mesh, mu, vxi, fHBC, GammaxHBC, fH2, fSH, nHP, THP,
             #	Compute VxH
             if H_P_EL or H_H2_EL or H_H_EL:
                 for k in range(nx):
-                    VxH[k] = Vth*np.sum(Vr2pidVr*(fH[:,:,k] @ vx*dVx)) / nH[k]
+                    VxH[k] = Vth*np.sum(Vr2pidVr*(fH[:,:,k] @ (vx*dVx))) / nH[k]
                 # print("VxH", VxH)
                 # input()
 
@@ -1142,6 +1136,8 @@ def kinetic_h(mesh : kinetic_mesh, mu, vxi, fHBC, GammaxHBC, fH2, fSH, nHP, THP,
                     DeltaVx = (VxH[k] - vxH2[k]) / Vth
                     MagDeltaVx = np.maximum(abs(DeltaVx), DeltaVx_tol)
                     DeltaVx = sign(DeltaVx)*MagDeltaVx
+                    # print("Mag", fH[:,:,k].T)
+                    # input()
                     Omega_H_H2[k] = np.sum(Vr2pidVr*((Alpha_H_H2[:,:,k]*fH[:,:,k]) @ dVx)) / (nH[k]*DeltaVx)
                 Omega_H_H2 = np.maximum(Omega_H_H2, 0)
                 # print("Omega_H_H2", Omega_H_H2)
@@ -1156,18 +1152,18 @@ def kinetic_h(mesh : kinetic_mesh, mu, vxi, fHBC, GammaxHBC, fH2, fSH, nHP, THP,
                     for k in range(nx):
                         for i in range(nvr):
                             vr2_2vx_ran2[i,:] = vr[i]**2 - 2*((vx - (VxH[k]/Vth))**2)
-                        Wperp_paraH[k] = np.sum(Vr2pidVr*((vr2_2vx_ran2*fH[:,:,k]) @ dVx))/nH[k]
+                        Wperp_paraH[k] = np.sum(Vr2pidVr*((vr2_2vx_ran2*fH[:,:,k]) @ dVx)) / nH[k]
                 else:
                     for k in range(nx):
                         M_fH = MH_H_sum[:,:,k] - fH[:,:,k]
-                        Wperp_paraH[k] = -np.sum(Vr2pidVr*((vr2_2vx2_2D*M_fH) @ dVx))/nH[k]
+                        Wperp_paraH[k] = -np.sum(Vr2pidVr*((vr2_2vx2_2D*M_fH) @ dVx)) / nH[k]
                 for k in range(nx):
                     Work[:] = fH[:,:,k].reshape(Work.shape, order='F')
                     Alpha_H_H[:] = (SIG_H_H @ Work).reshape(Alpha_H_H.shape, order='F')
                     Wpp = Wperp_paraH[k]
                     MagWpp = np.maximum(np.abs(Wpp), Wpp_tol)
                     Wpp = sign(Wpp)*MagWpp
-                    Omega_H_H[k] = np.sum(Vr2pidVr*((Alpha_H_H*Work.reshape(Alpha_H_H.shape)) @ dVx)) / (nH[k]*Wpp)
+                    Omega_H_H[k] = np.sum(Vr2pidVr*((Alpha_H_H*Work.reshape(Alpha_H_H.shape, order='F')) @ dVx)) / (nH[k]*Wpp)
                 Omega_H_H = np.maximum(Omega_H_H, 0)
                 # print("Omega_H_H", Omega_H_H)
                 # input()
@@ -1175,7 +1171,7 @@ def kinetic_h(mesh : kinetic_mesh, mu, vxi, fHBC, GammaxHBC, fH2, fSH, nHP, THP,
         #	Total Elastic scattering frequency
 
         Omega_EL = Omega_H_P + Omega_H_H2 + Omega_H_H
-        # print("Omega_EL", Omega_EL)
+        # print("Omega_EL", Omega_EL.T)
         # input()
 
         #	Total collision frequency
@@ -1191,7 +1187,6 @@ def kinetic_h(mesh : kinetic_mesh, mu, vxi, fHBC, GammaxHBC, fH2, fSH, nHP, THP,
         # input()
 
         #	Test x grid spacing based on Eq.(27) in notes
-
         if debrief>1:
             print(prompt+'Testing x grid spacing')
         Max_dx = np.full(nx, 1e32)
@@ -1265,9 +1260,9 @@ def kinetic_h(mesh : kinetic_mesh, mu, vxi, fHBC, GammaxHBC, fH2, fSH, nHP, THP,
             print(prompt+'Computing atomic neutral generation#'+sval(igen))
         fHG[:,i_p,0] = fH[:,i_p,0]
         for k in range(nx-1):
-            fHG[:,i_p,k+1] = fHG[:,i_p,k]*Ak[:,i_p,k]+Fk[:,i_p,k]
+            fHG[:,i_p,k+1] = fHG[:,i_p,k]*Ak[:,i_p,k] + Fk[:,i_p,k]
         for k in range(nx-1,0,-1):
-            fHG[:,i_n,k-1] = fHG[:,i_n,k]*Ck[:,i_n,k]+Gk[:,i_n,k]
+            fHG[:,i_n,k-1] = fHG[:,i_n,k]*Ck[:,i_n,k] + Gk[:,i_n,k]
         # print("fHG", fHG.T)
         # input()
                 
@@ -1283,7 +1278,7 @@ def kinetic_h(mesh : kinetic_mesh, mu, vxi, fHBC, GammaxHBC, fH2, fSH, nHP, THP,
 
         #	Set total atomic neutral distribution function to first flight generation
 
-        fH = fHG
+        fH = copy.copy(fHG)
         nH = NHG[:,0]
 
 # next_generation #########################################################################################################################################################################
@@ -1319,7 +1314,7 @@ def kinetic_h(mesh : kinetic_mesh, mu, vxi, fHBC, GammaxHBC, fH2, fSH, nHP, THP,
                 #	Sum charge exchange source over all generations
                 Beta_CX_sum += Beta_CX
             # print("Beta_CX_sum", Beta_CX_sum.T)
-            # input()  
+            # input()
 
             #	Compute MH from previous generation
             MH_H = np.zeros((nvr,nvx,nx))
@@ -1330,10 +1325,17 @@ def kinetic_h(mesh : kinetic_mesh, mu, vxi, fHBC, GammaxHBC, fH2, fSH, nHP, THP,
 
                 #	Compute VxHG, THG
                 for k in range(0, nx):
-                    VxHG[k] = Vth*np.sum(Vr2pidVr*(fHG[:,:,k] @ (vx * dVx))) / NHG[k,igen-1]
+                    VxHG[k] = Vth*np.sum(Vr2pidVr*(fHG[:,:,k] @ (vx*dVx))) / NHG[k,igen-1]
                     for i in range(0, nvr):
                         vr2vx2_ran2[i,:] = vr[i]**2 + (vx - VxHG[k]/Vth)**2
-                    THG[k] = (2*mu*CONST.H_MASS)*Vth2*np.sum(Vr2pidVr*((vr2vx2_ran2*fHG[:,:,k]) @ dVx)) / (3*CONST.Q*NHG[k,igen-1])
+                    # if igen >= 2:
+                    #     print("vr2", vr2vx2_ran2)
+                    #     input()
+                    #     print("fHG", fHG[:,:,k].T)
+                    #     input()
+                    #     print("NHG", NHG[k,igen-1])
+                    #     input()
+                    THG[k] = (mu*CONST.H_MASS)*Vth2*np.sum(Vr2pidVr*((vr2vx2_ran2*fHG[:,:,k]) @ dVx)) / (3*CONST.Q*NHG[k,igen-1])
                 # print("THG", THG)
                 # input()
 
@@ -1397,14 +1399,17 @@ def kinetic_h(mesh : kinetic_mesh, mu, vxi, fHBC, GammaxHBC, fH2, fSH, nHP, THP,
             #	Compute next generation atomic distribution
 
             fHG[:] = 0
+            # print("FHG", fHG)
             for k in range(0, nx-1):
                 fHG[:,i_p,k+1] = Ak[:,i_p,k]*fHG[:,i_p,k] + Bk[:,i_p,k]*(Beta_CX[:,i_p,k+1] + OmegaM[:,i_p,k+1] + Beta_CX[:,i_p,k] + OmegaM[:,i_p,k])
             for k in range(nx-1, 0, -1):
                 fHG[:,i_n,k-1] = Ck[:,i_n,k]*fHG[:,i_n,k] + Dk[:,i_n,k]*(Beta_CX[:,i_n,k-1] + OmegaM[:,i_n,k-1] + Beta_CX[:,i_n,k] + OmegaM[:,i_n,k])
+                # print("FHG1", fHG[:,i_n,k-1].T)
+                # input()
             for k in range(0, nx):
                 NHG[k,igen] = np.sum(Vr2pidVr*(fHG[:,:,k] @ dVx))
-            # print("fH2G", fHG.T)
-            # print("NH2G", NHG.T)
+            # print("fHG", fHG.T)
+            # print("NHG", NHG.T)
             # input()
 
             # NOTE Add plotting once program is working
@@ -1418,6 +1423,8 @@ def kinetic_h(mesh : kinetic_mesh, mu, vxi, fHBC, GammaxHBC, fH2, fSH, nHP, THP,
             #	Compute 'generation error': Delta_nHG=max(NHG(*,igen)/max(nH))
             #		and decide if another generation should be computed
             Delta_nHG = max(NHG[:,igen]/max(nH))
+            # print("Delta_nHG", Delta_nHG)
+            # input()
             if (Delta_nHG < truncate) or (fH_iterate and (Delta_nHG < 0.003*Delta_nHs)):
                 #	If fH 'seed' is being iterated, then do another generation until the 'generation error'
                 #		is less than 0.003 times the 'seed error' or is less than TRUNCATE
@@ -1432,18 +1439,18 @@ def kinetic_h(mesh : kinetic_mesh, mu, vxi, fHBC, GammaxHBC, fH2, fSH, nHP, THP,
         #	Compute H density profile
         for k in range(0, nx):
             nH[k] = np.sum(Vr2pidVr*(fH[:,:,k] @ dVx))
-        # print("nH2", nH2)
+        # print("nH", nH)
         # input()
 
         if fH_iterate:
 
             #	Compute 'seed error': Delta_nHs=(|nHs-nH|)/max(nH) 
             #		If Delta_nHs is greater than 10*truncate then iterate fH
-            Delta_nHs = np.max(np.abs(nHs - nH2))/np.max(nH2)
+            Delta_nHs = np.max(np.abs(nHs - nH))/np.max(nH)
+            # print("Delta_nHs", Delta_nHs)
+            # input()
             if Delta_nHs > 10*truncate:
-                do_fH_iterate = True
-    # print("Delta_nHs", Delta_nHs)
-    # input() 
+                do_fH_Iterate = True 
 
     #	Update Beta_CX_sum using last generation
     if H_P_CX:

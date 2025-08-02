@@ -19,8 +19,8 @@ from .poly import poly
 def sigma_el_h_hh(E): 
     E = np.array([E])
     _E = E.astype(float) 
-    # ensures 3.03e0 < _E < 1.01e4
-    _E = np.maximum(_E, 3.03e0)     
+    # ensures 0.03e0 < _E < 1.01e4
+    _E = np.maximum(_E, 0.03e0)     
     _E = np.minimum(_E, 1.01e4)
     a = np.array([-3.495671e1, -4.062257e-1, -3.820531e-2, -9.404486e-3, 3.963723e-4]) # added missing parantheses - GG
     result = np.exp(poly(np.log(_E), a)) * 1e-4

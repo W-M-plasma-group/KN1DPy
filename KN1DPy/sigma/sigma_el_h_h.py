@@ -19,7 +19,7 @@ from .poly import poly
 def sigma_el_h_h(E, vis = False):
     E = np.array(E)
     _E = E.astype(float)
-    # ensures 3.03e0 < _E < 1.01e4
+    # ensures 0.03e0 < _E < 1.01e4
     _E = np.maximum(_E, 0.03e0)     
     _E = np.minimum(_E, 1.01e4)
     if vis: 
