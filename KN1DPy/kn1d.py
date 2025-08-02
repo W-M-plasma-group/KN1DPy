@@ -505,6 +505,17 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
             
             fH,nH,GammaxH,VxH,pH,TH,qxH,qxH_total,NetHSource,Sion,QH,RxH,QH_total,AlbedoH,SideWallH,error = kh_results
 
+            print("fH", fH.T)
+            print("nH", nH)
+            print("GammaxH2", GammaxH2)
+            print("TH", TH)
+            print("qxH_total", qxH_total)
+            print("NetHSource", NetHSource)
+            print("Sion", Sion)
+            print("QH_total", QH_total)
+            print("SideWallH", SideWallH)
+            input()
+
 
             # Interpolate SideWallH data onto H2 mesh: SideWallH -> SideWallHM
             SideWallHM= interp_scalarx(SideWallH, kh_mesh.x, kh2_mesh.x, do_warn=do_warn, debug=interp_debug)

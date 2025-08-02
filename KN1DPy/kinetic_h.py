@@ -367,8 +367,8 @@ def kinetic_h(mesh : kinetic_mesh, mu, vxi, fHBC, GammaxHBC, fH2, fSH, nHP, THP,
     #	Test input parameters
 
     if debug>0:
-        plot = plot>1
-        debrief = debrief>1
+        #plot = np.max(plot, 1)
+        debrief = np.maximum(debrief, 1)
         pause = 1
     JH = 1
     if No_Johnson_Hinnov:
@@ -1669,151 +1669,167 @@ def kinetic_h(mesh : kinetic_mesh, mu, vxi, fHBC, GammaxHBC, fH2, fSH, nHP, THP,
 
     #	Compute Mesh Errors
 
-    mesh_error = np.zeros((nx,nvx,nvr))
-    max_mesh_error = 0
-    min_mesh_error = 0
+    mesh_error = np.zeros((nvr,nvx,nx))
+    max_mesh_error = 0.0
+    min_mesh_error = 0.0
     mtest = 5
-    moment_error = np.zeros((mtest,nx))
+    moment_error = np.zeros((nx,mtest))
     max_moment_error = np.zeros(mtest)
     C_error = np.zeros(nx)
     CX_error = np.zeros(nx)
-    H_H_error = np.zeros((3,nx))
-    H_H2_error = np.zeros((3,nx))
-    H_P_error = np.zeros((3,nx))
+    H_H_error = np.zeros((nx, 3))
+    H_H2_error = np.zeros((nx, 3))
+    H_P_error = np.zeros((nx, 3))
     max_H_H_error = np.zeros(3)
     max_H_H2_error = np.zeros(3)
     max_H_P_error = np.zeros(3)
 
     if Compute_Errors:
-        if debrief>1:
+        if debrief > 1:
             print(prompt+'Computing Collision Operator, Mesh, and Moment Normalized Errors')
-        NetHSource2 = SourceH+SRecomb-Sion-WallH
+        NetHSource2 = SourceH + SRecomb - Sion - WallH
         for k in range(nx):
-            C_error[k] = abs(NetHSource[k]-NetHSource2[k])/max(abs(NetHSource[k]),abs(NetHSource2[k]))
+            C_error[k] = abs(NetHSource[k] - NetHSource2[k]) / max(abs(np.array([NetHSource[k], NetHSource2[k]])))
+        # print("C_error", C_error)
+        # input()
 
         #	Test conservation of particles for charge exchange operator
-
         if H_P_CX:
             for k in range(nx):
-                CX_A = np.sum(Vr2pidVr*np.matmul(dVx,Alpha_CX[k,:,:]*fH[k,:,:]))
-                CX_B = np.sum(Vr2pidVr*np.matmul(dVx,Beta_CX_sum[k,:,:]))
-                CX_error[k] = abs(CX_A-CX_B)/max(abs(CX_A),abs(CX_B))
+                CX_A = np.sum(Vr2pidVr*((Alpha_CX[:,:,k]*fH[:,:,k]) @ dVx))
+                CX_B = np.sum(Vr2pidVr*(Beta_CX_sum[:,:,k] @ dVx))
+                CX_error[k] = np.abs(CX_A - CX_B) / np.max(np.abs(np.array([CX_A, CX_B])))
+            # print("CX_error", CX_error)
+            # input()
 
         #	Test conservation of particles, x momentum, and total energy of elastic collision operators
-
-        for m in range(3):
-            for k in range(nx):
-                if m<2:
-                    TfH = np.sum(Vr2pidVr*np.matmul(dVx*vx**m),fH[k,:,:])
+        for m in range(0, 3):
+            for k in range(0, nx):
+                if m < 2:
+                    TfH = np.sum(Vr2pidVr*(fH[:,:,k] @ (dVx*(vx**m))))
                 else:
-                    TfH = np.sum(Vr2pidVr*np.matmul(dVx,vr2vx2[k,:,:]*fH[k,:,:]))
+                    TfH = np.sum(Vr2pidVr*((vr2vx2[:,:,k]*fH[:,:,k]) @ dVx))
+
                 if H_H_EL:
-                    if m<2:
-                        TH_H = np.sum(Vr2pidVr*np.matmul(dVx*vx**m,MH_H_sum[k,:,:]))
+                    if m < 2:
+                        TH_H = np.sum(Vr2pidVr*(MH_H_sum[:,:,k] @ (dVx*(vx**m))))
                     else:
-                        TH_H = np.sum(Vr2pidVr*np.matmul(dVx,vr2vx2[k,:,:]*MH_H_sum[k,:,:]))
-                    H_H_error[m,k] = abs(TfH-TH_H)/max(abs(TfH),abs(TH_H))
+                        TH_H = np.sum(Vr2pidVr*((vr2vx2[:,:,k]*MH_H_sum[:,:,k]) @ dVx))
+                    H_H_error[k,m] = np.abs(TfH - TH_H) / np.max(np.abs(np.array([TfH, TH_H])))
+                
                 if H_H2_EL:
-                    if m<2:
-                        TH_H2 = np.sum(Vr2pidVr*np.matmul(dVx*vx**m,MH_H2_sum[k,:,:]))
+                    if m < 2:
+                        TH_H2 = np.sum(Vr2pidVr*(MH_H2_sum[:,:,k] @ (dVx*(vx**m))))
                     else:
-                        TH_H2 = np.sum(Vr2pidVr*np.matmul(dVx,vr2vx2[k,:,:]*MH_H2_sum[k,:,:]))
-                    H_H2_error[m,k] = abs(TfH-TH_H2)/max(abs(TfH),abs(TH_H2))
+                        TH_H2 = np.sum(Vr2pidVr*((vr2vx2[:,:,k]*MH_H2_sum[:,:,k]) @ dVx))
+                    H_H2_error[k,m] = np.abs(TfH - TH_H2) / np.max(np.abs(np.array([TfH, TH_H2])))
+
                 if H_P_EL:
-                    if m<2:
-                        TH_P = np.sum(Vr2pidVr*np.matmul(dVx*vx**m,MH_P_sum[k,:,:]))
+                    if m < 2:
+                        TH_P = np.sum(Vr2pidVr*(MH_P_sum[:,:,k] @ (dVx*(vx**m))))
                     else:
-                        TH_P = np.sum(Vr2pidVr*np.matmul(dVx,vr2vx2[k,:,:]*MH_P_sum[k,:,:]))
-                    H_P_error[m,k] = abs(TfH-TH_P)/max(abs(TfH),abs(TH_P))
-            max_H_H_error[m] = max(H_H_error[m,:])
-            max_H_H2_error[m] = max(H_H2_error[m,:])
-            max_H_P_error[m] = max(H_P_error[m,:])
+                        TH_P = np.sum(Vr2pidVr*((vr2vx2[:,:,k]*MH_P_sum[:,:,k]) @ dVx))
+                    H_P_error[k,m] = np.abs(TfH - TH_P) / np.max(np.abs(np.array([TfH, TH_P])))
+
+            max_H_H_error[m] = np.max(H_H_error[:,m])
+            max_H_H2_error[m] = np.max(H_H2_error[:,m])
+            max_H_P_error[m] = np.max(H_P_error[:,m])
+            # print("max_H_H_error", max_H_H_error)
+            # print("max_H_H2_error", max_H_H2_error)
+            # print("max_H_P_error", max_H_P_error)
+            # input()
 
         if CI_Test:
-
             #	Compute Momentum transfer rate via full collision integrals for charge exchange and 
             #		mixed elastic scattering.
             #		Then compute error between this and actual momentum transfer 
             #		resulting from CX and BKG (elastic) models.
 
-            if H_P_CX:
-
-                #	P -> H charge exchange momentum transfer via full collision integral
-
-                print(prompt+'Computing P -> H Charge Exchange Momentum Transfer')
-                _Sig = np.zeros((ntheta,nvr*nvx*nvr*nvx))
-                _Sig[:] = v_v*sigma_cx_h0(v_v2*(.5*CONST.H_MASS*Vth2/CONST.Q))
+            if H_P_CX: # P -> H charge exchange momentum transfer via full collision integral
+                print(prompt, 'Computing P -> H2 Charge Exchange Momentum Transfer')
+                _Sig = np.zeros((nvr*nvx*nvr*nvx,ntheta))
+                _Sig[:] = (v_v*sigma_cx_h0(v_v2*(0.5*CONST.H_MASS*Vth2 / CONST.Q))).reshape(_Sig.shape, order='F')
                 SIG_VX_CX = np.zeros((nvr*nvx,nvr*nvx))
-                SIG_VX_CX[:] = Vr2pidVrdVx*vx_vx*np.matmul(dTheta,_Sig)
-                alpha_vx_cx = np.zeros((nx,nvx,nvr))
-                for k in range(nx):
-                    Work[:] = fi_hat[k,:,:]*ni[k]
-                    alpha_vx_cx[k,:,:] = np.matmul(Work,SIG_VX_CX)
-                for k in range(nx):
-                    RxCI_CX[k] = -(mu*CONST.H_MASS)*Vth2*np.sum(Vr2pidVr*np.matmul(dVx,alpha_vx_cx[k,:,:]*fH[k,:,:]))
-                norm = max(abs(RxHCX),abs(RxCI_CX))
-                for k in range(nx):
-                    CI_CX_error[k] = abs(RxHCX[k]-RxCI_CX[k])/norm
-                print(prompt+'Maximum normalized momentum transfer error in CX collision operator: '+sval(max(CI_CX_error)))
-            if H_P_EL:
+                SIG_VX_CX[:] = (Vr2pidVrdVx*vx_vx*((_Sig @ dTheta).reshape(vx_vx.shape, order='F'))).reshape(SIG_VX_CX.shape, order='F')
+                alpha_vx_cx = np.zeros((nvr,nvx,nx))
 
-                #	P -> H momentum transfer via full collision integral
+                for k in range(0, nx):
+                    Work[:] = (fi_hat[:,:,k]*ni[k]).reshape(Work.shape, order='F')
+                    alpha_vx_cx[:,:,k] = (SIG_VX_CX @ Work).reshape(alpha_vx_cx[:,:,k].shape, order='F')
 
-                for k in range(nx):
-                    RxCI_P_H[k] = -.5*(mu*CONST.H_MASS)*Vth2*np.sum(Vr2pidVr*np.matmul(dVx,Alpha_H_P[k,:,:]*fH[k,:,:]))
-                norm = max(abs(RxP_H),abs(RxCI_P_H))
-                for k in range(nx):
-                    CI_P_H_error[k] = abs(RxP_H[k]-RxCI_P_H[k])/norm
-                print(prompt+'Maximum normalized momentum transfer error in H2 -> H elastic BKG collision operator: '+sval(max(CI_H2_H_error)))
-            if H_H2_EL:
+                for k in range(0, nx):
+                    RxCI_CX[k] = -(mu*CONST.H_MASS)*Vth2*np.sum(Vr2pidVr*((alpha_vx_cx[:,:,k]*fH[:,:,k]) @ dVx))
 
-                #	H -> H perp/parallel energy transfer via full collision integral
+                norm = np.max(np.abs(np.array([RxHCX, RxCI_CX])))
+                for k in range(0, nx):
+                    CI_CX_error[k] = np.abs(RxHCX[k] - RxCI_CX[k]) / norm
 
-                for k in range(nx):
-                    RxCI_H2_H[k] = -2/3*(mu*CONST.H_MASS)*Vth2*np.sum(Vr2pidVr*np.matmul(dVx,Alpha_H_H2[k,:,:]*fH[k,:,:]))
-                norm = max(abs(RxH2_H),abs(RxCI_H2_H))
-                for k in range(nx):
-                    CI_H2_H_error[k] = abs(RxH2_H[k]-RxCI_H2_H[k])/norm
-                print(prompt+'Maximum normalized momentum transfer error in H2 -> H elastic BKG collision operator: '+sval(max(CI_H2_H_error)))
-            if H_H_EL:
+                print(prompt,'Maximum normalized momentum transfer error in CX collision operator: ', sval(np.max(CI_CX_error)))
 
-                #	H -> H perp/parallel energy transfer via full collision integral
+            if H_P_EL: # P -> H momentum transfer via full collision integral
+                for k in range(0, nx):
+                    RxCI_P_H[k] = -(1/2)*(mu*CONST.H_MASS)*Vth2*np.sum(Vr2pidVr*((Alpha_H_P[:,:,k]*fH[:,:,k]) @ dVx))
 
-                for k in range(nx):
-                    Work[:] = fH[k,:,:]
-                    Alpha_H_H[:] = np.matmul(Work,SIG_H_H)
-                    Epara_Perp_CI[k] = .5*(mu*CONST.H_MASS)*Vth3*np.sum(Vr2pidVr*np.matmul(dVx,Alpha_H_H*fH[k,:,:]))
-                norm = max(abs(Epara_PerpH_H),abs(Epara_Perp_CI))
-                for k in range(nx):
-                    CI_H_H_error[k] = abs(Epara_PerpH_H[k]-Epara_Perp_CI[k])/norm
-                print(prompt+'Maximum normalized perp/parallel energy transfer error in H -> H elastic BKG collision operator: '+sval(max(CI_H_H_error)))
+                norm = np.max(np.abs(np.array([RxP_H, RxCI_P_H])))
+                for k in range(0, nx):
+                    CI_P_H_error[k] = np.abs(RxP_H[k] - RxCI_P_H[k]) / norm 
+
+                print(prompt, 'Maximum normalized momentum transfer error in P -> H elastic BKG collision operator: ', sval(np.max(CI_P_H_error)))
+
+            if H_H2_EL: # H2 -> H momentum transfer via full collision integral
+                for k in range(0, nx):
+                    RxCI_H2_H[k] = -(2/3)*(mu*CONST.H_MASS)*Vth2*np.sum(Vr2pidVr*((Alpha_H_H2[:,:,k]*fH[:,:,k]) @ dVx))
+                
+                norm = np.max(np.abs(np.array([RxH2_H, RxCI_H2_H])))
+                for k in range(0, nx):
+                    CI_H2_H_error[k] = np.abs(RxH2_H[k] - RxCI_H2_H[k])/norm
+                
+                print(prompt, 'Maximum normalized momentum transfer error in H2 -> H elastic BKG collision operator: ', sval(np.max(CI_H2_H_error)))
+
+            if H_H_EL: # H -> H perp/parallel energy transfer via full collision integral
+                for k in range(0, nx):
+                    Work[:] = fH[:,:,k].reshape(Work.shape, order='F')
+                    Alpha_H_H[:] = (SIG_H_H @ Work).reshape(Alpha_H_H.shape, order='F')
+                    Epara_Perp_CI[k] = 0.5*(mu*CONST.H_MASS)*Vth3*np.sum(Vr2pidVr*((Alpha_H_H*fH[:,:,k]) @ dVx)) 
+                
+                norm = np.max(np.abs(np.array([Epara_PerpH_H, Epara_Perp_CI])))
+                for k in range(0, nx):
+                    CI_H_H_error[k] = np.abs(Epara_PerpH_H[k] - Epara_Perp_CI[k]) / norm 
+                
+                print(prompt, 'Maximum normalized perp/parallel energy transfer error in H -> H elastic BKG collision operator: ', sval(np.max(CI_H_H_error)))
 
         #	Mesh Point Error based on fH satisfying Boltzmann equation
 
-        T1 = T2 = T3 = T4 = T5 = np.zeros((nx,nvx,nvr))
-        for k in range(nx-1):
-            for j in range(nvx-1):
-                T1[k,j,:] = 2*vx[j]*(fH[k+1,j,:]-fH[k,j,:])/(x[k+1]-x[k])
-            T2[k,:,:] = Sn[k+1,:,:]+Sn[k,:,:]
-            T3[k,:,:] = Beta_CX_sum[k+1,:,:]+Beta_CX_sum[k,:,:]
-            T4[k,:,:] = alpha_c[k+1,:,:]*fH[k+1,:,:]+alpha_c[k,:,:]*fH[k,:,:]
-            T5[k,:,:] = Omega_H_P[k+1]*MH_P_sum[k+1,:,:]+Omega_H_H2[k+1]*MH_H2_sum[k+1,:,:]+Omega_H_H[k+1]*MH_H_sum[k+1,:,:]+Omega_H_P[k]*MH_P_sum[k,:,:]+Omega_H_H2[k]*MH_H2_sum[k,:,:]+Omega_H_H[k]*MH_H_sum[k,:,:]
-            mesh_error[k,:,:] = abs(T1[k,:,:]-T2[k,:,:]-T3[k,:,:]+T4[k,:,:]-T5[k,:,:])/max(abs(np.concatenate([T1[k,:,:],T2[k,:,:],T3[k,:,:],T4[k,:,:],T5[k,:,:]])))
-        ave_mesh_error = np.sum(mesh_error)/mesh_error.size
-        max_mesh_error = max(mesh_error)
-        min_mesh_error = min(mesh_error[0:-1,:,:])
+        T1 = np.zeros((nvr,nvx,nx))
+        T2 = np.zeros((nvr,nvx,nx))
+        T3 = np.zeros((nvr,nvx,nx))
+        T4 = np.zeros((nvr,nvx,nx))
+        T5 = np.zeros((nvr,nvx,nx))
+        for k in range(0, nx-1):
+            for j in range(0, nvx):
+                T1[:,j,k] = 2*vx[j]*(fH[:,j,k+1] - fH[:,j,k]) / (x[k+1] - x[k]) 
+            T2[:,:,k] = (Sn[:,:,k+1] + Sn[:,:,k])
+            T3[:,:,k] = Beta_CX_sum[:,:,k+1] + Beta_CX_sum[:,:,k]
+            T4[:,:,k] = alpha_c[:,:,k+1]*fH[:,:,k+1] + alpha_c[:,:,k]*fH[:,:,k]
+            T5[:,:,k] = Omega_H_P[k+1]*MH_P_sum[:,:,k+1] + Omega_H_H2[k+1]*MH_H2_sum[:,:,k+1] + Omega_H_H[k+1]*MH_H_sum[:,:,k+1] + \
+                    Omega_H_P[k]*MH_P_sum[:,:,k] + Omega_H_H2[k]*MH_H2_sum[:,:,k] + Omega_H_H[k]*MH_H_sum[:,:,k]
+            mesh_error[:,:,k] = np.abs(T1[:,:,k] - T2[:,:,k] - T3[:,:,k] + T4[:,:,k] - T5[:,:,k]) / \
+                                np.max(np.abs(np.array([T1[:,:,k], T2[:,:,k], T3[:,:,k], T4[:,:,k], T5[:,:,k]])))
+        ave_mesh_error = np.sum(mesh_error) / np.size(mesh_error)
+        max_mesh_error = np.max(mesh_error)
+        min_mesh_error = np.min(mesh_error[:,:,0:nx-1])
 
         #	Moment Error
-
-        for m in range(mtest):
-            for k in range(nx-1):
-                MT1 = np.sum(np.matmul(dVx*vx**m,T1[k,:,:]))
-                MT2 = np.sum(np.matmul(dVx*vx**m,T2[k,:,:]))
-                MT3 = np.sum(np.matmul(dVx*vx**m,T3[k,:,:]))
-                MT4 = np.sum(np.matmul(dVx*vx**m,T4[k,:,:]))
-                MT5 = np.sum(np.matmul(dVx*vx**m,T5[k,:,:]))
-                moment_error[m,k] = abs(MT1-MT2-MT3+MT4-MT5)/max(abs(np.array([MT1,MT2,MT3,MT4,MT5])))
-            max_moment_error[m] = max(moment_error[m,:])
+        for m in range(0, mtest):
+            for k in range(0, nx-1):
+                MT1 = np.sum(Vr2pidVr*(T1[:,:,k] @ (dVx*(vx**m))))
+                MT2 = np.sum(Vr2pidVr*(T2[:,:,k] @ (dVx*(vx**m))))
+                MT3 = np.sum(Vr2pidVr*(T3[:,:,k] @ (dVx*(vx**m))))
+                MT4 = np.sum(Vr2pidVr*(T4[:,:,k] @ (dVx*(vx**m))))
+                MT5 = np.sum(Vr2pidVr*(T5[:,:,k] @ (dVx*(vx**m))))
+                #NOTE This is correct for the original code, but is it correct mathematically?
+                moment_error[k,m] = np.abs(MT1 - MT2 - MT3 + MT4 - MT5) / np.max(np.abs(np.array([MT1, MT2, MT3, MT4, MT5])))
+            max_moment_error[m] = np.max(moment_error[:,m])
 
         #	Compute error in qxH_total
 
@@ -1825,23 +1841,21 @@ def kinetic_h(mesh : kinetic_mesh, mu, vxi, fHBC, GammaxHBC, fH2, fSH, nHP, THP,
 
         #			This should agree with qxH_total if the definitions of nH, pH, piH_xx,
         #			TH, VxH, and qxH are coded correctly.
-
         qxH_total2 = np.zeros(nx)
-        for k in range(nx):
-            qxH_total2[k] = .5*(mu*CONST.H_MASS)*Vth3*np.sum(np.matmul(vx*dVx,Vr2pidVr[k,:,:]*fH[k,:,:]))
-        qxH_total_error = abs(qxH_total-qxH_total2)/max(abs(np.concatenate([qxH_total,qxH_total2])))
+        for k in range(0, nx):
+            qxH_total2[k] = 0.5*(mu*CONST.H_MASS)*Vth3*np.sum(Vr2pidVr*((vr2vx2[:,:,k]*fH[:,:,k]) @ (vx*dVx)))
+        qxH_total_error = np.abs(qxH_total - qxH_total2) / np.max(np.abs(np.array([qxH_total, qxH_total2])))
 
         #	Compute error in QH_total
-
         Q1 = np.zeros(nx)
         Q2 = np.zeros(nx)
         QH_total_error = np.zeros(nx)
-        for k in range(nx-1):
-            Q1[k] = (qxH_total[k+1]-qxH_total[k])/(x[k+1]-x[k])
-            Q2[k] = .5*(QH_total[k+1]+QH_total[k])
-        QH_total_error = abs(Q1-Q2)/max(np.concatenate([abs(Q1),abs(Q2)]))
+        for k in range(0, nx-1):
+            Q1[k] = (qxH_total[k+1] - qxH_total[k]) / (x[k+1] - x[k])
+            Q2[k] = 0.5*(QH_total[k+1] + QH_total[k])
+        QH_total_error = np.abs(Q1 - Q2) / np.max(np.abs(np.array([Q1, Q2])))
 
-        if debrief>0:
+        if debrief > 0:
             print(prompt+'Maximum particle convervation error of total collision operator: '+sval(max(C_error)))
             print(prompt+'Maximum H_P_CX  particle convervation error: '+sval(max(CX_error)))
             print(prompt+'Maximum H_H_EL  particle conservation error: '+sval(max_H_H_error[0]))
@@ -1855,11 +1869,12 @@ def kinetic_h(mesh : kinetic_mesh, mu, vxi, fHBC, GammaxHBC, fH2, fSH, nHP, THP,
                 print(prompt+'Maximum fH vx^'+sval(m)+' moment error: '+sval(max_moment_error[m]))
             print(prompt+'Maximum qxH_total error = '+str(max(qxH_total_error)))
             print(prompt+'Maximum QH_total error = '+str(max(QH_total_error)))
-            if debug>0:
-                input()	#	replacement for press_return
+            if debug > 0:
+                input()
 
-    if plot>1:	#	May add later
-        pass
+    # NOTE Add plotting once program is working
+    # if plot>1:	#	May add later
+    #     pass
 
     #	lines 1665 - 1748 in original code are used for plotting
     #		This may be added later, but has been left out for now

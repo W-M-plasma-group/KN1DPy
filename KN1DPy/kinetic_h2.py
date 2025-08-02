@@ -2010,7 +2010,7 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
         T4 = np.zeros((nvr,nvx,nx))
         T5 = np.zeros((nvr,nvx,nx))
         T6 = np.zeros((nvr,nvx,nx))
-        for k in range(0, nx - 1):
+        for k in range(0, nx-1):
             for j in range(0, nvx):
                 T1[:,j,k] = 2*vx[j]*(fH2[:,j,k+1] - fH2[:,j,k])/(x[k+1] - x[k]) 
             T2[:,:,k] = fw_hat[:,:]*(SH2[k+1] + SH2[k])/Vth
@@ -2035,7 +2035,7 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
                 MT5 = np.sum(Vr2pidVr*(T5[:,:,k] @ (dVx*(vx**m))))
                 MT6 = np.sum(Vr2pidVr*(T6[:,:,k] @ (dVx*(vx**m))))
                 #NOTE This is correct for the original code, but is it correct mathematically?
-                moment_error[k,m] = np.abs(MT1 - MT2 - MT3 + MT4 - MT5 - MT6)/np.max(np.abs(np.array([MT1, MT2, MT3, MT4, MT5, MT6])))
+                moment_error[k,m] = np.abs(MT1 - MT2 - MT3 + MT4 - MT5 - MT6) / np.max(np.abs(np.array([MT1, MT2, MT3, MT4, MT5, MT6])))
             max_moment_error[m] = np.max(moment_error[:,m])
 
         # Compute error in qxH2_total
@@ -2057,7 +2057,7 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
         Q2 = np.zeros(nx)
         QH2_total_error = np.zeros(nx)
         for k in range(0, nx-1):
-            Q1[k] = (qxH2_total[k+1] - qxH2_total[k])/(x[k+1] - x[k])
+            Q1[k] = (qxH2_total[k+1] - qxH2_total[k]) / (x[k+1] - x[k])
             Q2[k] = 0.5*(QH2_total[k+1] + QH2_total[k])
         QH2_total_error = np.abs(Q1 - Q2)/np.max(np.abs(np.array([Q1, Q2])))
 
