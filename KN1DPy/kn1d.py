@@ -506,6 +506,7 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
             fH,nH,GammaxH,VxH,pH,TH,qxH,qxH_total,NetHSource,Sion,QH,RxH,QH_total,AlbedoH,SideWallH,error = kh_results
 
             print("fH", fH.T)
+            input()
             print("nH", nH)
             print("GammaxH2", GammaxH2)
             print("TH", TH)

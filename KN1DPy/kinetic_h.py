@@ -1584,10 +1584,10 @@ def kinetic_h(mesh : kinetic_mesh, mu, vxi, fHBC, GammaxHBC, fH2, fSH, nHP, THP,
     piH_zz = copy.copy(piH_yy)
     #	qxH
     for k in range(nx):
-        qxH[k] = 0.5*(mu*CONST.H_MASS)*Vth3*np.sum(Vr2pidVr*((vr2vx2_ran[:,:,k]*fH2[:,:,k]) @ (dVx*(vx - _VxH[k]))))
+        qxH[k] = 0.5*(mu*CONST.H_MASS)*Vth3*np.sum(Vr2pidVr*((vr2vx2_ran[:,:,k]*fH[:,:,k]) @ (dVx*(vx - _VxH[k]))))
     # print("piH2_xx", piH_xx)
     # print("piH2_yy", piH_yy)
-    # print("qxH2", qxH)
+    # print("qxH", qxH)
     # input()
 
     #	C = RHS of Boltzman equation for total fH
@@ -1629,7 +1629,7 @@ def kinetic_h(mesh : kinetic_mesh, mu, vxi, fHBC, GammaxHBC, fH2, fSH, nHP, THP,
         EW_H[k] = 0.5*(mu*CONST.H_MASS)*Vth2*np.sum(Vr2pidVr*((vr2vx2[:,:,k]*CW_H) @ dVx))
         
         if H_H_EL:
-            CH_H = Vth*Omega_H_H[k]*(MH_H_sum[:,:,k] - fH2[:,:,k])
+            CH_H = Vth*Omega_H_H[k]*(MH_H_sum[:,:,k] - fH[:,:,k])
             for i in range(0, nvr):
                 vr2_2vx_ran2[i,:] = vr[i]**2 - 2*((vx - _VxH[k])**2)
             Epara_PerpH_H[k] = -0.5*(mu*CONST.H_MASS)*Vth2*np.sum(Vr2pidVr*((vr2_2vx_ran2*CH_H) @ dVx))
@@ -1662,7 +1662,7 @@ def kinetic_h(mesh : kinetic_mesh, mu, vxi, fHBC, GammaxHBC, fH2, fSH, nHP, THP,
     # input()
 
     #	QH_total
-    QH_total = QH + RxH*VxH - 0.5*(mu*CONST.H_MASS)*NetHSource*VxH*VxH
+    QH_total = QH + RxH*VxH + 0.5*(mu*CONST.H_MASS)*NetHSource*VxH*VxH
     # print("QH_total", QH_total)
     # input()
 
