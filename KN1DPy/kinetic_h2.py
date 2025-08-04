@@ -752,26 +752,29 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
     New_Grid = 1
     if vx_s is not None:
         test = 0 
-        ii = np.argwhere(vx_s != vx).T ; test = test + np.size(ii)
-        ii = np.argwhere(vr_s != vr).T ; test = test + np.size(ii)
-        ii = np.argwhere(x_s != x).T ; test = test + np.size(ii)
-        ii = np.argwhere(Tnorm_s != Tnorm).T ; test = test + np.size(ii)
-        ii = np.argwhere(mu_s != mu).T ; test = test + np.size(ii)
+        ii = np.argwhere(vx_s != vx) ; test = test + np.size(ii)
+        ii = np.argwhere(vr_s != vr) ; test = test + np.size(ii)
+        ii = np.argwhere(x_s != x) ; test = test + np.size(ii)
+        ii = np.argwhere(Tnorm_s != Tnorm) ; test = test + np.size(ii)
+        ii = np.argwhere(mu_s != mu) ; test = test + np.size(ii)
         if test <= 0:
             New_Grid = 0
     New_Protons = 1
     if Ti_s is not None:
         test = 0 
-        ii = np.argwhere(Ti_s != Ti).T ; test = test + np.size(ii)
-        ii = np.argwhere(n_s != n).T ; test = test + np.size(ii)
-        ii = np.argwhere(vxi_s != vxi).T ; test = test + np.size(ii)
+        ii = np.argwhere(Ti_s != Ti)
+        test = test + np.size(ii)
+        ii = np.argwhere(n_s != n)
+        test = test + np.size(ii)
+        ii = np.argwhere(vxi_s != vxi)
+        test = test + np.size(ii)
         if test <= 0:
-            New_protons = 0
+            New_Protons = 0
     New_Electrons = 1
     if Te_s is not None:
         test = 0 
-        ii = np.argwhere(Te_s != Te).T ; test = test + np.size(ii)
-        ii = np.argwhere(n_s != n).T ; test = test + np.size(ii)
+        ii = np.argwhere(Te_s != Te) ; test = test + np.size(ii)
+        ii = np.argwhere(n_s != n) ; test = test + np.size(ii)
         if test <= 0:
             New_Electrons = 0
     New_fH = 1
@@ -792,8 +795,10 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
     New_HP_Seed=1
     if nHP_s is not None:
         test = 0
-        ii = np.argwhere(nHP_s != nHP) ; test = test + np.size(ii)
-        ii = np.argwhere(THP_s != THP) ; test = test + np.size(ii)
+        ii = np.argwhere(nHP_s != nHP)
+        test = test + np.size(ii)
+        ii = np.argwhere(THP_s != THP)
+        test = test + np.size(ii)
         if test <= 0:
             New_HP_Seed = 0
     New_ni_correct=1
@@ -1187,22 +1192,22 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
                     THP_mu[:,:,k] = THP[k]/mu
 
                 # Molecular Charge Exchange sink rate 
-                alpha_cx = sigmav_cx_hh(THP_mu, EH2_P)/Vth
+                Alpha_CX = sigmav_cx_hh(THP_mu, EH2_P)/Vth
                 for k in range(0, nx):
-                    alpha_cx[:,:,k] = alpha_cx[:,:,k]*nHP[k]
+                    Alpha_CX[:,:,k] = Alpha_CX[:,:,k]*nHP[k]
             else:
                 # Option (A): Compute SigmaV_CX from sigma directly via SIG_CX
-                alpha_cx = np.zeros((nvr, nvx, nx))
+                Alpha_CX = np.zeros((nvr, nvx, nx))
                 for k in range(0, nx):
                     Work[:] = (fHp_hat[:,:,k]*nHP[k]).reshape(Work.shape, order='F')
-                    alpha_cx[:,:,k] = SIG_CX @ Work
+                    Alpha_CX[:,:,k] = SIG_CX @ Work
                 if Do_Alpha_CX_Test:
                     alpha_cx_test = sigmav_cx_hh(THP_mu, EH2_P)/Vth
                     for k in range(0, nx):
                         alpha_cx_test[:,:,k] = alpha_cx_test[:,:,k]*nHP[k]
                         print('Compare alpha_cx and alpha_cx_test')
                         input()
-            # print("alpha_cx", alpha_cx.T)
+            # print("Alpha_CX", Alpha_CX.T)
             # input()
 
         # Compute Alpha_H2_P for present Ti and ni (optionally correcting for nHP), 
@@ -1295,7 +1300,7 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
         alpha_c = np.zeros((nvr,nvx,nx))
         if H2_HP_CX:
             for k in range(0, nx):
-                alpha_c[:,:,k] = alpha_cx[:,:,k]+Alpha_Loss[k]+Omega_EL[k]+gamma_wall[:,:,k]
+                alpha_c[:,:,k] = Alpha_CX[:,:,k]+Alpha_Loss[k]+Omega_EL[k]+gamma_wall[:,:,k]
         else: 
             for k in range(0, nx):
                 alpha_c[:,:,k] = Alpha_Loss[k]+Omega_EL[k]+gamma_wall[:,:,k]
@@ -1408,7 +1413,7 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
         fH2 = copy.copy(fH2G)
         nH2 = NH2G[:,0]
         # print("fH2", fH2.T)
-        # print("nH2", nH2)
+        # print("nH2", nH2.T)
         # input()
         
         #fH2_done = 0 # I am not sure if this is correct because fH2_done is a function, but I'm not sure what the intention of the original IDL code was so I don't know how to change it - GG
@@ -1444,7 +1449,7 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
                     # Option (B): Compute charge exchange source with assumption that CX source neutrals have 
                     # molecular ion distribution function
                     for k in range(0, nx): 
-                        Beta_CX[:,:,k] = fHp_hat[:,:,k]*np.sum(Vr2pidVr*((alpha_cx[:,:,k]*fH2G[:,:,k]) @ dVx))
+                        Beta_CX[:,:,k] = fHp_hat[:,:,k]*np.sum(Vr2pidVr*((Alpha_CX[:,:,k]*fH2G[:,:,k]) @ dVx))
                 else: 
                     # Option (A): Compute charge exchange source using fH2 and vr x sigma x v_v at each velocity mesh point
                     for k in range(0, nx):
@@ -1688,10 +1693,10 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
             # Option (B): Compute charge exchange source with assumption that CX source neutrals have
             # molecular ion distribution function
             for k in range(0, nx):
-                Beta_CX[:,:,k] = fHp_hat[:,:,k]*np.sum(Vr2pidVr*(alpha_cx[:,:,k]*fH2G[:,:,k] @ dVx))
-                # print((alpha_cx[:,:,k]*fH2G[:,:,k] @ dVx).T)
+                Beta_CX[:,:,k] = fHp_hat[:,:,k]*np.sum(Vr2pidVr*(Alpha_CX[:,:,k]*fH2G[:,:,k] @ dVx))
+                # print(fH2G[:,:,k].T)
                 # input()
-        else:
+        else: #NOTE Not Tested
             # Option (A): Compute charge exchange source using fH2 and vr x sigma x v_v at each velocity mesh point
             for k in range(0, nx):
                 Work[:] = fH2G[:,:,k]
@@ -1807,7 +1812,7 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
             EP_H2[k] = 0.5*(2*mu*CONST.H_MASS)*Vth2*np.sum(Vr2pidVr*((vr2vx2[:,:,k]*CH2_P) @ dVx))
 
         if H2_HP_CX:
-            CH2_HP_CX = Vth*(Beta_CX_sum[:,:,k] - alpha_cx[:,:,k]*fH2[:,:,k])
+            CH2_HP_CX = Vth*(Beta_CX_sum[:,:,k] - Alpha_CX[:,:,k]*fH2[:,:,k])
             RxH2CX[k] = (2*mu*CONST.H_MASS)*Vth*np.sum(Vr2pidVr*(CH2_HP_CX @ (dVx*(vx - _VxH2[k]))))
             EH2CX[k] = 0.5*(2*mu*CONST.H_MASS)*Vth2*np.sum(Vr2pidVr*((vr2vx2[:,:,k]*CH2_HP_CX) @ dVx))
 
@@ -1889,7 +1894,7 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
         # Test conservation of particles for charge exchange operator
         if H2_HP_CX:
             for k in range(0, nx):
-                CX_A = np.sum(Vr2pidVr*((alpha_cx[:,:,k]*fH2[:,:,k]) @ dVx))
+                CX_A = np.sum(Vr2pidVr*((Alpha_CX[:,:,k]*fH2[:,:,k]) @ dVx))
                 CX_B = np.sum(Vr2pidVr*(Beta_CX_sum[:,:,k] @ dVx))
                 CX_error[k] = np.abs(CX_A - CX_B)/np.max(np.abs(np.array([CX_A, CX_B])))
             # print("CX_error", CX_error)
@@ -2700,7 +2705,7 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
     KH2.Input.SH2_s = SH2_s
     KH2.Input.fH2_s = fH2_s
 
-    KH2.Input.nHP_s = nHP_s
+    KH2.Input.nHP_s = nHP
     KH2.Input.THP_s = THP_s
     KH2.Input.Simple_CX_s = Simple_CX_s
     KH2.Input.Sawada_s = Sawada_s

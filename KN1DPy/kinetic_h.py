@@ -649,7 +649,7 @@ def kinetic_h(mesh : kinetic_mesh, mu, vxi, fHBC, GammaxHBC, fH2, fSH, nHP, THP,
         ii = np.argwhere(n_s != n).T ; test = test + np.size(ii)
         ii = np.argwhere(vxi_s != vxi).T ; test = test + np.size(ii)
         if test <= 0:
-            New_protons = 0
+            New_Protons = 0
     New_Molecular_Ions = 1
     if nHP_s is not None:
         test = 0

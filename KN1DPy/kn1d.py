@@ -449,7 +449,7 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
             # print("shape", fH2.shape)
             # input()
             kh2_results = kinetic_h2(
-                    kh2_mesh, mu, vxiM, fh2BC, GammaxH2BC, NuLoss, fHM, SH2, fH2, nH2, THP, KH2_Common,\
+                    kh2_mesh, mu, vxiM, fh2BC, GammaxH2BC, NuLoss, fHM, SH2, fH2, nHP, THP, KH2_Common,\
                     truncate=truncate, Simple_CX=Simple_CX, Max_Gen=max_gen, Compute_H_Source=Compute_H_Source,\
                     H2_H2_EL=H2_H2_EL,H2_P_EL=H2_P_EL,H2_H_EL=H2_H_EL,H2_HP_CX=H2_HP_CX, ni_correct=ni_correct,\
                     Compute_Errors=H2compute_errors, plot=H2plot,debug=H2debug,debrief=H2debrief,pause=H2pause)
