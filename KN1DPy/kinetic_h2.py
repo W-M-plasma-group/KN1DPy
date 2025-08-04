@@ -1057,12 +1057,12 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
 
         # Compute sigma_H2_H * v_v at all possible relative velocities
         _Sig = np.zeros((nvr*nvx*nvr*nvx, ntheta))
-        _Sig[:] = (v_v*sigma_el_h_hh(v_v2*(0.5*CONST.H_MASS*Vth2/CONST.Q))).reshape(_Sig.shape)
+        _Sig[:] = (v_v*sigma_el_h_hh(v_v2*(0.5*CONST.H_MASS*Vth2/CONST.Q))).reshape(_Sig.shape, order='F')
 
         # Note: using H energy here for cross-section tabulated as H -> H2
         # Set SIG_H2_H = vr' x vx_vx x Integral{v_v * sigma_H2_H} over theta = 0, 2pi times differential velocity space element Vr'2pidVr'*dVx
         SIG_H2_H = np.zeros((nvr*nvx, nvr*nvx))
-        SIG_H2_H[:] = (Vr2pidVrdVx*vx_vx*((_Sig @ dTheta).reshape(vx_vx.shape))).reshape(SIG_H2_H.shape)
+        SIG_H2_H[:] = (Vr2pidVrdVx*vx_vx*((_Sig @ dTheta).reshape(vx_vx.shape, order='F'))).reshape(SIG_H2_H.shape, order='F')
 
         # SIG_H2_H is now vr' * vx_vx * sigma_H2_H(v_V) ( integrated over theta ) for all possible ([vr, vx], [vr', vx'])
 
@@ -1132,7 +1132,7 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
 
         Alpha_H2_H = np.zeros((nvr, nvx, nx))
         for k in range(0, nx):
-            Work[:] = fH[:,:,k].reshape(Work.shape)
+            Work[:] = fH[:,:,k].reshape(Work.shape, order='F')
             Alpha_H2_H[:,:,k] = (SIG_H2_H @ Work).reshape(Alpha_H2_H[:,:,k].shape, order='F')
 
         # print("Alpha_H2_H", Alpha_H2_H)
@@ -1804,6 +1804,10 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
         if H2_H_EL:
             CH2_H = Vth*Omega_H2_H[k]*(MH2_H_sum[:,:,k] - fH2[:,:,k])
             RxH_H2[k] = (2*mu*CONST.H_MASS)*Vth*np.sum(Vr2pidVr*(CH2_H @ (dVx*(vx - _VxH2[k]))))
+            print("rxH_H2", Vth)
+            print("b", Omega_H2_H[k])
+            # print("b", (MH2_H_sum[:,:,k] - fH2[:,:,k]).T)
+            input()
             EH_H2[k] = 0.5*(2*mu*CONST.H_MASS)*Vth2*np.sum(Vr2pidVr*((vr2vx2[:,:,k]*CH2_H) @ dVx))
 
         if H2_P_EL:
@@ -1830,9 +1834,9 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
     # print("Sloss", Sloss)
     # print("WallH2", WallH2)
     # input()
-    # print("RxH_H2", RxH_H2)
+    print("RxH_H2", RxH_H2)
     # print("EH_H2", EH_H2)
-    # input()
+    input()
     # print("RxP_H2", RxP_H2)
     # print("EP_H2", EP_H2)
     # input()
