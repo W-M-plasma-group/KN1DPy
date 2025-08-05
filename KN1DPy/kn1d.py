@@ -578,9 +578,9 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
             # print("SH2", SH2)
             # input()
 
-            print("RxH_H2", KH2_Common.Output.RxH_H2)
-            print("RxH2_H", KH_Common.Output.RxH2_H)
-            input()
+            # print("RxH_H2", KH2_Common.Output.RxH_H2)
+            # print("RxH2_H", KH_Common.Output.RxH2_H)
+            # input()
             if compute_errors:
                 _RxH_H2 = interp_scalarx(KH2_Common.Output.RxH_H2, kh2_mesh.x, kh_mesh.x, do_warn=do_warn, debug=interp_debug)
                 DRx = _RxH_H2 + KH_Common.Output.RxH2_H
@@ -621,8 +621,8 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
 
     
     # Compute Lyman and Balmer
-    Lyman = lyman_alpha(kh_mesh.ne, kh_mesh.Te, nH, jh_coefficients, no_null = 1)
-    Balmer = balmer_alpha(kh_mesh.ne, kh_mesh.Te, nH, jh_coefficients, no_null = 1)
+    Lyman = lyman_alpha(kh_mesh.ne, kh_mesh.Te, nH, jh_coefficients, no_null = 1) #NOTE Not Working Yet
+    Balmer = balmer_alpha(kh_mesh.ne, kh_mesh.Te, nH, jh_coefficients, no_null = 1) #NOTE Not Working Yet
 
     #   Update KN1D_internal common block - GG 2/15
     #   NOTE What is the purpose of this, can it be removed?

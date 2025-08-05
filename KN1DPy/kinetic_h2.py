@@ -1520,7 +1520,7 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
                     if debrief > 1:
                         print(prompt, 'Computing MH2_H')
                     #Compute MH2_H
-                    vx_shift = (2 * VxH2G * VxH)/3
+                    vx_shift = (2*VxH2G + VxH)/3
                     Tmaxwell = TH2G + (4/9)*(TH - TH2G + ((mu*CONST.H_MASS*(VxH - VxH2G)**2)/(6*CONST.Q)))
                     mol = 2
                     Maxwell = create_shifted_maxwellian_include(vr,vx,Tnorm,vx_shift,Tmaxwell,shifted_Maxwellian_debug,mu,mol,
@@ -1530,7 +1530,7 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
                     # input()
 
                     for k in range(0, nx):
-                        MH2_H[:,:,k] = Maxwell[:,:,k] * NH2G[k,igen-1]
+                        MH2_H[:,:,k] = Maxwell[:,:,k]*NH2G[k,igen-1]
                         OmegaM[:,:,k] = OmegaM[:,:,k] + Omega_H2_H[k]*MH2_H[:,:,k]
                     MH2_H_sum = MH2_H_sum + MH2_H
                     # print("MH2_H_sum", MH2_H_sum.T)
@@ -1804,10 +1804,9 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
         if H2_H_EL:
             CH2_H = Vth*Omega_H2_H[k]*(MH2_H_sum[:,:,k] - fH2[:,:,k])
             RxH_H2[k] = (2*mu*CONST.H_MASS)*Vth*np.sum(Vr2pidVr*(CH2_H @ (dVx*(vx - _VxH2[k]))))
-            print("rxH_H2", Vth)
-            print("b", Omega_H2_H[k])
-            # print("b", (MH2_H_sum[:,:,k] - fH2[:,:,k]).T)
-            input()
+            # print("rxH_H2", MH2_H_sum[:,:,k].T)
+            # print("b", fH2[:,:,k].T)
+            # input()
             EH_H2[k] = 0.5*(2*mu*CONST.H_MASS)*Vth2*np.sum(Vr2pidVr*((vr2vx2[:,:,k]*CH2_H) @ dVx))
 
         if H2_P_EL:
@@ -1834,9 +1833,9 @@ def kinetic_h2(mesh : kinetic_mesh, mu, vxi, fH2BC, GammaxH2BC, NuLoss, fH, SH2,
     # print("Sloss", Sloss)
     # print("WallH2", WallH2)
     # input()
-    print("RxH_H2", RxH_H2)
+    # print("RxH_H2", RxH_H2)
     # print("EH_H2", EH_H2)
-    input()
+    # input()
     # print("RxP_H2", RxP_H2)
     # print("EP_H2", EP_H2)
     # input()
