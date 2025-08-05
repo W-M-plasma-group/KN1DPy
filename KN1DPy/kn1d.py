@@ -632,7 +632,13 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
     kn1d_internal.nHP_s = nHP
     kn1d_internal.THP_s = THP
 
-    # The rest of the code for KN1D is for saving files and plotting which we can implement at a later date 
+    # Store Outputs
+    output_file = 'Results/output'
+    print(prompt, "Saving files to", output_file+".npz")
+    np.savez(output_file, xH2=kh2_mesh.x, nH2=nH2, GammaxH2=GammaxH2, TH2=TH2, qxH2_total=qxH2_total, nHP=nHP, THP=THP, SH=SH, SP=SP,
+             xH=kh_mesh.x, nH=nH, GammaxH=GammaxH, TH=TH, qxH_total=qxH_total, NetHSource=NetHSource, Sion=Sion, QH_total=QH_total, SideWallH=SideWallH, Lyman=Lyman, Balmer=Balmer)
+    
+    # NOTE Add plotting later
 
     # return kh2_mesh.x, nH2, GammaxH2, TH2, qxH2_total, nHP, THP, SH, SP, \
     #     kh_mesh.x, nH, GammaxH, TH, qxH_total, NetHSource, Sion, QH_total, SideWallH, Lyman, Balmer
