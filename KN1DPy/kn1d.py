@@ -438,7 +438,6 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
             do_warn = 5e-3
             fHM = interp_fvrvxx(fH, kh_mesh, kh2_mesh, fvrvxx_internal, do_warn=do_warn, debug=interp_debug) 
             # print("fHM", fHM.shape)
-            # input()
 
             # Compute fH2 using Kinetic_H2
             ni_correct = 1

@@ -3,7 +3,7 @@ from numpy.typing import NDArray
 from scipy import interpolate
 
 from .sigma.sigmav_ion_h0 import sigmav_ion_h0
-from .sigma.sigma_cx_h0 import sigma_cx_h0
+from .sigma.sigmav_cx_h0 import sigmav_cx_h0
 from .sigma.sigmav_ion_hh import sigmav_ion_hh
 from .sigma.sigmav_h1s_h1s_hh import sigmav_h1s_h1s_hh
 from .sigma.sigmav_h1s_h2s_hh import sigmav_h1s_h2s_hh
@@ -90,9 +90,9 @@ class kinetic_mesh:
         xminH = x[0]
 
         # Interpolate Ti and Te onto a fine mesh between xminH and xmaxH 
-        xfine = xminH + (xmaxH - xminH) * np.arange( 1001 )/1000
+        xfine = xminH + (xmaxH - xminH)*np.arange(1001)/1000
 
-        interpfunc = interpolate.interp1d(x, Ti, kind = 'linear')
+        interpfunc = interpolate.interp1d(x, Ti, kind='linear', fill_value="extrapolate")
         Tifine = interpfunc(xfine)
 
         interpfunc = interpolate.interp1d(x, Te, kind = 'linear')
@@ -108,7 +108,6 @@ class kinetic_mesh:
         vx, vr, Tnorm, ixE0, ixE0 = create_vr_vx_mesh(nv, Tifine, E0 = E0) # fixed error from not assigning all outputs - GG
 
         vth = np.sqrt( (2 * CONST.Q * Tnorm) / (mu * CONST.H_MASS))
-        #print("VTH", vth)
         # Estimate interaction rate with side walls
         nxfine = np.size(xfine)
         gamma_wall = np.zeros(nxfine, float)
@@ -131,7 +130,7 @@ class kinetic_mesh:
                 ioniz_rate = jhs_coef(nfine, Tefine, jh_coeffs, no_null = True) # deleted unecessary variable - GG
             else:
                 ioniz_rate = sigmav_ion_h0(Tefine) #NOTE Not tested yet
-            RR = nfine * ioniz_rate + nfine * sigma_cx_h0(Tifine, np.array([minE0] * nxfine)) + gamma_wall # replaced size(nxfine) with nxfine
+            RR = nfine*ioniz_rate + nfine*sigmav_cx_h0(Tifine, np.full(xfine.shape, minE0)) + gamma_wall
 
         elif mesh_type == 'h2':
             RR=nfine*sigmav_ion_hh(Tefine)+nfine*sigmav_h1s_h1s_hh(Tefine)+nfine*sigmav_h1s_h2s_hh(Tefine)+0.1*nfine*sigmav_cx_hh(Tifine,Tifine) + gamma_wall
@@ -143,11 +142,12 @@ class kinetic_mesh:
         # Construct xH Axis 
         xpt = xmaxH
         xH = np.array([xpt])
+        
         while xpt > xminH:
             xH = np.concatenate([np.array([xpt]), xH]) # put xpt in array to fix concatenation error
-            interpfunc = interpolate.interp1d(xfine, dx_max)
+            interpfunc = interpolate.interp1d(xfine, dx_max, kind='linear', fill_value="extrapolate")
             dxpt1 = interpfunc(xpt)
-            dxpt2 = dxpt1
+            dxpt2 = np.copy(dxpt1)
             xpt_test = xpt - dxpt1
             if xpt_test > xminH:
                 interpfunc = interpolate.interp1d(xfine, dx_max)
@@ -168,8 +168,9 @@ class kinetic_mesh:
         # if xH[1] - xH[0] > 0.5 * big_dx:
         #   xH = np.concatenate(xH[0], xH[2:])
 
-        interpfunc = interpolate.interp1d(xfine, Tifine)
-        TiH = interpfunc(xH)
+        # interpfunc = interpolate.interp1d(xfine, Tifine, kind='linear', fill_value="extrapolate")
+        # TiH = interpfunc(xH)
+        TiH = np.interp(xH, xfine, Tifine)
         interpfunc = interpolate.interp1d(xfine, Tefine)
         TeH = interpfunc(xH)
         interpfunc = interpolate.interp1d(xfine, nfine)
@@ -177,7 +178,7 @@ class kinetic_mesh:
         interpfunc = interpolate.interp1d(xfine, PipeDiafine)
         PipeDiaH = interpfunc(xH)
 
-        vx, vr, Tnorm, ixE0, irE0 = create_vr_vx_mesh(nv, TiH, E0 = E0) # fixed error from not assigning all outputs - GG
+        vx, vr, Tnorm, ixE0, irE0 = create_vr_vx_mesh(nv, TiH, E0 = E0)
 
         self.x : NDArray = xH
         self.Ti : NDArray = TiH

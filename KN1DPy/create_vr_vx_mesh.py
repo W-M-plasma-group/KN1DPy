@@ -13,10 +13,10 @@ from .reverse import * # fixed import
 #
 # Gwendolyn Galleher 
 
-def create_vr_vx_mesh(nv : int, Ti : NDArray, E0 : NDArray = np.array([0.0]), Tmax : float = 0.0
+def create_vr_vx_mesh(nv : int, Ti : NDArray, E0 : NDArray = np.array([0.0]), Tmax : float = 0.0, debug_flag = False
                       ) -> tuple[NDArray, NDArray, float, NDArray, NDArray] : # removed unused input parameters
     _Ti = np.array(Ti) 
-    _Ti = np.concatenate([_Ti, E0[E0>0]]) 
+    _Ti = np.concatenate([_Ti, E0[E0>0]])
     if Tmax > 0:
         ii = np.where(_Ti < Tmax)
         _Ti = _Ti[ii]
