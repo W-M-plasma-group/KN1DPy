@@ -14,15 +14,15 @@ def generate_jh_coeffs(jh_coeffs : JH_Coef, create = 0) -> None:
 
     if jh_coeffs.LogR_BSCoef is None:
         # this is where old data is restored 
-        s=np.load('jh_bscoef.npz')
+        s = np.load('jh_bscoef.npz')
         # update global vars JH_coef common block
-        jh_coeffs.DKnot=s['DKnot']
-        jh_coeffs.TKnot=s['TKnot']
-        jh_coeffs.order=s['order']
-        jh_coeffs.LogR_BSCoef=s['LogR_BSCoef']
-        jh_coeffs.LogS_BSCoef=s['LogS_BSCoef']
-        jh_coeffs.LogAlpha_BSCoef=s['LogAlpha_BSCoef']
-        jh_coeffs.A_Lyman=s['A_Lyman']
-        jh_coeffs.A_Balmer=s['A_Balmer']
+        jh_coeffs.DKnot = s['DKnot']
+        jh_coeffs.TKnot = s['TKnot']
+        jh_coeffs.order = s['order']
+        jh_coeffs.LogR_BSCoef = s['LogR_BSCoef']
+        jh_coeffs.LogS_BSCoef = s['LogS_BSCoef']
+        jh_coeffs.LogAlpha_BSCoef = s['LogAlpha_BSCoef']
+        jh_coeffs.A_Lyman = s['A_Lyman']
+        jh_coeffs.A_Balmer = s['A_Balmer']
         
     return

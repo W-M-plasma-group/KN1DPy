@@ -2,7 +2,6 @@ from KN1DPy.kn1d import kn1d
 import scipy.io as sio
 from scipy.io import readsav
 import numpy as np
-import matplotlib.pyplot as plt
 import sys
 
 import time
@@ -12,9 +11,9 @@ standard_out = sys.stdout
 
 ##Input
 
-#data_file = './sav_files/kn1d_test_inputs.sav'
+data_file = './sav_files/kn1d_test_inputs.sav'
 # data_file = '../kn1d/savfiles/kn1d_test_inputs.sav'
-data_file = './sav_files/1090904018_950to1050.sav'
+# data_file = './sav_files/1090904018_950to1050.sav'
 print("Loading file: "  + data_file)
 sav_data = readsav(data_file)
 
@@ -41,39 +40,3 @@ for key, value in results.items():
 
 output.close()
 sys.stdout = standard_out
-
-#Create Results Plots
-plt.plot(np.arange(0, len(results["xH2"])), results["xH2"])
-plt.title("xH2")
-plt.savefig('Results/xH2.png')
-plt.clf()
-
-plt.plot(np.arange(0, len(results["nH2"])), results["nH2"])
-plt.title("nH2")
-plt.savefig('Results/nH2.png')
-plt.clf()
-
-plt.plot(np.arange(0, len(results["xH"])), results["xH"])
-plt.title("xH")
-plt.savefig('Results/xH.png')
-plt.clf()
-
-plt.plot(np.arange(0, len(results["nH"])), results["nH"])
-plt.title("nH")
-plt.savefig('Results/nH.png')
-plt.clf()
-
-plt.plot(results["nH2"], results["xH2"])
-plt.title("nH2 vs xH2")
-plt.savefig('Results/nH2_xH2.png')
-plt.clf()
-
-plt.plot(results["nH"], results["xH"])
-plt.title("nH vs xH")
-plt.savefig('Results/nH_xH.png')
-plt.clf()
-
-plt.plot(results["xH"], results["NetHSource"])
-plt.title("Net H Source")
-plt.savefig('Results/NetHSource.png')
-plt.clf()

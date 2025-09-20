@@ -849,10 +849,11 @@ def kinetic_h(mesh : kinetic_mesh, mu, vxi, fHBC, GammaxHBC, fH2, fSH, nHP, THP,
         else:
             #NOTE Replace JH with constant for consistency across program, check with someone who knows what they are doing if this is correct
             if CONST.USE_JH:
+                print("using in mesh")
                 sigv[:,1] = jhs_coef(n, Te, jh_coeffs, no_null=True) # Johnson-Hinnov, limited Te range; fixed JHS_coef capitalization #NOTE Not tested yet
             else:
                 sigv[:,1] = sigmav_ion_h0(Te) # from Janev et al., up to 20keV #NOTE Not Tested Yet
-
+                
         #	Reaction R2:  e + H(+) -> H(1s) + hv  (radiative recombination)
         #NOTE Replace JH with constant for consistency across program, check with someone who knows what they are doing if this is correct
         if CONST.USE_JH:

@@ -124,6 +124,7 @@ class kinetic_mesh:
             if CONST.USE_COLLRAD_IONIZATION:
                 ioniz_rate = collrad_sigmav_ion_h0(nfine, Tefine)
             elif CONST.USE_JH: #NOTE not tested yet
+                print("using in mesh")
                 #Checks that the JH_Coef class has been passed into the function before calling jhs_coef
                 if (jh_coeffs == None):
                     raise Exception("kinetic_h_mesh generated using JH, but no JH coefficients given")

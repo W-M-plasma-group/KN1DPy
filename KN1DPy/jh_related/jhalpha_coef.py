@@ -35,6 +35,10 @@ def jhalpha_coef(Density : NDArray, Te : NDArray, jh_coeffs : JH_Coef, create = 
     if count > 0: 
         for i in ok:
             #result[ok] = np.exp( ) # currently missing the python equivalent to bs2dr will come back to this later 
-            result[i]=np.exp(interpolate.bisplev(LDensity[i], LTe[i],
-                                                 (jh_coeffs.DKnot, jh_coeffs.TKnot, jh_coeffs.LogS_BSCoef, 3, 3), 0, 0)) # updated
+            result[i]=np.exp(interpolate.bisplev(LTe[i], LDensity[i], 
+                                                 (jh_coeffs.TKnot, jh_coeffs.DKnot, jh_coeffs.LogAlpha_BSCoef, jh_coeffs.order, jh_coeffs.order), 0, 0)) # updated
+            
+    print("jhalpha_coef", result)
+    input()
+
     return result

@@ -20,7 +20,7 @@ class JH_Coef:
         string += "    DKnot: " + str(self.DKnot) + "\n"
         string += "    TKnot: " + str(self.TKnot) + "\n"
         string += "    order: " + str(self.order) + "\n"
-        string += "    LogR_BSCoef: " + str(self.LogR_BSCoef) + "\n"
+        string += "    LogR_BSCoef: " + str(self.LogR_BSCoef.T) + "\n"
         string += "    LogS_BSCoef: " + str(self.LogS_BSCoef) + "\n"
         string += "    LogAlpha_BSCoef: " + str(self.LogAlpha_BSCoef) + "\n"
         string += "    A_Lyman: " + str(self.A_Lyman) + "\n"

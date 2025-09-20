@@ -58,6 +58,9 @@ def jhr_coef(Density : NDArray, Te : NDArray, Ion : int, p : int, jh_coeffs : JH
     if count > 0: 
         for i in ok: # fixed how result is defined not completely confident in this - GG
             # result[i] = np.exp( ) # currently missing the python equivalent to bs2dr will come back to this later 
-            result[i]=np.exp(interpolate.bisplev(LDensity[i],LTe[i],
-                                                 (jh_coeffs.DKnot,jh_coeffs.TKnot,jh_coeffs.LogS_BSCoef,3,3),0,0)) # updated
+            result[i]=np.exp(interpolate.bisplev(LTe[i], LDensity[i],
+                                                 (jh_coeffs.TKnot, jh_coeffs.DKnot, jh_coeffs.LogR_BSCoef[:,Ion,p-2], jh_coeffs.order, jh_coeffs.order),0,0)) # updated
+            
+    print("jhr_coef", result)
+    input()
     return result 
