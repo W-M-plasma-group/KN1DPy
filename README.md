@@ -3,6 +3,9 @@ KN1D is a 1D-space, 2-D velocity neutral kinetic code developed by B. LaBombard 
 This repo contains the updated python version, KN1DPy, of the original KN1D code.
 Contact: njbrown@wm.edu
 
+## NOTE
+This translation is still in development and not fully tested. Certain functionality and accuracy may still be missing.
+
 ## Requirements
 All dependencies are located in requirements.txt. To install, run the following in the terminal:
 ```
