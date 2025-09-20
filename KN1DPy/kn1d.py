@@ -592,7 +592,7 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia, \
     
     # fH_fH2_done code section  
 
-    # NOTE May be relevant for plotting, but not for output
+    # NOTE Implement Later
 
     # error = 0
     # # Compute total H flux through crossing limiter radius
