@@ -1,6 +1,5 @@
 .vscode/
 __pycache__/
-jh_bscoef.npz
 /Inputs
 /Results
 /dev_files
