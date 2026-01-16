@@ -1,7 +1,7 @@
 {
     "kinetic_h": {
-        "mesh_size" : 20,
-        "ion_rate" : "collrad",
+        "mesh_size" : 10,
+        "ion_rate" : "janev",
         "dvx_tolerance" : 0.01,
         "wpp_tolerance" : 0.001,
         "ci_test" : true,
