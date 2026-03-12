@@ -17,6 +17,39 @@ pixi install
 pixi shell
 ```
 
+## Examples
+
+Example scripts are in `examples/C-Mod/`. All commands should be run from the **KN1DPy root directory**.
+
+### IDL
+
+Start IDL from the **KN1DPy root directory** with the following command to ensure the correct shared library is loaded:
+
+```bash
+LD_LIBRARY_PATH=/path/to/KN1DPy/IDL:$LD_LIBRARY_PATH idl
+```
+
+Then type the following commands one at a time in the IDL prompt:
+
+```
+.compile IDL/bs2dr.pro
+.compile IDL/kn1d.pro
+.run examples/C-Mod/run_cmod_idl.pro
+run_cmod_idl
+```
+
+Outputs are written to `examples/C-Mod/cmod_example_idl/`.
+
+### Comparison plots
+
+After running both versions, generate side-by-side comparison plots with:
+
+```bash
+pixi run python examples/C-Mod/plot_cmod_comparison.py
+```
+
+This saves `examples/C-Mod/cmod_comparison.png`.
+
 ## Limitations
 Currently, anything using the Johnson-Hinov Tables are not working.
 This includes Lyman_Alpha and Balmer Alpha, which will return 0 for the moment.
