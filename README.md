@@ -21,6 +21,15 @@ pixi shell
 
 Example scripts are in `examples/C-Mod/`. All commands should be run from the **KN1DPy root directory**.
 
+### Python (KN1DPy)
+
+From the KN1DPy root directory, type the following commands one at a time:
+
+```
+pixi shell
+python examples/C-Mod/run_cmod_python.py
+```
+
 ### IDL
 
 Start IDL from the **KN1DPy root directory** with the following command to ensure the correct shared library is loaded:
