@@ -139,8 +139,8 @@ class KineticH2():
 
 
     def __init__(self, mesh: KineticMesh, mu: int, vxi: NDArray, fH2BC: NDArray, GammaxH2BC: float, NuLoss: NDArray, SH2_initial: NDArray,
-                    sawada: bool = True, compute_h_source: bool = False, ni_correct: bool = False, truncate: float = 1.0e-4, max_gen: int = 50, 
-                    compute_errors: bool = False, debrief: int = 0, debug: int = 0):
+                    sawada: bool = True, compute_h_source: bool = False, ni_correct: bool = False, truncate: float = 1.0e-4, max_gen: int = 50,
+                    compute_errors: bool = False, debrief: int = 0, debug: int = 0, config_path: str = './config.json'):
         '''
         Parameters
         ----------
@@ -185,7 +185,7 @@ class KineticH2():
         # --- Settings ---
 
         # Configuration Options
-        self.config = get_config()
+        self.config = get_config(config_path)
 
         col = self.config['collisions']
         self.COLLISIONS = KH2Collisions(col['H2_H_EL'], col['H2_H2_EL'], col['H2_P_EL'], col['H2_P_CX'], col['SIMPLE_CX'])

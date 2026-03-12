@@ -43,22 +43,23 @@ class KineticMesh:
     '''
 
     def __init__( #NOTE Simplify this later, consider using class inheritance
-            self, 
+            self,
             mesh_type   : str, #'h' for kinetic_h_mesh, 'h2' for kinetic_h2_mesh
-            mu          : int, 
+            mu          : int,
             x           : NDArray,
             Ti          : NDArray,
-            Te          : NDArray, 
-            n           : NDArray, 
+            Te          : NDArray,
+            n           : NDArray,
             PipeDia     : NDArray,
             jh          : Johnson_Hinnov = None,
-            E0          : NDArray = np.array([0.0]), 
-            fctr        : float   = 1.0):
+            E0          : NDArray = np.array([0.0]),
+            fctr        : float   = 1.0,
+            config_path : str     = './config.json'):
 
         print("generating kinetic_" + mesh_type + "_mesh")
 
         #Get mesh size from config file
-        nv = get_config()["kinetic_" + mesh_type]["mesh_size"]
+        nv = get_config(config_path)["kinetic_" + mesh_type]["mesh_size"]
 
         # estimate Interaction rate with side walls
         #NOTE Commented gamma_wall calculations here, revisit later
@@ -85,7 +86,8 @@ class KineticMesh:
             y[k] = y[k-1] - ((x[k] - x[k-1])*0.5*(react_rate[k] + react_rate[k-1]))/v0
         if mesh_type == 'h':
             # Find x location where Y = -5, i.e. where nH should be down by exp(-5)
-            xmax = np.minimum(interp_1d(y, x, -5, fill_value="extrapolate"), max(x))
+            expdown = max(-5, np.min(y))
+            xmax = np.minimum(interp_1d(y, x, expdown, fill_value="extrapolate"), max(x))
         elif mesh_type == 'h2':
             #Find x location where Y = -10, i.e., where nH2 should be down by exp(-10)
             xmax = np.minimum(interp_1d(y, x, -10.0), max(x))
@@ -117,7 +119,7 @@ class KineticMesh:
             minVr = vth*min(vr)
             minE0 = 0.5*CONST.H_MASS*(minVr**2) / CONST.Q
 
-            ion_rate_option = get_config()['kinetic_h']['ion_rate']
+            ion_rate_option = get_config(config_path)['kinetic_h']['ion_rate']
             if ion_rate_option == 'collrad':
                 ioniz_rate = collrad_sigmav_ion_h0(nfine, Tefine)
             elif ion_rate_option == 'jh':
@@ -146,12 +148,18 @@ class KineticMesh:
             if xpt_test > xmin:
                 dxpt2 = interp_1d(xfine, dx_max, xpt_test, fill_value="extrapolate")
 
-            if mesh_type == 'h':
-                dxh_max = 0.0005 # JWH: 0.0015 should be sufficient for D3D because scale lengths are 2.5x larger
-                # lowered dxh_max from 5e-4 to 4e-4; original was giving mesh size errors in kinetic_h - nh
-                dxpt = min([dxpt1, dxpt2, dxh_max])
-            elif mesh_type == 'h2':
-                dxpt = min([dxpt1,dxpt2])
+            # DO WE WANT TO IMPOSE A MINIMUM DXH HERE??
+            # OPTION 1) ENFORCE MINIMUM DXH
+            
+            # if mesh_type == 'h':
+            #     dxh_max = 0.0005 # JWH: 0.0015 should be sufficient for D3D because scale lengths are 2.5x larger
+            #     # lowered dxh_max from 5e-4 to 4e-4; original was giving mesh size errors in kinetic_h - nh
+            #     dxpt = min([dxpt1, dxpt2, dxh_max])
+            # elif mesh_type == 'h2':
+            #     dxpt = min([dxpt1,dxpt2])
+
+            # OPTION 2) NO MINIMUM DXH
+            dxpt = min([dxpt1,dxpt2])
 
             xpt -= dxpt 
         xH = np.concatenate([np.array([xmin]), xH[0:np.size(xH) - 1]])
