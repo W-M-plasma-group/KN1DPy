@@ -7,11 +7,10 @@ Contact: njbrown@wm.edu
 This translation is still in development and not fully tested. Certain functionality and accuracy may still be missing.
 
 ## Requirements
-This translation was developed in python 3.12.3. It uses the pixi package manager. In order to set up correctly, run the folowing commands in the terminal:
+This translation was developed in python 3.12.3. It uses the pixi package manager. In order to set up correctly, clone the repository and run the following commands in the terminal:
 
 ```
 curl -fsSL https://pixi.sh/install.sh | bash
-git clone git@github.com:W-M-plasma-group/KN1DPy.git
 cd KN1DPy
 pixi install
 pixi shell
