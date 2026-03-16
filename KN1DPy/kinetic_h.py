@@ -124,8 +124,8 @@ class KineticH():
 
 
     def __init__(self, mesh: KineticMesh, mu: int, vxi: NDArray, fHBC: NDArray, GammaxHBC: float, jh: Johnson_Hinnov = None,
-                 recomb: bool = True, ni_correct: bool = False, truncate: float = 1e-4, max_gen: int = 50, 
-                 compute_errors: bool = False, debrief: int = 0, debug: int = 0):
+                 recomb: bool = True, ni_correct: bool = False, truncate: float = 1e-4, max_gen: int = 50,
+                 compute_errors: bool = False, debrief: int = 0, debug: int = 0, config_path: str = './config.json'):
         '''
         Parameters
         ----------
@@ -166,7 +166,7 @@ class KineticH():
         # --- Settings ---
 
         # Configuration Options
-        self.config = get_config()
+        self.config = get_config(config_path)
         
         col = self.config['collisions']
         self.COLLISIONS = KHCollisions(col['H2_H_EL'], col['H_H_EL'], col['H_P_EL'], col['H_P_CX'], col['SIMPLE_CX'])

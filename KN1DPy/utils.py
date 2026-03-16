@@ -25,10 +25,10 @@ def get_json(file_path:str) -> dict[str, Any]:
     with open(file_path, 'r') as config:
         return json.load(config)
     
-def get_config() -> dict[str, Any]:
-    ''' Lazy function to load config file '''
+def get_config(config_path: str = './config.json') -> dict[str, Any]:
+    ''' Load config file from the given path (defaults to ./config.json) '''
 
-    return get_json('./config.json')
+    return get_json(config_path)
 
 
 # --- Printing ---

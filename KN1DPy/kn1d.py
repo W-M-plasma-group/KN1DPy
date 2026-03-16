@@ -3,6 +3,7 @@ from numpy.typing import NDArray
 from scipy import interpolate
 from dataclasses import dataclass
 import os
+import json
 
 from .create_shifted_maxwellian import create_shifted_maxwellian
 from .make_dvr_dvx import VSpace_Differentials
@@ -54,7 +55,8 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia,
          truncate = 1.0e-3, max_gen = 50,
          compute_errors = 0, debrief = 0,
          Hdebug = 0, Hdebrief = 0,
-         H2debug = 0, H2debrief = 0, interp_debug = 0) -> dict:
+         H2debug = 0, H2debrief = 0, interp_debug = 0, File=None,
+         config_path = './config.json') -> dict:
     '''
     Computes the molecular and atomic neutral profiles for inputted profiles
     of Ti(x), Te(x), n(x), and molecular neutral pressure, GaugeH2, at the boundary using
@@ -144,7 +146,7 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia,
     # --- Validate Config Options ---
     
     valid_ion_rates = ['collrad', 'jh', 'janev']
-    ion_rate_option = get_config()['kinetic_h']['ion_rate']
+    ion_rate_option = get_config(config_path)['kinetic_h']['ion_rate']
     if ion_rate_option not in valid_ion_rates:
         raise Exception(prompt+"Invalid Ionization Rate Option used: '"+ion_rate_option+"', check config.json")
 
@@ -157,7 +159,7 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia,
     if GaugeH2 > 15.0:
         fctr = fctr*15 / GaugeH2
 
-    kh2_mesh = KineticMesh('h2', mu, x, Ti, Te, n, PipeDia, E0 = Eneut, fctr = fctr) 
+    kh2_mesh = KineticMesh('h2', mu, x, Ti, Te, n, PipeDia, E0 = Eneut, fctr = fctr, config_path = config_path)
     
     # Determine optimized vr, vx grid for kinetic_h (atoms, A)
     fctr = 0.3
@@ -167,7 +169,7 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia,
     # Generates Johnson_Hinnov class, Used in place of IDL version's JH_Coef Common block
     jh = Johnson_Hinnov()
 
-    kh_mesh = KineticMesh('h', mu, x, Ti, Te, n, PipeDia, jh=jh, fctr=fctr)
+    kh_mesh = KineticMesh('h', mu, x, Ti, Te, n, PipeDia, jh=jh, fctr=fctr, config_path=config_path)
 
 
     # --- Initialize variables ---
@@ -273,12 +275,14 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia,
     GammaxHBC = 0
     fHBC = np.zeros((kh_mesh.vr.size,kh_mesh.vx.size))
     kinetic_h = KineticH(kh_mesh, mu, vxiA, fHBC, GammaxHBC, jh=jh,
-                         ni_correct=True, truncate=truncate, max_gen=max_gen, 
-                         compute_errors=compute_errors, debrief=Hdebrief, debug=Hdebug)
+                         ni_correct=True, truncate=truncate, max_gen=max_gen,
+                         compute_errors=compute_errors, debrief=Hdebrief, debug=Hdebug,
+                         config_path=config_path)
     
     kinetic_h2 = KineticH2(kh2_mesh, mu, vxiM, fh2BC, GammaxH2BC, NuLoss, SH2,
-                            compute_h_source=True, ni_correct=True, truncate=truncate, max_gen=max_gen, 
-                            compute_errors=compute_errors, debrief=H2debrief, debug=H2debug)
+                            compute_h_source=True, ni_correct=True, truncate=truncate, max_gen=max_gen,
+                            compute_errors=compute_errors, debrief=H2debrief, debug=H2debug,
+                            config_path=config_path)
 
 
     # --- Begin Iteration ---
@@ -402,37 +406,112 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia,
 
     # --- Store Results ---
 
-    # Store Outputs
-    output_dir = 'Results/'
-    output_file = 'output'
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
-    output_path = output_dir+output_file
-    print(prompt, "Saving files to", output_path+".npz")
-    np.savez(output_path,
-             xH2=kh2_mesh.x,
-             nH2=kh2_results.nH2,
-             GammaxH2=kh2_results.GammaxH2,
-             TH2=kh2_results.TH2,
-             qxH2_total=kh2_results.qxH2_total,
-             nHP=kh2_results.nHP,
-             THP=kh2_results.THP,
-             SH=kh2_results.SH,
-             SP=kh2_results.SP,
+    # Determine output directory
+    if File is None:
+        out_dir = os.path.join('Results', 'output')
+    else:
+        out_dir = File
+    os.makedirs(out_dir, exist_ok=True)
+    print(prompt, "Saving files to", out_dir)
 
-             xH=kh_mesh.x,
-             nH=kh_results.nH,
-             GammaxH=kh_results.GammaxH,
-             TH=kh_results.TH,
-             qxH_total=kh_results.qxH_total,
-             NetHSource=kh_results.NetHSource,
-             Sion=kh_results.Sion,
-             QH_total=kh_results.QH_total,
-             SideWallH=kh_results.SideWallH,
-             Lyman=Lyman,
-             Balmer=Balmer,
-             GammaHLim=GammaHLim)
+    # KN1D_input: raw user inputs + interpolated profiles on each mesh
+    np.savez(os.path.join(out_dir, 'KN1D_input.npz'),
+            x=x, xlimiter=xlimiter, xsep=xsep, GaugeH2=GaugeH2,
+            mu=mu, Ti=Ti, Te=Te, n=n, vxi=vxi, LC=LC,
+            PipeDia=PipeDia, truncate=truncate,
+            xH2=kh2_mesh.x, TiM=kh2_mesh.Ti, TeM=kh2_mesh.Te, nM=kh2_mesh.ne,
+            PipeDiaM=kh2_mesh.PipeDia, vxM=kh2_mesh.vx, vrM=kh2_mesh.vr, TnormM=kh2_mesh.Tnorm,
+            xH=kh_mesh.x, TiA=kh_mesh.Ti, TeA=kh_mesh.Te, nA=kh_mesh.ne,
+            PipeDiaA=kh_mesh.PipeDia, vxA=kh_mesh.vx, vrA=kh_mesh.vr, TnormA=kh_mesh.Tnorm)
 
+    # KN1D_mesh: snapshot of mesh state (mirrors IDL KN1D_mesh save set, used for restart/comparison)
+    np.savez(os.path.join(out_dir, 'KN1D_mesh.npz'),
+            x_s=x, GaugeH2_s=GaugeH2, mu_s=mu,
+            Ti_s=Ti, Te_s=Te, n_s=n, vxi_s=vxi,
+            LC_s=LC, PipeDia_s=PipeDia,
+            xH2_s=kh2_mesh.x, vxM_s=kh2_mesh.vx, vrM_s=kh2_mesh.vr, TnormM_s=kh2_mesh.Tnorm,
+            xH_s=kh_mesh.x, vxA_s=kh_mesh.vx, vrA_s=kh_mesh.vr, TnormA_s=kh_mesh.Tnorm)
+
+    # KN1D_H2: full molecular output
+    np.savez(os.path.join(out_dir, 'KN1D_H2.npz'),
+            xH2=kh2_mesh.x,
+            fH2=kh2_results.fH2,
+            nH2=kh2_results.nH2,
+            GammaxH2=kh2_results.GammaxH2,
+            VxH2=kh2_results.VxH2,
+            pH2=kh2_results.pH2,
+            TH2=kh2_results.TH2,
+            qxH2=kh2_results.qxH2,
+            qxH2_total=kh2_results.qxH2_total,
+            Sloss=kh2_results.Sloss,
+            QH2=kh2_results.QH2,
+            RxH2=kh2_results.RxH2,
+            QH2_total=kh2_results.QH2_total,
+            AlbedoH2=kh2_results.AlbedoH2,
+            nHP=kh2_results.nHP,
+            THP=kh2_results.THP,
+            fSH=kh2_results.fSH,
+            SH=kh2_results.SH,
+            SP=kh2_results.SP,
+            SHP=kh2_results.SHP,
+            NuE=kh2_results.NuE,
+            NuDis=kh2_results.NuDis,
+            piH2_xx=kinetic_h2.Output.piH2_xx,
+            piH2_yy=kinetic_h2.Output.piH2_yy,
+            piH2_zz=kinetic_h2.Output.piH2_zz,
+            RxH2CX=kinetic_h2.Output.RxH2CX,
+            RxH_H2=kinetic_h2.Output.RxH_H2,
+            RxP_H2=kinetic_h2.Output.RxP_H2,
+            RxW_H2=kinetic_h2.Output.RxW_H2,
+            EH2CX=kinetic_h2.Output.EH2CX,
+            EH_H2=kinetic_h2.Output.EH_H2,
+            EP_H2=kinetic_h2.Output.EP_H2,
+            EW_H2=kinetic_h2.Output.EW_H2,
+            Epara_PerpH2_H2=kinetic_h2.Output.Epara_PerpH2_H2,
+            GammaxH2_plus=kh2_results.GammaxH2[0],
+            GammaxH2_minus=kh2_results.GammaxH2[-1])
+
+    # KN1D_H: full atomic output
+    np.savez(os.path.join(out_dir, 'KN1D_H.npz'),
+            xH=kh_mesh.x,
+            fH=kh_results.fH,
+            nH=kh_results.nH,
+            GammaxH=kh_results.GammaxH,
+            VxH=kh_results.VxH,
+            pH=kh_results.pH,
+            TH=kh_results.TH,
+            qxH=kh_results.qxH,
+            qxH_total=kh_results.qxH_total,
+            NetHSource=kh_results.NetHSource,
+            Sion=kh_results.Sion,
+            SideWallH=kh_results.SideWallH,
+            QH=kh_results.QH,
+            RxH=kh_results.RxH,
+            QH_total=kh_results.QH_total,
+            AlbedoH=kh_results.AlbedoH,
+            GammaHLim=GammaHLim,
+            piH_xx=kinetic_h.Output.piH_xx,
+            piH_yy=kinetic_h.Output.piH_yy,
+            piH_zz=kinetic_h.Output.piH_zz,
+            RxHCX=kinetic_h.Output.RxHCX,
+            RxH2_H=kinetic_h.Output.RxH2_H,
+            RxP_H=kinetic_h.Output.RxP_H,
+            RxW_H=kinetic_h.Output.RxW_H,
+            EHCX=kinetic_h.Output.EHCX,
+            EH2_H=kinetic_h.Output.EH2_H,
+            EP_H=kinetic_h.Output.EP_H,
+            EW_H=kinetic_h.Output.EW_H,
+            Epara_PerpH_H=kinetic_h.Output.Epara_PerpH_H,
+            SourceH=kinetic_h.Output.SourceH,
+            SRecomb=kinetic_h.Output.SRecomb,
+            EH_hist=EH_hist,
+            SI_hist=SI_hist,
+            Lyman=Lyman,
+            Balmer=Balmer)
+
+    # config snapshot
+    with open(os.path.join(out_dir, 'config.json'), 'w') as f:
+        json.dump(get_config(config_path), f, indent=4)
 
     # Format Results into Dataclass
     results = KN1DResults(kh2_mesh.x, 
