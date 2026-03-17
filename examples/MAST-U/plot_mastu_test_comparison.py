@@ -1,13 +1,13 @@
 """
-C-Mod KN1D comparison plots — Python (KN1DPy) vs IDL
-=====================================================
+MAST-U KN1D comparison plots — Python (KN1DPy) vs IDL
+======================================================
 Run from the KN1DPy root directory:
 
-    python examples/C-Mod/plot_cmod_comparison.py
+    python examples/MAST-U/plot_mastu_test_comparison.py
 
 Loads outputs from:
-  - examples/C-Mod/cmod_example/         (Python run)
-  - examples/C-Mod/cmod_example_idl/     (IDL run)
+  - examples/MAST-U/python_output/    (Python run)
+  - examples/MAST-U/IDL_output/       (IDL run)
 
 and plots the key profiles side-by-side for comparison.
 """
@@ -21,12 +21,11 @@ from scipy.io import readsav
 # ------------------------------------------------------------------ #
 #  Load Python outputs
 # ------------------------------------------------------------------ #
-py_h  = np.load('examples/C-Mod/cmod_example/KN1D_H.npz')
-py_h2 = np.load('examples/C-Mod/cmod_example/KN1D_H2.npz')
-inp   = np.load('examples/C-Mod/cmod_example/KN1D_input.npz')
+py_h  = np.load('examples/MAST-U/python_output/KN1D_H.npz')
+py_h2 = np.load('examples/MAST-U/python_output/KN1D_H2.npz')
+inp   = np.load('examples/MAST-U/python_output/KN1D_input.npz')
 
-x   = inp['x']     # raw input spatial grid
-xA  = inp['xH']    # H mesh x coordinates (same as py_h['xH'])
+xA  = inp['xH']    # H mesh x coordinates
 Ti  = inp['TiA']   # ion temperature on H mesh
 Te  = inp['TeA']   # electron temperature on H mesh
 n   = inp['nA']    # electron density on H mesh
@@ -39,16 +38,15 @@ SideWallH = py_h['SideWallH'];  SRecomb = py_h['SRecomb']
 xH2    = py_h2['xH2'];    nH2    = py_h2['nH2'];    TH2    = py_h2['TH2']
 GamxH2 = py_h2['GammaxH2'];      nHP = py_h2['nHP']; THP = py_h2['THP']
 SH     = py_h2['SH'];     SP     = py_h2['SP'];      qxH2   = py_h2['qxH2_total']
-NuLoss = py_h2['NuE'];    NuDis  = py_h2['NuDis']   # NuE = NuLoss in Python
+NuLoss = py_h2['NuE'];    NuDis  = py_h2['NuDis']
 
 # ------------------------------------------------------------------ #
 #  Load IDL outputs  (IDL sav files use lowercase keys)
 # ------------------------------------------------------------------ #
-idl_h  = readsav('examples/C-Mod/cmod_example_idl/cmod_example.KN1D_H')
-idl_h2 = readsav('examples/C-Mod/cmod_example_idl/cmod_example.KN1D_H2')
-idl_in = readsav('examples/C-Mod/cmod_example_idl/cmod_example.KN1D_input')
+idl_h  = readsav('examples/MAST-U/IDL_output/mastu_test.KN1D_H')
+idl_h2 = readsav('examples/MAST-U/IDL_output/mastu_test.KN1D_H2')
+idl_in = readsav('examples/MAST-U/IDL_output/mastu_test.KN1D_input')
 
-i_x   = idl_in['x'];   i_Ti = idl_in['ti'];  i_Te = idl_in['te'];  i_n = idl_in['n']
 i_xH  = idl_h['xh'];   i_nH = idl_h['nh'];   i_TH = idl_h['th']
 i_GamxH  = idl_h['gammaxh'];   i_Sion  = idl_h['sion']
 i_Lyman  = idl_h['lyman'];     i_Balmer = idl_h['balmer']
@@ -58,7 +56,7 @@ i_SideWallH = idl_h['sidewallh']
 i_xH2 = idl_h2['xh2'];  i_nH2 = idl_h2['nh2'];   i_TH2 = idl_h2['th2']
 i_GamxH2 = idl_h2['gammaxh2']; i_nHP = idl_h2['nhp'];  i_THP = idl_h2['thp']
 i_SH  = idl_h2['sh'];   i_SP  = idl_h2['sp'];     i_qxH2 = idl_h2['qxh2_total']
-i_NuLoss = idl_h2['nuloss'];   i_NuDis = idl_h2['nudis']
+i_NuLoss = idl_h2['nue'];      i_NuDis = idl_h2['nudis']
 
 # xlimiter for reference line
 xlimiter = float(inp['xlimiter'])
@@ -77,15 +75,15 @@ def legend(ax):
     ax.legend(fontsize=7, loc='best')
 
 fig, axes = plt.subplots(3, 3, figsize=(14, 11))
-fig.suptitle('KN1D C-Mod: Python vs IDL comparison', fontsize=13, y=1.01)
+fig.suptitle('KN1D MAST-U: Python vs IDL comparison', fontsize=13, y=1.01)
 
 # ------------------------------------------------------------------ #
 #  (0,0) Density profiles
 # ------------------------------------------------------------------ #
 ax = axes[0, 0]
 ax.semilogy(xA,  n,    color='gray',  lw=LW, ls=':',  label='$n_e$ (input)')
-ax.semilogy(xH,  nH,   color=C_PY,   lw=LW,           label='$n_H$ Python', marker='o')
-ax.semilogy(i_xH, i_nH, color=C_IDL, lw=LW, ls='--',  label='$n_H$ IDL', marker='x')
+ax.semilogy(xH,  nH,   color=C_PY,   lw=LW,           label='$n_H$ Python')
+ax.semilogy(i_xH, i_nH, color=C_IDL, lw=LW, ls='--',  label='$n_H$ IDL')
 ax.semilogy(xH2, nH2,  color=C_PY,   lw=LW, ls='-.',   label='$n_{H_2}$ Python')
 ax.semilogy(i_xH2, i_nH2, color=C_IDL, lw=LW, ls=(0,(3,1,1,1)), label='$n_{H_2}$ IDL')
 ax.semilogy(xH2, nHP,  color='purple', lw=LW,           label='$n_{H^+}$ Python')
@@ -206,6 +204,6 @@ ax.set_xlabel('x (m)'); ax.set_ylabel('(%)')
 ax.set_title('$n_H$ relative difference\n(Python $-$ IDL) / IDL')
 
 fig.tight_layout()
-out = 'examples/C-Mod/cmod_comparison.png'
+out = 'examples/MAST-U/mastu_test_comparison.png'
 fig.savefig(out, dpi=150, bbox_inches='tight')
 print(f'Saved: {out}')

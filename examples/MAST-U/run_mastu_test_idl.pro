@@ -1,21 +1,23 @@
 ;+
-; run_cmod_idl.pro
+; run_mastu_test_idl.pro
 ;
-; C-Mod KN1D example - IDL
-; ========================
+; MAST-U KN1D example - IDL
+; ==========================
 ; Run from the KN1DPy root directory:
 ;
-;   .run examples/C-Mod/run_cmod_idl.pro
+;   .run examples/MAST-U/run_mastu_test_idl.pro
 ;
 ; Inputs are loaded from the shared .sav file (same source as the Python script).
+; To generate mastu_test_in.sav from the raw .dat files, run create_mastu_sav.pro
+; in IDL once (see examples/MAST-U/create_mastu_sav.pro).
 ;-
 
-pro run_cmod_idl
+pro run_mastu_test_idl
 
   ; ---------------------------------------------------------------- ;
-  ;  Input file (edit path if running from a different directory)
+  ;  Input file
   ; ---------------------------------------------------------------- ;
-  sav_file = 'examples/C-Mod/cmod_test_in.sav'
+  sav_file = 'examples/MAST-U/input/mastu_test_in.sav'
 
   print, 'Loading inputs: ' + sav_file
   restore, sav_file
@@ -29,7 +31,7 @@ pro run_cmod_idl
   ; ---------------------------------------------------------------- ;
   ;  Run options
   ; ---------------------------------------------------------------- ;
-  File           = 'examples/C-Mod/cmod_example_idl/cmod_example'
+  File           = 'examples/MAST-U/IDL_output/mastu_test'
   refine         = 0
   ReadInput      = 0
   NewFile        = 1

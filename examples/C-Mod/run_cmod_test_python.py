@@ -3,7 +3,7 @@ C-Mod KN1D example - Python (KN1DPy)
 =====================================
 Run this script from the KN1DPy root directory so that the package is found:
 
-    python examples/C-Mod/run_cmod_python.py
+    python examples/C-Mod/run_cmod_test_python.py
 
 Inputs are loaded from the shared .sav file (same source as the IDL script).
 
@@ -22,9 +22,9 @@ np.set_printoptions(linewidth=225)
 # ------------------------------------------------------------------ #
 #  Paths (edit these as needed)
 # ------------------------------------------------------------------ #
-data_file   = 'examples/C-Mod/cmod_test_in.sav'
+data_file   = 'examples/C-Mod/input/cmod_test_in.sav'
 config_path = './config.json'   # root config; swap for a per-example json if needed
-output_file = 'examples/C-Mod/cmod_example'  # outputs saved in examples/C-Mod/cmod_example/
+output_file = 'examples/C-Mod/python_output'  # outputs saved in examples/C-Mod/python_output/
 
 # ------------------------------------------------------------------ #
 #  Load inputs
@@ -67,12 +67,3 @@ results = kn1d(
 )
 
 print(f'Elapsed time: {time.time() - t0:.1f} s')
-
-# ------------------------------------------------------------------ #
-#  Quick summary of key outputs
-# ------------------------------------------------------------------ #
-print('\n--- Results summary ---')
-print(f'  xH shape  : {results.xH.shape}')
-print(f'  nH peak   : {results.nH.max():.3e} m^-3')
-print(f'  Sion peak : {results.Sion.max():.3e} m^-3 s^-1')
-print(f'  Results written to {output_file}/ (KN1D_input.npz, KN1D_mesh.npz, KN1D_H2.npz, KN1D_H.npz, config.json)')
