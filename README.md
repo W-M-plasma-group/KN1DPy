@@ -126,7 +126,7 @@ When `File` is specified, `kn1d()` writes four `.npz` files and a copy of the ac
 
 ## Configuration
 
-Settings are controlled via `config.json` in the root directory (or a custom path passed via `config_path`).
+As well as the inputs, the settings for each run (e.g choice of atomic rate coefficients and mesh sizes) can be controlled via `config.json` in the root directory (or a custom path passed via `config_path`). The settings that can be changed in the `config.json` file are as follows...
 
 ### `kinetic_h` and `kinetic_h2`
 
