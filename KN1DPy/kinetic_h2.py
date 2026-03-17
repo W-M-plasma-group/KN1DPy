@@ -514,7 +514,7 @@ class KineticH2():
         Beta_CX_sum += Beta_CX
 
         # Update MH2_*_sum using last generation
-        m_vals = self._compute_mh_values(fH2G, NH2G[:,igen-1])
+        m_vals = self._compute_mh_values(fH2G, NH2G[:,igen])
         m_sums.H2_H += m_vals.H2_H
         m_sums.H2_P += m_vals.H2_P
         m_sums.H2_H2 += m_vals.H2_H2
