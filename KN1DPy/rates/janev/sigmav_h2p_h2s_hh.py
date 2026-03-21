@@ -1,13 +1,13 @@
 import numpy as np
 
-from ..utils import poly
+from ...utils import poly
 
-def sigmav_h1s_hn3_hh(Te):
+def sigmav_h2p_h2s_hh(Te):
     '''
     Returns maxwellian averaged <sigma V) for electron impact dissociation
-    of molecular hydrogen resulting in one H atom in the 1s state and one 
-    H atom in the n=3 state. Coefficients are taken from 
-    
+    of molecular hydrogen resulting in one H atom in the 2p state and one
+    H atom in the 2s state. Coefficients are taken from 
+
         Janev, "Elementary Processes in Hydrogen-Helium Plasmas",
         Springer-Verlag, 1987, p.259.
 
@@ -24,15 +24,15 @@ def sigmav_h1s_hn3_hh(Te):
 
     Te = np.asarray(Te)
     
-    b = [-3.884976142596e+1,  
-          1.520368281111e+1, 
-         -6.078494762845e+0,
-          1.535455119900e+0,
-         -2.628667482712e-1,
-          2.994456451213e-2, 
-         -2.156175515382e-3,
-          8.826547202670e-5, 
-         -1.558890013181e-6]
+    b = [-4.794288960529e+1, 
+          2.629649351119e+1, 
+         -1.151117702256e+1, 
+          2.991954880790e+0, 
+         -4.949305181578e-1, 
+          5.236320848415e-2, 
+         -3.433774290547e-3, 
+          1.272097387363e-4, 
+         -2.036079507592e-6]
     
     # Ensure 0.1 < Te < 2.01e4
     Te = np.clip(Te, 0.1, 2.01e4)

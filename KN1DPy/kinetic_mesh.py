@@ -2,14 +2,14 @@ import numpy as np
 from numpy.typing import NDArray
 
 from .utils import get_config, interp_1d, reverse
-from .sigma.sigmav_ion_h0 import sigmav_ion_h0
-from .sigma.sigmav_cx_h0 import sigmav_cx_h0
-from .sigma.sigmav_ion_hh import sigmav_ion_hh
-from .sigma.sigmav_h1s_h1s_hh import sigmav_h1s_h1s_hh
-from .sigma.sigmav_h1s_h2s_hh import sigmav_h1s_h2s_hh
-from .sigma.sigmav_cx_hh import sigmav_cx_hh
-from .sigma.collrad_sigmav_ion_h0 import collrad_sigmav_ion_h0
-from .johnson_hinnov import Johnson_Hinnov
+from .rates.janev.sigmav_ion_h0 import sigmav_ion_h0
+from .rates.janev.sigmav_cx_h0 import sigmav_cx_h0
+from .rates.janev.sigmav_ion_hh import sigmav_ion_hh
+from .rates.janev.sigmav_h1s_h1s_hh import sigmav_h1s_h1s_hh
+from .rates.janev.sigmav_h1s_h2s_hh import sigmav_h1s_h2s_hh
+from .rates.janev.sigmav_cx_hh import sigmav_cx_hh
+from .rates.collrad.collrad_sigmav_ion_h0 import collrad_sigmav_ion_h0
+from .rates.johnson_hinnov.johnson_hinnov import Johnson_Hinnov
 
 from .common import constants as CONST
 
@@ -59,7 +59,9 @@ class KineticMesh:
         print("generating kinetic_" + mesh_type + "_mesh")
 
         #Get mesh size from config file
-        nv = get_config(config_path)["kinetic_" + mesh_type]["mesh_size"]
+        cfg = get_config(config_path)
+        nv = cfg["kinetic_" + mesh_type]["mesh_size"]
+        max_dx = cfg["kinetic_h"].get("max_dx", None) if mesh_type == 'h' else None
 
         # estimate Interaction rate with side walls
         #NOTE Commented gamma_wall calculations here, revisit later
@@ -148,18 +150,10 @@ class KineticMesh:
             if xpt_test > xmin:
                 dxpt2 = interp_1d(xfine, dx_max, xpt_test, fill_value="extrapolate")
 
-            # DO WE WANT TO IMPOSE A MINIMUM DXH HERE??
-            # OPTION 1) ENFORCE MINIMUM DXH
-            
-            # if mesh_type == 'h':
-            #     dxh_max = 0.0005 # JWH: 0.0015 should be sufficient for D3D because scale lengths are 2.5x larger
-            #     # lowered dxh_max from 5e-4 to 4e-4; original was giving mesh size errors in kinetic_h - nh
-            #     dxpt = min([dxpt1, dxpt2, dxh_max])
-            # elif mesh_type == 'h2':
-            #     dxpt = min([dxpt1,dxpt2])
-
-            # OPTION 2) NO MINIMUM DXH
-            dxpt = min([dxpt1,dxpt2])
+            if mesh_type == 'h' and max_dx is not None:
+                dxpt = min([dxpt1, dxpt2, max_dx])
+            else:
+                dxpt = min([dxpt1, dxpt2])
 
             xpt -= dxpt 
         xH = np.concatenate([np.array([xmin]), xH[0:np.size(xH) - 1]])

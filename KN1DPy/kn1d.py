@@ -9,7 +9,7 @@ from .create_shifted_maxwellian import create_shifted_maxwellian
 from .make_dvr_dvx import VSpace_Differentials
 from .utils import sval, interp_1d, get_config
 from .interp_fvrvxx import interp_fvrvxx
-from .johnson_hinnov import Johnson_Hinnov
+from .rates.johnson_hinnov.johnson_hinnov import Johnson_Hinnov
 from .kinetic_mesh import KineticMesh
 from .kinetic_h import KineticH
 from .kinetic_h2 import KineticH2
@@ -145,7 +145,7 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia,
 
     # --- Validate Config Options ---
     
-    valid_ion_rates = ['collrad', 'jh', 'janev']
+    valid_ion_rates = ['collrad', 'jh', 'janev', 'adas']
     ion_rate_option = get_config(config_path)['kinetic_h']['ion_rate']
     if ion_rate_option not in valid_ion_rates:
         raise Exception(prompt+"Invalid Ionization Rate Option used: '"+ion_rate_option+"', check config.json")

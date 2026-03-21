@@ -3,7 +3,7 @@ import numpy as np
 from numpy.typing import NDArray
 from scipy import interpolate
 
-from .utils import get_local_directory, bs2dr
+from ...utils import get_local_directory, bs2dr
 
 class Johnson_Hinnov():
     '''

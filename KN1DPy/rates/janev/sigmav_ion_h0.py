@@ -1,6 +1,6 @@
 import numpy as np
 
-from ..utils import poly
+from ...utils import poly
 
 def sigmav_ion_h0(Te):
     '''

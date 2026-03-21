@@ -7,15 +7,16 @@ from .make_dvr_dvx import VSpace_Differentials
 from .create_shifted_maxwellian import create_shifted_maxwellian
 from .kinetic_mesh import KineticMesh
 
-from .sigma.collrad_sigmav_ion_h0 import collrad_sigmav_ion_h0
-from .johnson_hinnov import Johnson_Hinnov
-from .sigma.sigmav_ion_h0 import sigmav_ion_h0
-from .sigma.sigmav_rec_h1s import sigmav_rec_h1s
-from .sigma.sigma_cx_h0 import sigma_cx_h0
-from .sigma.sigma_el_h_h import sigma_el_h_h
-from .sigma.sigma_el_h_hh import sigma_el_h_hh
-from .sigma.sigma_el_p_h import sigma_el_p_h
-from .sigma.sigmav_cx_h0 import sigmav_cx_h0
+from .rates.collrad.collrad_sigmav_ion_h0 import collrad_sigmav_ion_h0
+from .rates.johnson_hinnov.johnson_hinnov import Johnson_Hinnov
+from .rates.janev.sigmav_ion_h0 import sigmav_ion_h0
+from .rates.janev.sigmav_rec_h1s import sigmav_rec_h1s
+from .rates.adas.adas_ionisation import scd_adas, acd_adas
+from .rates.janev.sigma_cx_h0 import sigma_cx_h0
+from .rates.janev.sigma_el_h_h import sigma_el_h_h
+from .rates.janev.sigma_el_h_hh import sigma_el_h_hh
+from .rates.janev.sigma_el_p_h import sigma_el_p_h
+from .rates.janev.sigmav_cx_h0 import sigmav_cx_h0
 
 from .common import constants as CONST
 from .common.Kinetic_H import *
@@ -429,8 +430,8 @@ class KineticH():
                 NHG[k,0] = np.sum(self.dvr_vol*(fHG[:,:,k] @ self.dvx))
 
             # Set total atomic neutral distribution function to first flight generation
-            fH = np.copy(fHG)
-            nH = NHG[:,0]
+            fH = fHG.copy()
+            nH = NHG[:,0].copy()
 
 
             # --- Iterative Generations ---
@@ -938,12 +939,16 @@ class KineticH():
             self.Internal.sigv[:,1] = collrad_sigmav_ion_h0(self.mesh.ne, self.mesh.Te) # from COLLRAD code (DEGAS-2)
         elif self.ion_rate_option == "jh":
             self.Internal.sigv[:,1] = self.jh.jhs_coef(self.mesh.ne, self.mesh.Te, no_null=True) # Johnson-Hinnov, limited Te range
+        elif self.ion_rate_option == "adas":
+            self.Internal.sigv[:,1] = scd_adas(self.mesh.ne, self.mesh.Te) # ADAS SCD, density-dependent
         else:
             self.Internal.sigv[:,1] = sigmav_ion_h0(self.mesh.Te) # from Janev et al., up to 20keV
-                
+
         # Reaction R2:  e + H(+) -> H(1s) + hv  (radiative recombination)
         if self.ion_rate_option == "jh":
             self.Internal.sigv[:,2] = self.jh.jhalpha_coef(self.mesh.ne, self.mesh.Te, no_null=True)
+        elif self.ion_rate_option == "adas":
+            self.Internal.sigv[:,2] = acd_adas(self.mesh.ne, self.mesh.Te) # ADAS ACD, density-dependent
         else:
             self.Internal.sigv[:,2] = sigmav_rec_h1s(self.mesh.Te)
 
@@ -1584,7 +1589,11 @@ class KineticH():
         self.Errors.Max_dx = np.full(self.nx, 1e32)
         for k in range(self.nx):
             for j in self.vx_pos:
-                self.Errors.Max_dx[k] = np.minimum(self.Errors.Max_dx[k], min(2*self.mesh.vx[j] / alpha_c[:,j,k]))
+                with np.errstate(divide='ignore', invalid='ignore'):
+                    local_dx = 2.0 * self.mesh.vx[j] / alpha_c[:, j, k]
+                    local_dx = local_dx[np.isfinite(local_dx) & (local_dx > 0)]
+                    if local_dx.size > 0:
+                        self.Errors.Max_dx[k] = np.minimum(self.Errors.Max_dx[k], np.min(local_dx))
 
         dx = np.roll(self.mesh.x, -1) - self.mesh.x
         Max_dxL = self.Errors.Max_dx[0:self.nx-1]

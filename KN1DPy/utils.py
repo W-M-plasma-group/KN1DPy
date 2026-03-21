@@ -8,7 +8,6 @@ from numpy.typing import NDArray
 import numpy as np
 from scipy import interpolate
 from scipy.io import readsav
-import netCDF4 as nc
 
 # --- File Paths ---
 
@@ -229,6 +228,7 @@ def sav_read(sav_path, nc_path):
             Dictionary of all inputs from the input file
     '''
 
+    import netCDF4 as nc
     sav_data = readsav(sav_path)
     fn = nc_path
     ds = nc.Dataset(fn, 'w', format = 'NETCDF4') 
@@ -252,7 +252,8 @@ def nc_read(nc_path):
             Dictionary of all inputs from the input file
     '''
     
+    import netCDF4 as nc
     fn = nc_path
-    ds = nc.Dataset(fn) 
+    ds = nc.Dataset(fn)
     input_dict = ds.__dict__
     return input_dict

@@ -6,21 +6,21 @@ from .make_dvr_dvx import VSpace_Differentials
 from .create_shifted_maxwellian import create_shifted_maxwellian
 from .kinetic_mesh import KineticMesh
 
-from .sigma.sigmav_ion_hh import sigmav_ion_hh
-from .sigma.sigmav_h1s_h1s_hh import sigmav_h1s_h1s_hh
-from .sigma.sigmav_h1s_h2s_hh import sigmav_h1s_h2s_hh
-from .sigma.sigmav_p_h1s_hh import sigmav_p_h1s_hh
-from .sigma.sigmav_h2p_h2s_hh import sigmav_h2p_h2s_hh
-from .sigma.sigmav_h1s_hn3_hh import sigmav_h1s_hn3_hh
-from .sigma.sigmav_p_h1s_hp import sigmav_p_h1s_hp
-from .sigma.sigmav_p_hn2_hp import sigmav_p_hn2_hp
-from .sigma.sigmav_p_p_hp import sigmav_p_p_hp
-from .sigma.sigmav_h1s_hn_hp import sigmav_h1s_hn_hp
-from .sigma.sigma_cx_hh import sigma_cx_hh
-from .sigma.sigma_el_h_hh import sigma_el_h_hh
-from .sigma.sigma_el_p_hh import sigma_el_p_hh
-from .sigma.sigma_el_hh_hh import sigma_el_hh_hh
-from .sigma.sigmav_cx_hh import sigmav_cx_hh
+from .rates.janev.sigmav_ion_hh import sigmav_ion_hh
+from .rates.janev.sigmav_h1s_h1s_hh import sigmav_h1s_h1s_hh
+from .rates.janev.sigmav_h1s_h2s_hh import sigmav_h1s_h2s_hh
+from .rates.janev.sigmav_p_h1s_hh import sigmav_p_h1s_hh
+from .rates.janev.sigmav_h2p_h2s_hh import sigmav_h2p_h2s_hh
+from .rates.janev.sigmav_h1s_hn3_hh import sigmav_h1s_hn3_hh
+from .rates.janev.sigmav_p_h1s_hp import sigmav_p_h1s_hp
+from .rates.janev.sigmav_p_hn2_hp import sigmav_p_hn2_hp
+from .rates.janev.sigmav_p_p_hp import sigmav_p_p_hp
+from .rates.janev.sigmav_h1s_hn_hp import sigmav_h1s_hn_hp
+from .rates.janev.sigma_cx_hh import sigma_cx_hh
+from .rates.janev.sigma_el_h_hh import sigma_el_h_hh
+from .rates.janev.sigma_el_p_hh import sigma_el_p_hh
+from .rates.janev.sigma_el_hh_hh import sigma_el_hh_hh
+from .rates.janev.sigmav_cx_hh import sigmav_cx_hh
 
 from .utils import sval, get_config, path_interp_2d
 
