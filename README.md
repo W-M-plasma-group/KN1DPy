@@ -133,7 +133,7 @@ As well as the inputs, the settings for each run (e.g choice of atomic rate coef
 | Key              | Description |
 |------------------|-------------|
 | `mesh_size`      | Number of velocity grid points. Likely needs to be increased from default for cases with > 500 eV pedestals. |
-| `grid_fctr`      | Scales the physics-based maximum spatial grid spacing. Smaller values give a finer mesh. Default `1.0`. Reduce (e.g. to `0.3`) for high-density, high-temperature conditions where the default mesh is too coarse for the grid spacing check to pass. |
+| `grid_fctr`      | Scales the physics-based maximum spatial grid spacing. Smaller values give a finer mesh. Default `0.3` (matching the IDL default). Increase towards `1.0` for faster runs where coarser mesh spacing is acceptable. |
 | `ion_rate`       | Ionization rate method: `"collrad"`, `"jh"` (Johnson–Hinnov), or `"janev"`. (`kinetic_h` only) |
 | `dvx_tolerance`  | Convergence tolerance on the velocity grid spacing (essentially to avoid a division by zero error). |
 | `wpp_tolerance`  | Convergence tolerance for the wall pressure (essentially to avoid a division by zero error). |

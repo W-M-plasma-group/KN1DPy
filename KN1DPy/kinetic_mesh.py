@@ -54,6 +54,7 @@ class KineticMesh:
             PipeDia     : NDArray,
             jh          : Johnson_Hinnov = None,
             E0          : NDArray = np.array([0.0]),
+            fctr        : float   = None,
             config_path : str     = './config.json'):
 
         print("generating kinetic_" + mesh_type + "_mesh")
@@ -61,7 +62,8 @@ class KineticMesh:
         #Get mesh size from config file
         cfg = get_config(config_path)
         nv = cfg["kinetic_" + mesh_type]["mesh_size"]
-        fctr = cfg["kinetic_" + mesh_type].get("grid_fctr", 1.0)
+        if fctr is None:
+            fctr = cfg["kinetic_" + mesh_type]["grid_fctr"]
 
         # estimate Interaction rate with side walls
         #NOTE Commented gamma_wall calculations here, revisit later
