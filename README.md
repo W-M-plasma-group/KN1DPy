@@ -155,7 +155,7 @@ Each flag enables or disables a specific collision channel:
 
 ---
 
-## Coming Soon...
+## kn1d_lite
 
-- [ ] ADAS ionisation rates (will become the recommended option once implemented)
-- [ ] Support for running KN1D on closed field lines (outer boundary at the separatrix)
+`kn1d_lite` is a simplified version of `kn1d` that is designed to be run on closed field lines (inside the separatrix).
+It ignores molecules, and simply calculates the atomic neutral density for specified plasma profiles on the closed field lines. See [docs/kn1d_lite.md](docs/kn1d_lite.md) for a full description and instructions on how to run.
