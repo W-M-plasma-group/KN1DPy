@@ -1,7 +1,7 @@
 """
 MAST-U KN1D example - Python (KN1DPy)
 ======================================
-Run this script from the KN1DPy root directory so that the package is found:
+Usage:
 
     python examples/MAST-U/run_mastu_test_python.py
 
@@ -13,6 +13,9 @@ Config settings (mesh size, collision flags, etc.) are read from CONFIG_PATH
 below. A copy of the active config is automatically saved alongside the outputs
 as config.json inside the output directory.
 """
+
+import sys, os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
 from KN1DPy.kn1d import kn1d
 from scipy.io import readsav

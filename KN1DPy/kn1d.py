@@ -151,7 +151,10 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia,
     # --- Validate Config Options ---
     
     valid_ion_rates = ['collrad', 'jh', 'janev', 'adas']
-    ion_rate_option = get_config(config_path)['kinetic_h']['ion_rate']
+    cfg = get_config(config_path)
+    ion_rate_option = cfg['kinetic_h']['ion_rate']
+    grid_fctr_h2 = cfg['kinetic_h2']['grid_fctr']
+    grid_fctr_h  = cfg['kinetic_h']['grid_fctr']
     if ion_rate_option not in valid_ion_rates:
         raise Exception(prompt+"Invalid Ionization Rate Option used: '"+ion_rate_option+"', check config.json")
 
@@ -160,21 +163,21 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia,
 
     # Determine optimized vr, vx, grid for kinetc_h2 (molecules, M)
     Eneut = np.array([0.003,0.01,0.03,0.1,0.3,1.0,3.0])
-    fctr = 0.3
+    fctr_h2 = grid_fctr_h2
     if GaugeH2 > 15.0:
-        fctr = fctr*15 / GaugeH2
+        fctr_h2 = fctr_h2 * 15 / GaugeH2
 
-    kh2_mesh = KineticMesh('h2', mu, x, Ti, Te, n, PipeDia, E0 = Eneut, fctr = fctr, config_path = config_path)
-    
+    kh2_mesh = KineticMesh('h2', mu, x, Ti, Te, n, PipeDia, E0 = Eneut, fctr = fctr_h2, config_path = config_path)
+
     # Determine optimized vr, vx grid for kinetic_h (atoms, A)
-    fctr = 0.3
-    if GaugeH2 > 30.0 :
-        fctr = fctr * 30 / GaugeH2
+    fctr_h = grid_fctr_h
+    if GaugeH2 > 30.0:
+        fctr_h = fctr_h * 30 / GaugeH2
 
     # Generates Johnson_Hinnov class, Used in place of IDL version's JH_Coef Common block
     jh = Johnson_Hinnov()
 
-    kh_mesh = KineticMesh('h', mu, x, Ti, Te, n, PipeDia, jh=jh, fctr=fctr, config_path=config_path)
+    kh_mesh = KineticMesh('h', mu, x, Ti, Te, n, PipeDia, jh=jh, fctr=fctr_h, config_path=config_path)
 
 
     # --- Initialize variables ---
