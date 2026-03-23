@@ -54,6 +54,7 @@ class KineticMesh:
             PipeDia     : NDArray,
             jh          : Johnson_Hinnov = None,
             E0          : NDArray = np.array([0.0]),
+            fctr        : float   = None,
             config_path : str     = './config.json'):
 
         print("generating kinetic_" + mesh_type + "_mesh")
@@ -61,7 +62,8 @@ class KineticMesh:
         #Get mesh size from config file
         cfg = get_config(config_path)
         nv = cfg["kinetic_" + mesh_type]["mesh_size"]
-        fctr = cfg["kinetic_" + mesh_type].get("grid_fctr", 1.0)
+        if fctr is None:
+            fctr = cfg["kinetic_" + mesh_type]["grid_fctr"]
 
         # estimate Interaction rate with side walls
         #NOTE Commented gamma_wall calculations here, revisit later
@@ -121,10 +123,15 @@ class KineticMesh:
             minVr = vth*min(vr)
             minE0 = 0.5*CONST.H_MASS*(minVr**2) / CONST.Q
 
-            # Hardwired to JH for comparison test with KN1D_python
-            if jh is None:
-                jh = Johnson_Hinnov()
-            ioniz_rate = jh.jhs_coef(nfine, Tefine, no_null=True)
+            ion_rate_option = get_config(config_path)['kinetic_h']['ion_rate']
+            if ion_rate_option == 'collrad':
+                ioniz_rate = collrad_sigmav_ion_h0(nfine, Tefine)
+            elif ion_rate_option == 'jh':
+                if (jh == None):
+                    jh = Johnson_Hinnov()
+                ioniz_rate = jh.jhs_coef(nfine, Tefine, no_null = True)
+            else:
+                ioniz_rate = sigmav_ion_h0(Tefine)
             react_rate = nfine*(ioniz_rate + sigmav_cx_h0(Tifine, np.full(xfine.shape, minE0))) + gamma_wall
 
         elif mesh_type == 'h2':

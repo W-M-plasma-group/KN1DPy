@@ -1970,7 +1970,7 @@ class KineticH2():
             print(' x(k+1)-x(k)  Max_dx(k)   x(k+1)-x(k)  Max_dx(k)   x(k+1)-x(k)  Max_dx(k)   x(k+1)-x(k)  Max_dx(k)   x(k+1)-x(k)  Max_dx(k)')
             for ii in range(0, np.size(ilarge)-1):
                 jj = jj + 1
-                out = out + str(ilarge[ii]) +' '+ str(self.mesh.x(ilarge[ii]+1)-self.mesh.x(ilarge[ii])) +' '+ self.Errors.Max_dx(ilarge[ii]) +' ' # I didn't include any of the formatting from the original code I thought this is something we could determine later
+                out = out + str(ilarge[ii]) +' '+ str(self.mesh.x[ilarge[ii]+1]-self.mesh.x[ilarge[ii]]) +' '+ str(self.Errors.Max_dx[ilarge[ii]]) +' '
                 if jj > 4:
                     print(out)
                     jj = 0 

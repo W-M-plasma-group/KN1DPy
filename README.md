@@ -133,7 +133,7 @@ As well as the inputs, the settings for each run (e.g choice of atomic rate coef
 | Key              | Description |
 |------------------|-------------|
 | `mesh_size`      | Number of velocity grid points. Likely needs to be increased from default for cases with > 500 eV pedestals. |
-| `grid_fctr`      | Scales the physics-based maximum spatial grid spacing. Smaller values give a finer mesh. Default `1.0`. Reduce (e.g. to `0.3`) for high-density, high-temperature conditions where the default mesh is too coarse for the grid spacing check to pass. |
+| `grid_fctr`      | Scales the physics-based maximum spatial grid spacing. Smaller values give a finer mesh. Default `0.3` (matching the IDL default). Increase towards `1.0` for faster runs where coarser mesh spacing is acceptable. |
 | `ion_rate`       | Ionization rate method: `"collrad"`, `"jh"` (Johnson–Hinnov), or `"janev"`. (`kinetic_h` only) |
 | `dvx_tolerance`  | Convergence tolerance on the velocity grid spacing (essentially to avoid a division by zero error). |
 | `wpp_tolerance`  | Convergence tolerance for the wall pressure (essentially to avoid a division by zero error). |
@@ -155,7 +155,7 @@ Each flag enables or disables a specific collision channel:
 
 ---
 
-## Coming Soon...
+## kn1d_lite
 
-- [ ] ADAS ionisation rates (will become the recommended option once implemented)
-- [ ] Support for running KN1D on closed field lines (outer boundary at the separatrix)
+`kn1d_lite` is a simplified version of `kn1d` that is designed to be run on closed field lines (inside the separatrix).
+It ignores molecules, and simply calculates the atomic neutral density for specified plasma profiles on the closed field lines. See [docs/kn1d_lite.md](docs/kn1d_lite.md) for a full description and instructions on how to run.
