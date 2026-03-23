@@ -3,7 +3,7 @@ import numpy as np
 from numpy.typing import NDArray
 from scipy import interpolate
 
-from .utils import get_local_directory, bs2dr
+from ...utils import get_local_directory, bs2dr
 
 class Johnson_Hinnov():
     '''
@@ -103,8 +103,8 @@ class Johnson_Hinnov():
         LTe = np.log(Te)
 
         if no_null:
-            LDensity = np.clip(LDensity, np.min(self.dknot), np.max(self.dknot))
-            LTe = np.clip(LTe, np.min(self.tknot), np.max(self.tknot))
+            LDensity = np.clip(LDensity, self.dknot[0] + 0.001, self.dknot[-1] - 0.001)
+            LTe = np.clip(LTe, self.tknot[0] + 0.001, self.tknot[-1] - 0.001)
             ok = np.arange(LDensity.size)
         else: # NOTE Not Tested, Might not be needed?
             for i in range(0, len(Density)):
@@ -112,7 +112,7 @@ class Johnson_Hinnov():
                     ok = np.append(ok, i)
 
         if ok.size > 0:
-            result[ok] = np.exp(bs2dr(LDensity[ok], LTe[ok], self.order, self.order, self.dknot, self.tknot, self.logr_bscoef.T[:,Ion,p-2]))
+            result[ok] = np.exp(bs2dr(LTe[ok], LDensity[ok], self.order, self.order, self.tknot, self.dknot, self.logr_bscoef.T[:,Ion,p-2]))
 
         return result 
     
@@ -141,8 +141,8 @@ class Johnson_Hinnov():
         LTe = np.log(Te)
 
         if no_null:
-            LDensity = np.clip(LDensity, np.min(self.dknot), np.max(self.dknot))
-            LTe = np.clip(LTe, np.min(self.tknot), np.max(self.tknot))
+            LDensity = np.clip(LDensity, self.dknot[0] + 0.001, self.dknot[-1] - 0.001)
+            LTe = np.clip(LTe, self.tknot[0] + 0.001, self.tknot[-1] - 0.001)
             ok = np.arange(LDensity.size)
         else: # NOTE Not Tested, Might not be needed?
             for i in range(0, len(Density)):
@@ -150,7 +150,7 @@ class Johnson_Hinnov():
                     ok = np.append(ok, i)
 
         if ok.size > 0: 
-            result[ok] = np.exp(bs2dr(LDensity[ok], LTe[ok], self.order, self.order, self.dknot, self.tknot, self.logs_bscoef))
+            result[ok] = np.exp(bs2dr(LTe[ok], LDensity[ok], self.order, self.order, self.tknot, self.dknot, self.logs_bscoef))
 
         return result
     
@@ -179,8 +179,8 @@ class Johnson_Hinnov():
         LTe = np.log(Te)
 
         if no_null:
-            LDensity = np.clip(LDensity, np.min(self.dknot), np.max(self.dknot))
-            LTe = np.clip(LTe, np.min(self.tknot), np.max(self.tknot))
+            LDensity = np.clip(LDensity, self.dknot[0] + 0.001, self.dknot[-1] - 0.001)
+            LTe = np.clip(LTe, self.tknot[0] + 0.001, self.tknot[-1] - 0.001)
             ok = np.arange(LDensity.size)
         else: # NOTE Not Tested, Might not be needed?
             for i in range(0, len(Density)):
@@ -188,7 +188,7 @@ class Johnson_Hinnov():
                     ok = np.append(ok, i)
 
         if ok.size > 0: 
-            result[ok] = np.exp(bs2dr(LDensity[ok], LTe[ok], self.order, self.order, self.dknot, self.tknot, self.logalpha_bscoef))
+            result[ok] = np.exp(bs2dr(LTe[ok], LDensity[ok], self.order, self.order, self.tknot, self.dknot, self.logalpha_bscoef))
 
         return result
     

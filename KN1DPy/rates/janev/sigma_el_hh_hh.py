@@ -1,6 +1,6 @@
 import numpy as np
 
-from ..utils import poly
+from ...utils import poly
 
 def sigma_el_hh_hh(E, vis = False):
     '''

@@ -1,4 +1,5 @@
 # Utility Functions for KN1DPy
+from __future__ import annotations
 
 import json
 from typing import Any
@@ -8,7 +9,6 @@ from numpy.typing import NDArray
 import numpy as np
 from scipy import interpolate
 from scipy.io import readsav
-import netCDF4 as nc
 
 # --- File Paths ---
 
@@ -117,13 +117,15 @@ def bs2dr(x, y, kx_ord, ky_ord, xknot, yknot, bscoef):
     '''
     IDL bs2dr translation equivalent
     '''
-    result = interpolate._dfitpack.bispeu(
-                yknot, xknot, 
-                bscoef,
-                kx_ord-1, ky_ord-1,
-                y, x
-            )[0]
-    return result
+    try:
+        import scipy.interpolate._dfitpack as _dfitpack
+        return _dfitpack.bispeu(yknot, xknot, bscoef, kx_ord-1, ky_ord-1, y, x)[0]
+    except ImportError:
+        # Fallback for scipy versions without _dfitpack: evaluate point-by-point
+        # using bisplev (grid evaluator), available in all scipy versions.
+        tck = (yknot, xknot, bscoef, kx_ord-1, ky_ord-1)
+        return np.array([interpolate.bisplev(np.array([y[i]]), np.array([x[i]]), tck).ravel()[0]
+                         for i in range(len(x))])
 
 
 # --- Table Searching ---
@@ -229,6 +231,7 @@ def sav_read(sav_path, nc_path):
             Dictionary of all inputs from the input file
     '''
 
+    import netCDF4 as nc
     sav_data = readsav(sav_path)
     fn = nc_path
     ds = nc.Dataset(fn, 'w', format = 'NETCDF4') 
@@ -252,7 +255,8 @@ def nc_read(nc_path):
             Dictionary of all inputs from the input file
     '''
     
+    import netCDF4 as nc
     fn = nc_path
-    ds = nc.Dataset(fn) 
+    ds = nc.Dataset(fn)
     input_dict = ds.__dict__
     return input_dict

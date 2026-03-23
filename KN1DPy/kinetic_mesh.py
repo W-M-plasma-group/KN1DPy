@@ -1,15 +1,16 @@
-import numpy as np 
+from __future__ import annotations
+import numpy as np
 from numpy.typing import NDArray
 
 from .utils import get_config, interp_1d, reverse
-from .sigma.sigmav_ion_h0 import sigmav_ion_h0
-from .sigma.sigmav_cx_h0 import sigmav_cx_h0
-from .sigma.sigmav_ion_hh import sigmav_ion_hh
-from .sigma.sigmav_h1s_h1s_hh import sigmav_h1s_h1s_hh
-from .sigma.sigmav_h1s_h2s_hh import sigmav_h1s_h2s_hh
-from .sigma.sigmav_cx_hh import sigmav_cx_hh
-from .sigma.collrad_sigmav_ion_h0 import collrad_sigmav_ion_h0
-from .johnson_hinnov import Johnson_Hinnov
+from .rates.janev.sigmav_ion_h0 import sigmav_ion_h0
+from .rates.janev.sigmav_cx_h0 import sigmav_cx_h0
+from .rates.janev.sigmav_ion_hh import sigmav_ion_hh
+from .rates.janev.sigmav_h1s_h1s_hh import sigmav_h1s_h1s_hh
+from .rates.janev.sigmav_h1s_h2s_hh import sigmav_h1s_h2s_hh
+from .rates.janev.sigmav_cx_hh import sigmav_cx_hh
+from .rates.collrad.collrad_sigmav_ion_h0 import collrad_sigmav_ion_h0
+from .rates.johnson_hinnov.johnson_hinnov import Johnson_Hinnov
 
 from .common import constants as CONST
 
@@ -53,13 +54,14 @@ class KineticMesh:
             PipeDia     : NDArray,
             jh          : Johnson_Hinnov = None,
             E0          : NDArray = np.array([0.0]),
-            fctr        : float   = 1.0,
             config_path : str     = './config.json'):
 
         print("generating kinetic_" + mesh_type + "_mesh")
 
         #Get mesh size from config file
-        nv = get_config(config_path)["kinetic_" + mesh_type]["mesh_size"]
+        cfg = get_config(config_path)
+        nv = cfg["kinetic_" + mesh_type]["mesh_size"]
+        fctr = cfg["kinetic_" + mesh_type].get("grid_fctr", 1.0)
 
         # estimate Interaction rate with side walls
         #NOTE Commented gamma_wall calculations here, revisit later
@@ -119,15 +121,10 @@ class KineticMesh:
             minVr = vth*min(vr)
             minE0 = 0.5*CONST.H_MASS*(minVr**2) / CONST.Q
 
-            ion_rate_option = get_config(config_path)['kinetic_h']['ion_rate']
-            if ion_rate_option == 'collrad':
-                ioniz_rate = collrad_sigmav_ion_h0(nfine, Tefine)
-            elif ion_rate_option == 'jh':
-                if (jh == None):
-                    jh = Johnson_Hinnov()
-                ioniz_rate = jh.jhs_coef(nfine, Tefine, no_null = True)
-            else:
-                ioniz_rate = sigmav_ion_h0(Tefine)
+            # Hardwired to JH for comparison test with KN1D_python
+            if jh is None:
+                jh = Johnson_Hinnov()
+            ioniz_rate = jh.jhs_coef(nfine, Tefine, no_null=True)
             react_rate = nfine*(ioniz_rate + sigmav_cx_h0(Tifine, np.full(xfine.shape, minE0))) + gamma_wall
 
         elif mesh_type == 'h2':
@@ -148,18 +145,7 @@ class KineticMesh:
             if xpt_test > xmin:
                 dxpt2 = interp_1d(xfine, dx_max, xpt_test, fill_value="extrapolate")
 
-            # DO WE WANT TO IMPOSE A MINIMUM DXH HERE??
-            # OPTION 1) ENFORCE MINIMUM DXH
-            
-            # if mesh_type == 'h':
-            #     dxh_max = 0.0005 # JWH: 0.0015 should be sufficient for D3D because scale lengths are 2.5x larger
-            #     # lowered dxh_max from 5e-4 to 4e-4; original was giving mesh size errors in kinetic_h - nh
-            #     dxpt = min([dxpt1, dxpt2, dxh_max])
-            # elif mesh_type == 'h2':
-            #     dxpt = min([dxpt1,dxpt2])
-
-            # OPTION 2) NO MINIMUM DXH
-            dxpt = min([dxpt1,dxpt2])
+            dxpt = min([dxpt1, dxpt2])
 
             xpt -= dxpt 
         xH = np.concatenate([np.array([xmin]), xH[0:np.size(xH) - 1]])
