@@ -123,7 +123,7 @@ class KineticMesh:
             minVr = vth*min(vr)
             minE0 = 0.5*CONST.H_MASS*(minVr**2) / CONST.Q
 
-            # Hardwired to JH for comparison test with KN1D_python
+            # Hardwired to JH for comparison test with IDL
             if jh is None:
                 jh = Johnson_Hinnov()
             ioniz_rate = jh.jhs_coef(nfine, Tefine, no_null=True)
