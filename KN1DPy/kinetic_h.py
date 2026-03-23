@@ -447,12 +447,13 @@ class KineticH():
             # --- End Iteration ---
 
             if fH_iterate:
-                # Compute 'seed error': Delta_nHs=(|nHs-nH|)/max(nH) 
+                # Compute 'seed error': Delta_nHs=(|nHs-nH|)/max(nH)
                 # If Delta_nHs is less than 10*truncate then stop iterating fH
-
                 self.Internal.Delta_nHs = np.max(np.abs(nH_input - nH)) / np.max(nH)
                 if self.Internal.Delta_nHs <= 10*self.truncate:
                     break
+            else:
+                break  # No outer iteration needed when fH_iterate=False
 
 
         # --- Update Last Generation ---
@@ -505,7 +506,7 @@ class KineticH():
             m_sums.H_H += m_vals.H_H
             m_sums.H_P += m_vals.H_P
             m_sums.H_H2 += m_vals.H_H2
-            
+
             # Compute next generation molecular distribution
             OmegaM = collision_freqs.H_H*m_vals.H_H + collision_freqs.H_P*m_vals.H_P + collision_freqs.H_H2*m_vals.H_H2
             fHG[:] = 0
@@ -516,10 +517,10 @@ class KineticH():
             for k in range(nx):
                 NHG[k,igen] = np.sum(self.dvr_vol*(fHG[:,:,k] @ self.dvx))
 
-
             # Add result to total neutral distribution function
             fH += fHG
             nH += NHG[:,igen]
+
 
             # Compute 'generation error': Delta_nHG=max(NHG(*,igen)/max(nH))
             # and decide if another generation should be computed
