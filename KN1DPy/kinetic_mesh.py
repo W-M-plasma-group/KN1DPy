@@ -121,15 +121,10 @@ class KineticMesh:
             minVr = vth*min(vr)
             minE0 = 0.5*CONST.H_MASS*(minVr**2) / CONST.Q
 
-            ion_rate_option = get_config(config_path)['kinetic_h']['ion_rate']
-            if ion_rate_option == 'collrad':
-                ioniz_rate = collrad_sigmav_ion_h0(nfine, Tefine)
-            elif ion_rate_option == 'jh':
-                if (jh == None):
-                    jh = Johnson_Hinnov()
-                ioniz_rate = jh.jhs_coef(nfine, Tefine, no_null = True)
-            else:
-                ioniz_rate = sigmav_ion_h0(Tefine)
+            # Hardwired to JH for comparison test with KN1D_python
+            if jh is None:
+                jh = Johnson_Hinnov()
+            ioniz_rate = jh.jhs_coef(nfine, Tefine, no_null=True)
             react_rate = nfine*(ioniz_rate + sigmav_cx_h0(Tifine, np.full(xfine.shape, minE0))) + gamma_wall
 
         elif mesh_type == 'h2':
