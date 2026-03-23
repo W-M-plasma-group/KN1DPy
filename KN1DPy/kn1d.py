@@ -1,5 +1,10 @@
 import numpy as np
 from numpy.typing import NDArray
+
+# Just a little hack to mean that the code should work even
+# if it's run outside of the pixi envirnoment with old numpy versions
+if not hasattr(np, 'trapezoid'):
+    np.trapezoid = np.trapz
 from scipy import interpolate
 from dataclasses import dataclass
 import os

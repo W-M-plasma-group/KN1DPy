@@ -1,4 +1,5 @@
 # Utility Functions for KN1DPy
+from __future__ import annotations
 
 import json
 from typing import Any
@@ -116,13 +117,15 @@ def bs2dr(x, y, kx_ord, ky_ord, xknot, yknot, bscoef):
     '''
     IDL bs2dr translation equivalent
     '''
-    result = interpolate._dfitpack.bispeu(
-                yknot, xknot, 
-                bscoef,
-                kx_ord-1, ky_ord-1,
-                y, x
-            )[0]
-    return result
+    try:
+        import scipy.interpolate._dfitpack as _dfitpack
+        return _dfitpack.bispeu(yknot, xknot, bscoef, kx_ord-1, ky_ord-1, y, x)[0]
+    except ImportError:
+        # Fallback for scipy versions without _dfitpack: evaluate point-by-point
+        # using bisplev (grid evaluator), available in all scipy versions.
+        tck = (yknot, xknot, bscoef, kx_ord-1, ky_ord-1)
+        return np.array([interpolate.bisplev(np.array([y[i]]), np.array([x[i]]), tck).ravel()[0]
+                         for i in range(len(x))])
 
 
 # --- Table Searching ---

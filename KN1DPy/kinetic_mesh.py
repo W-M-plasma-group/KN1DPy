@@ -1,4 +1,5 @@
-import numpy as np 
+from __future__ import annotations
+import numpy as np
 from numpy.typing import NDArray
 
 from .utils import get_config, interp_1d, reverse
