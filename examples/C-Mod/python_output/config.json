@@ -1,0 +1,28 @@
+{
+    "kinetic_h": {
+        "mesh_size": 10,
+        "ion_rate": "jh",
+        "dvx_tolerance": 0.01,
+        "wpp_tolerance": 0.001,
+        "ci_test": true,
+        "alpha_cx_test": false,
+        "grid_fctr": 1.0
+    },
+    "kinetic_h2": {
+        "mesh_size": 6,
+        "dvx_tolerance": 0.01,
+        "wpp_tolerance": 0.001,
+        "ci_test": true,
+        "alpha_cx_test": false
+    },
+    "collisions": {
+        "H2_H_EL": true,
+        "H2_H2_EL": true,
+        "H2_P_EL": true,
+        "H2_P_CX": true,
+        "H_H_EL": true,
+        "H_P_EL": true,
+        "H_P_CX": true,
+        "SIMPLE_CX": true
+    }
+}

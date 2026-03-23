@@ -1,21 +1,23 @@
+import numpy as np
+
 # Contains Class definitions for shared variables primarily used in Kinetic_H2
 
 #   From the Kinetic_H_Output common block
 class Kinetic_H2_Output:
 
-    def __init__(self):
-        self.piH2_xx = None
-        self.piH2_yy = None
-        self.piH2_zz = None
-        self.RxH2CX = None
-        self.RxH_H2 = None
-        self.RxP_H2 = None
-        self.RxW_H2 = None
-        self.EH2CX = None
-        self.EH_H2 = None
-        self.EP_H2 = None
-        self.EW_H2 = None
-        self.Epara_PerpH2_H2 = None
+    def __init__(self, nx):
+        self.piH2_xx = np.zeros(nx)
+        self.piH2_yy = np.zeros(nx)
+        self.piH2_zz = np.zeros(nx)
+        self.RxH2CX = np.zeros(nx)
+        self.RxH_H2 = np.zeros(nx)
+        self.RxP_H2 = np.zeros(nx)
+        self.RxW_H2 = np.zeros(nx)
+        self.EH2CX = np.zeros(nx)
+        self.EH_H2 = np.zeros(nx)
+        self.EP_H2 = np.zeros(nx)
+        self.EW_H2 = np.zeros(nx)
+        self.Epara_PerpH2_H2 = np.zeros(nx)
 
     #Setup string conversion for printing
     def __str__(self):
@@ -158,6 +160,7 @@ class Kinetic_H2_Internal:
         self.SIG_H2_P = None
         self.Alpha_CX = None
         self.Alpha_H2_H = None
+        self.Alpha_H2_P = None
         self.MH2_H2_sum = None
         self.Delta_nH2s = 0.0
 
@@ -204,29 +207,5 @@ class Kinetic_H2_H_Moments:
         string += "    nH2: " + str(self.nH) + "\n"
         string += "    VxH2: " + str(self.VxH) + "\n"
         string += "    TH2: " + str(self.TH) + "\n"
-
-        return string
-    
-
-# Collection of Common Blocks used in Kinetic_H
-class Kinetic_H2_Common:
-
-    def __init__(self, output : Kinetic_H2_Output = None, errors : Kinetic_H2_Errors = None,
-                 input : Kinetic_H2_Input = None, internal : Kinetic_H2_Internal = None, moments : Kinetic_H2_H_Moments = None):
-        
-        self.Output = output if output else Kinetic_H2_Output()
-        self.Errors = errors if errors else Kinetic_H2_Errors()
-        self.Input = input if input else Kinetic_H2_Input()
-        self.Internal = internal if internal else Kinetic_H2_Internal()
-        self.Moments = moments if moments else Kinetic_H2_H_Moments()
-
-    #Setup string conversion for printing
-    def __str__(self):
-        string = "Kinetic_H2 Common Blocks:\n\n"
-        string += str(self.Output) + "\n"
-        string += str(self.Errors) + "\n"
-        string += str(self.Input) + "\n"
-        string += str(self.Internal) + "\n"
-        string += str(self.Moments) + "\n"
 
         return string

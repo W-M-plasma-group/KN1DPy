@@ -1,4 +1,5 @@
 .vscode/
+.pixi/
 __pycache__/
 /Inputs
 /Results
