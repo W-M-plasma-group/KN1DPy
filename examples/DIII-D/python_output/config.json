@@ -6,7 +6,7 @@
         "wpp_tolerance": 0.001,
         "ci_test": true,
         "alpha_cx_test": false,
-        "max_dx": null
+        "grid_fctr": 1.0
     },
     "kinetic_h2": {
         "mesh_size": 6,

@@ -6,11 +6,12 @@
         "wpp_tolerance" : 0.001,
         "ci_test" : true,
         "alpha_cx_test" : false,
-        "max_dx" : 0.0015
+        "grid_fctr" : 1.0
     },
 
     "kinetic_h2" : {
         "mesh_size" : 6,
+        "grid_fctr" : 1.0,
         "dvx_tolerance" : 0.01,
         "wpp_tolerance" : 0.001,
         "ci_test" : true,
