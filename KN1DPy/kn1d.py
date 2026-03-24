@@ -520,9 +520,10 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia,
             Lyman=Lyman,
             Balmer=Balmer)
 
-    # config snapshot
+    # config snapshot — read before opening to avoid truncating the source file
+    config_snapshot = get_config(config_path)
     with open(os.path.join(out_dir, 'config.json'), 'w') as f:
-        json.dump(get_config(config_path), f, indent=4)
+        json.dump(config_snapshot, f, indent=4)
 
     # Format Results into Dataclass
     results = KN1DResults(kh2_mesh.x, 
