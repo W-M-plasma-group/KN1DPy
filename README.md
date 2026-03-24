@@ -133,10 +133,9 @@ As well as the inputs, the settings for each run (e.g choice of atomic rate coef
 | Key              | Description |
 |------------------|-------------|
 | `mesh_size`      | Number of velocity grid points. Likely needs to be increased from default for cases with > 500 eV pedestals. |
-| `grid_fctr`      | Scales the physics-based maximum spatial grid spacing. Smaller values give a finer mesh. Default `0.3` (matching the IDL default). Increase towards `1.0` for faster runs where coarser mesh spacing is acceptable. |
-| `ion_rate`       | Ionization rate method: `"collrad"`, `"jh"` (Johnson–Hinnov), or `"janev"`. (`kinetic_h` only) |
-| `dvx_tolerance`  | Convergence tolerance on the velocity grid spacing (essentially to avoid a division by zero error). |
-| `wpp_tolerance`  | Convergence tolerance for the wall pressure (essentially to avoid a division by zero error). |
+| `grid_fctr`      | Scales the physics-based maximum spatial grid spacing. Smaller values give a finer mesh. Default `0.3` (matching the IDL default). Lower values mean finer resolution. |
+| `extra_energy_bins_eV` | Additional velocity grid points at the specified energies (eV). `kinetic_h` has no hardcoded energy bins, but `kinetic_h2` already has hardcoded energy bins at `0.003, 0.01, 0.03, 0.1, 0.3, 1.0, 3.0`, so any `kinetic_h2` inputs here will be in addition to these. Default `[]`. |
+| `ion_rate`       | Ionization rate method: `"adas"` (recommended), `"jh"` (Johnson–Hinnov), `"collrad"`, or `"janev"`. (`kinetic_h` only) |
 
 ### `collisions`
 

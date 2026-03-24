@@ -125,7 +125,7 @@ class KineticH():
 
 
     def __init__(self, mesh: KineticMesh, mu: int, vxi: NDArray, fHBC: NDArray, GammaxHBC: float, jh: Johnson_Hinnov = None,
-                 recomb: bool = True, ni_correct: bool = False, truncate: float = 1e-4, max_gen: int = 50,
+                 recomb: bool = True, ni_correct: bool = False, truncate: float = 1e-4, max_gen: int = 100,
                  compute_errors: bool = False, debrief: int = 0, debug: int = 0, config_path: str = './config.json'):
         '''
         Parameters
@@ -174,9 +174,10 @@ class KineticH():
         
         self.ion_rate_option = self.config['kinetic_h']['ion_rate']
 
-        # Internal Tolerances
-        self.DeltaVx_tol = self.config['kinetic_h']['dvx_tolerance']
-        self.Wpp_tol = self.config['kinetic_h']['wpp_tolerance']
+        # Small numerical tolerances to avoid divide-by-zero in velocity grid
+        # spacing and wall pressure calculations respectively.
+        self.DeltaVx_tol = 0.01
+        self.Wpp_tol = 0.001
 
         # Internal Debug switches
         self.CI_Test = self.config['kinetic_h']['ci_test']
@@ -489,8 +490,16 @@ class KineticH():
         igen = 0
         while True:
 
-            if igen >= self.max_gen or (not fH_generations):
-                self._debrief_msg('Completed '+sval(self.max_gen)+' generations. Returning present solution...', 0)
+            if igen >= self.max_gen:
+                raise Exception(
+                    f'Kinetic_H: failed to converge after {self.max_gen} generations. '
+                    f'The {self.max_gen}th generation is still contributing a non-negligible amount '
+                    f'to the total neutral density. This means there are neutrals undergoing '
+                    f'{self.max_gen} charge exchange or scattering events before ionisation, which '
+                    f'is unlikely in typical tokamak conditions and probably indicates a problem '
+                    f'with the input profiles.'
+                )
+            if not fH_generations:
                 break
             igen += 1
             self._debrief_msg('Computing atomic neutral generation#'+sval(igen), 0)

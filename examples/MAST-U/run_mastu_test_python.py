@@ -28,7 +28,7 @@ np.set_printoptions(linewidth=225)
 #  Paths (edit these as needed)
 # ------------------------------------------------------------------ #
 data_file   = 'examples/MAST-U/input/mastu_test_in.sav'
-config_path = './config.json'   # root config; swap for a per-example json if needed
+config_path = 'examples/MAST-U/python_output/config.json'
 output_file = 'examples/MAST-U/python_output'
 
 # ------------------------------------------------------------------ #
