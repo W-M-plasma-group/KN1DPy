@@ -537,8 +537,16 @@ class KineticH2():
         igen = 0
         while True:
 
-            if igen >= self.max_gen or (not fH2_iterate): 
-                self._debrief_msg('Completed '+sval(self.max_gen)+' generations. Returning present solution...', 0)
+            if igen >= self.max_gen:
+                raise Exception(
+                    f'Kinetic_H2: failed to converge after {self.max_gen} generations. '
+                    f'The {self.max_gen}th generation is still contributing a non-negligible amount '
+                    f'to the total neutral density. This means there are neutrals undergoing '
+                    f'{self.max_gen} charge exchange or scattering events before ionisation, which '
+                    f'is unlikely in typical tokamak conditions and probably indicates a problem '
+                    f'with the input profiles.'
+                )
+            if not fH2_iterate:
                 break
             igen += 1
             self._debrief_msg('Computing molecular neutral generation#'+sval(igen), 0)
