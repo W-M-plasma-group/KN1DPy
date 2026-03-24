@@ -139,7 +139,7 @@ class KineticH2():
 
 
     def __init__(self, mesh: KineticMesh, mu: int, vxi: NDArray, fH2BC: NDArray, GammaxH2BC: float, NuLoss: NDArray, SH2_initial: NDArray,
-                    sawada: bool = True, compute_h_source: bool = False, ni_correct: bool = False, truncate: float = 1.0e-4, max_gen: int = 50,
+                    sawada: bool = True, compute_h_source: bool = False, ni_correct: bool = False, truncate: float = 1.0e-4, max_gen: int = 100,
                     compute_errors: bool = False, debrief: int = 0, debug: int = 0, config_path: str = './config.json'):
         '''
         Parameters
@@ -190,9 +190,10 @@ class KineticH2():
         col = self.config['collisions']
         self.COLLISIONS = KH2Collisions(col['H2_H_EL'], col['H2_H2_EL'], col['H2_P_EL'], col['H2_P_CX'], col['SIMPLE_CX'])
 
-        # Internal Tolerances
-        self.DeltaVx_tol = self.config['kinetic_h2']['dvx_tolerance']
-        self.Wpp_tol = self.config['kinetic_h2']['wpp_tolerance']
+        # Small numerical tolerances to avoid divide-by-zero in velocity grid
+        # spacing and wall pressure calculations respectively.
+        self.DeltaVx_tol = 0.01
+        self.Wpp_tol = 0.001
 
         # Internal Debug switches
         self.CI_Test = self.config['kinetic_h2']['ci_test']

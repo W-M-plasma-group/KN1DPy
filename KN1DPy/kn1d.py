@@ -57,7 +57,7 @@ class KN1DResults():
  
 
 def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia,
-         truncate = 1.0e-3, max_gen = 50,
+         truncate = 1.0e-3, max_gen = 100,
          compute_errors = 0, debrief = 0,
          Hdebug = 0, Hdebrief = 0,
          H2debug = 0, H2debrief = 0, interp_debug = 0, File=None,
@@ -155,6 +155,8 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia,
     ion_rate_option = cfg['kinetic_h']['ion_rate']
     grid_fctr_h2 = cfg['kinetic_h2']['grid_fctr']
     grid_fctr_h  = cfg['kinetic_h']['grid_fctr']
+    extra_bins_h2 = np.array(cfg['kinetic_h2'].get('extra_energy_bins_eV', []))
+    extra_bins_h  = np.array(cfg['kinetic_h'].get('extra_energy_bins_eV', []))
     if ion_rate_option not in valid_ion_rates:
         raise Exception(prompt+"Invalid Ionization Rate Option used: '"+ion_rate_option+"', check config.json")
 
@@ -162,7 +164,7 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia,
     # --- Generate Meshes ---
 
     # Determine optimized vr, vx, grid for kinetc_h2 (molecules, M)
-    Eneut = np.array([0.003,0.01,0.03,0.1,0.3,1.0,3.0])
+    Eneut = np.unique(np.concatenate([[0.003,0.01,0.03,0.1,0.3,1.0,3.0], extra_bins_h2]))
     fctr_h2 = grid_fctr_h2
     if GaugeH2 > 15.0:
         fctr_h2 = fctr_h2 * 15 / GaugeH2
@@ -170,6 +172,7 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia,
     kh2_mesh = KineticMesh('h2', mu, x, Ti, Te, n, PipeDia, E0 = Eneut, fctr = fctr_h2, config_path = config_path)
 
     # Determine optimized vr, vx grid for kinetic_h (atoms, A)
+    E0_h = np.unique(extra_bins_h) if len(extra_bins_h) > 0 else np.array([0.0])
     fctr_h = grid_fctr_h
     if GaugeH2 > 30.0:
         fctr_h = fctr_h * 30 / GaugeH2
@@ -177,7 +180,7 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia,
     # Generates Johnson_Hinnov class, Used in place of IDL version's JH_Coef Common block
     jh = Johnson_Hinnov()
 
-    kh_mesh = KineticMesh('h', mu, x, Ti, Te, n, PipeDia, jh=jh, fctr=fctr_h, config_path=config_path)
+    kh_mesh = KineticMesh('h', mu, x, Ti, Te, n, PipeDia, jh=jh, E0=E0_h, fctr=fctr_h, config_path=config_path)
 
 
     # --- Initialize variables ---
