@@ -88,7 +88,7 @@ def make_adf11_interpolator(filename, block=0):
         scalar = (Te_eV.ndim == 0 and ne_cm3.ndim == 0)
         lTe    = np.clip(np.log10(np.atleast_1d(Te_eV).ravel()),  Te_lo, Te_hi)
         lne    = np.clip(np.log10(np.atleast_1d(ne_cm3).ravel()), ne_lo, ne_hi)
-        result = np.array([float(spl(lne[i], lTe[i])) for i in range(lTe.size)])
+        result = np.array([float(spl(lne[i], lTe[i]).item(0)) for i in range(lTe.size)])
         result = 10.0 ** result
         return float(result[0]) if scalar else result
 
