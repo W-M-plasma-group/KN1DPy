@@ -12,13 +12,35 @@ A comprehensive description of the algorithm can be found in this [PSFC report (
 
 ### Installation
 
-KN1DPy requires Python 3.12 and uses [pixi](https://pixi.sh) to manage dependencies. To set up the environment, clone the repository and run:
+KN1DPy requires Python ≥ 3.7. Three install options are available:
+
+**Option 1 — pip (recommended for most users)**
+
+Works with your existing Python environment and integrates easily with other packages.
+
+```bash
+git clone https://github.com/your-org/KN1DPy
+cd KN1DPy
+pip install -e .
+```
+
+**Option 2 — pixi (recommended if you use conda-based environments)**
+
+[pixi](https://pixi.sh) manages a self-contained conda environment. Useful if you need conda-forge packages alongside KN1DPy.
 
 ```bash
 curl -fsSL https://pixi.sh/install.sh | bash
 cd KN1DPy
 pixi install
 pixi shell
+```
+
+**Option 3 — pixi with locked environment (for exact reproduction of reference results)**
+
+A `pixi.lock` file pinning the exact environment used to generate the reference outputs is provided in `lock_files/`. Follow the same steps as Option 2, but after `cd KN1DPy` and before `pixi install`, copy the lock file to the repo root:
+
+```bash
+cp lock_files/pixi.lock .
 ```
 
 ### Running your own case

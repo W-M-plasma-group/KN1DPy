@@ -100,6 +100,7 @@ class KineticMesh:
 
         # Interpolate Ti and Te onto a fine mesh between xmin and xmax 
         xfine = xmin + (xmax - xmin)*np.arange(1001)/1000
+        xfine = np.clip(xfine, xmin, max(x)) # prevents numerical issues with interpolation outside of x range
 
         Tifine = interp_1d(x, Ti, xfine, fill_value="extrapolate")
         Tefine = interp_1d(x, Te, xfine)
