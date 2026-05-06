@@ -15,7 +15,7 @@ def input_directory():
 
 @pytest.fixture(scope="session")
 def config_path(input_directory: pathlib.Path):
-    return input_directory / "config.json"
+    return input_directory / "config.toml"
 
 
 @pytest.fixture(scope="session")
