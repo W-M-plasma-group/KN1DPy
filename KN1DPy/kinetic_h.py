@@ -129,7 +129,7 @@ class KineticH():
 
     def __init__(self, mesh: KineticMesh, mu: int, vxi: NDArray, fHBC: NDArray, GammaxHBC: float, jh: Johnson_Hinnov = None,
                  recomb: bool = True, ni_correct: bool = False, truncate: float = 1e-4, max_gen: int = 100,
-                 compute_errors: bool = False, debrief: int = 0, debug: int = 0, config_path: str = './config.json',
+                 compute_errors: bool = False, debrief: int = 0, debug: int = 0, config_path: str = './config.toml',
                  return_gen0: bool = False, return_all_generations: bool = False):
         '''
         Parameters

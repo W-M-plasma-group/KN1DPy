@@ -8,7 +8,7 @@ if not hasattr(np, 'trapezoid'):
 from scipy import interpolate
 from dataclasses import dataclass
 import os
-import json
+import tomli_w
 
 from .create_shifted_maxwellian import create_shifted_maxwellian
 from .make_dvr_dvx import VSpace_Differentials
@@ -61,7 +61,7 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia,
          compute_errors = 0, debrief = 0,
          Hdebug = 0, Hdebrief = 0,
          H2debug = 0, H2debrief = 0, interp_debug = 0, File=None,
-         config_path = './config.json',
+         config_path = './config.toml',
          return_gen0 = False, return_all_generations = False) -> dict:
     '''
     Computes the molecular and atomic neutral profiles for inputted profiles
@@ -159,7 +159,7 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia,
     extra_bins_h2 = np.array(cfg['kinetic_h2'].get('extra_energy_bins_eV', []))
     extra_bins_h  = np.array(cfg['kinetic_h'].get('extra_energy_bins_eV', []))
     if ion_rate_option not in valid_ion_rates:
-        raise Exception(prompt+"Invalid Ionization Rate Option used: '"+ion_rate_option+"', check config.json")
+        raise Exception(prompt+"Invalid Ionization Rate Option used: '"+ion_rate_option+"', check config.toml")
 
     
     # --- Generate Meshes ---
@@ -526,8 +526,8 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia,
 
     # config snapshot — read before opening to avoid truncating the source file
     config_snapshot = get_config(config_path)
-    with open(os.path.join(out_dir, 'config.json'), 'w') as f:
-        json.dump(config_snapshot, f, indent=4)
+    with open(os.path.join(out_dir, 'config.toml'), 'wb') as f:
+        tomli_w.dump(config_snapshot, f)
 
     # Format Results into Dataclass
     results = KN1DResults(kh2_mesh.x, 

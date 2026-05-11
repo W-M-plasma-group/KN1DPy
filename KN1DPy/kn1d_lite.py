@@ -53,7 +53,7 @@ def kn1d_lite(
     compute_errors=False,
     debrief=False,
     debug=False,
-    config_path='./config.json',
+    config_path='./config.toml',
     return_gen0=False,
     return_all_generations=False,
 ) -> KN1DLiteResults:
