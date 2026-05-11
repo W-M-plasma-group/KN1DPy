@@ -12,7 +12,15 @@ A comprehensive description of the algorithm can be found in this [PSFC report (
 
 ### Installation
 
-KN1DPy requires Python ≥ 3.7. Three install options are available:
+KN1DPy requires Python ≥ 3.12. If your system Python is older (common on HPC clusters), [uv](https://docs.astral.sh/uv/) is the easiest way to install a newer version without admin access:
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+uv python list        # shows available and installed Python versions
+uv python install 3.12 # example compatible Python version
+```
+
+Three install options are available:
 
 **Option 1 — pip (recommended for most users)**
 
@@ -53,7 +61,7 @@ The example run scripts (e.g. `examples/C-Mod/run_cmod_test_python.py`) can be u
 
 Three example cases are provided in the `examples/` directory: **C-Mod**, **MAST-U**, and **DIII-D**. Each includes input files, run scripts for both Python and IDL, pre-computed output files, and scripts for comparing and plotting the results.
 
-> **Note:** The Python version will only reproduce the IDL results exactly when run using the `config.json` that is saved alongside each set of outputs in `examples/<device>/python_output/`. 
+> **Note:** The Python version will only reproduce the IDL results exactly when run using the `config.toml` that is saved alongside each set of outputs in `examples/<device>/python_output/`. 
 
 All commands must be run from the **KN1DPy root directory**.
 
@@ -134,7 +142,7 @@ The main entry point is `kn1d()` in `KN1DPy/kn1d.py`. All array inputs should be
 
 ## Outputs
 
-When `File` is specified, `kn1d()` writes four `.npz` files and a copy of the active `config.json` to the output directory. The `.npz` files can be loaded with `numpy.load()`.
+When `File` is specified, `kn1d()` writes four `.npz` files and a copy of the active `config.toml` to the output directory. The `.npz` files can be loaded with `numpy.load()`.
 
 | File | Description |
 |------|-------------|
@@ -142,13 +150,13 @@ When `File` is specified, `kn1d()` writes four `.npz` files and a copy of the ac
 | `KN1D_H2.npz` | Molecular hydrogen results. The core output is `fH2`, the 2D velocity distribution function (vr × vx) on the molecular spatial grid `xH2`. Derived quantities include `nH2`, `GammaxH2`, `TH2`, and the atomic and ion source terms `SH` and `SP`. |
 | `KN1D_input.npz` | The input profiles (`Ti`, `Te`, `n`, etc.) interpolated onto both the atomic and molecular spatial grids, together with the velocity grid arrays (`vrA`, `vxA`, `vrM`, `vxM`). Useful for plotting inputs and outputs on the same axes. |
 | `KN1D_mesh.npz` | The raw velocity and spatial grid parameters used internally. |
-| `config.json` | A copy of the configuration used for this run, so the outputs are fully self-documenting. |
+| `config.toml` | A copy of the configuration used for this run, so the outputs are fully self-documenting. |
 
 ---
 
 ## Configuration
 
-As well as the inputs, the settings for each run (e.g choice of atomic rate coefficients and mesh sizes) can be controlled via `config.json` in the root directory (or a custom path passed via `config_path`). The settings that can be changed in the `config.json` file are as follows...
+As well as the inputs, the settings for each run (e.g choice of atomic rate coefficients and mesh sizes) can be controlled via `config.toml` in the root directory (or a custom path passed via `config_path`). The settings that can be changed in the `config.toml` file are as follows...
 
 ### `kinetic_h` and `kinetic_h2`
 

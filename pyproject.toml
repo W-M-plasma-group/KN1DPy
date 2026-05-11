@@ -5,12 +5,13 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "KN1DPy"
 version = "0.1.0"
-requires-python = ">=3.7"
+requires-python = ">=3.12"
 
 dependencies = [
-  "numpy>=1.21",
-  "scipy>=1.7",
+  "numpy>=2.1",
+  "scipy>=1.14",
   "matplotlib>=3.5",
+  "tomli-w>=1.0",
 ]
 
 [tool.pixi.workspace]
@@ -18,10 +19,11 @@ channels = ["conda-forge"]
 platforms = ["linux-64", "osx-arm64", "win-64"]
 
 [tool.pixi.dependencies]
-python = ">=3.7"
-numpy = ">=1.21"
-scipy = ">=1.7"
+python = ">=3.12"
+numpy = ">=2.1"
+scipy = ">=1.14"
 matplotlib = ">=3.5"
+tomli-w = ">=1.0"
 
 [tool.pixi.pypi-dependencies]
 KN1DPy = { path = ".", editable = true }

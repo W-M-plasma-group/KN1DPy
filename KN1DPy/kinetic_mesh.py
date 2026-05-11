@@ -1,4 +1,3 @@
-from __future__ import annotations
 import numpy as np
 from numpy.typing import NDArray
 
@@ -55,7 +54,7 @@ class KineticMesh:
             jh          : Johnson_Hinnov = None,
             E0          : NDArray = np.array([0.0]),
             fctr        : float   = None,
-            config_path : str     = './config.json'):
+            config_path : str     = './config.toml'):
 
         print("generating kinetic_" + mesh_type + "_mesh")
 

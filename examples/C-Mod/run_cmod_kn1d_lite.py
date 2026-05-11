@@ -13,7 +13,7 @@ from KN1DPy.kn1d_lite import kn1d_lite
 
 #  Settings
 data_file   = 'examples/C-Mod/input/cmod_test_in.sav'
-config_path = 'config.json'
+config_path = 'config.toml'
 incident_n0 = 1e15      # m^-3 — incident neutral density at separatrix
 energy_eV   = 3.0       # eV   — incident neutral energy
 

@@ -9,7 +9,7 @@ Inputs are loaded from the shared .sav file (same source as the IDL script).
 
 Config settings (mesh size, collision flags, etc.) are read from CONFIG_PATH
 below. A copy of the active config is automatically saved alongside the outputs
-as config.json inside the output directory.
+as config.toml inside the output directory.
 """
 
 import sys, os
@@ -26,7 +26,7 @@ np.set_printoptions(linewidth=225)
 #  Paths (edit these as needed)
 # ------------------------------------------------------------------ #
 data_file   = 'examples/DIII-D/input/diiid_test_in.sav'
-config_path = 'examples/DIII-D/python_output/config.json'
+config_path = 'examples/DIII-D/python_output/config.toml'
 output_file = 'examples/DIII-D/python_output'
 
 # ------------------------------------------------------------------ #

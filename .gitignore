@@ -181,3 +181,6 @@ Inputs/
 Results/
 dev_files/
 
+# ADAS data files (downloaded on first use — not redistributable)
+KN1DPy/rates/adas/*.dat
+
