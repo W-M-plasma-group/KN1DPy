@@ -1,6 +1,4 @@
 # Utility Functions for KN1DPy
-from __future__ import annotations
-
 import json
 import tomllib
 import tomli_w
