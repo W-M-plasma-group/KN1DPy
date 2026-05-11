@@ -3,7 +3,7 @@ Entry point for running kn1d_lite from an external environment via subprocess.
 
 Usage:
     /path/to/KN1DPy/.pixi/envs/default/bin/python run_kn1d_lite.py \
-        --input /path/to/input.npz --output /path/to/output.npz --config /path/to/config.json
+        --input /path/to/input.npz --output /path/to/output.npz --config /path/to/config.toml
 
 See docs/kn1d_lite.md for full usage instructions.
 """

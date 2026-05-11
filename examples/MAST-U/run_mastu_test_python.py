@@ -11,7 +11,7 @@ in IDL once (see examples/MAST-U/create_mastu_sav.pro).
 
 Config settings (mesh size, collision flags, etc.) are read from CONFIG_PATH
 below. A copy of the active config is automatically saved alongside the outputs
-as config.json inside the output directory.
+as config.toml inside the output directory.
 """
 
 import sys, os
@@ -28,7 +28,7 @@ np.set_printoptions(linewidth=225)
 #  Paths (edit these as needed)
 # ------------------------------------------------------------------ #
 data_file   = 'examples/MAST-U/input/mastu_test_in.sav'
-config_path = 'examples/MAST-U/python_output/config.json'
+config_path = 'examples/MAST-U/python_output/config.toml'
 output_file = 'examples/MAST-U/python_output'
 
 # ------------------------------------------------------------------ #
