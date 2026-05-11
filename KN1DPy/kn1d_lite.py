@@ -2,6 +2,7 @@ import numpy as np
 from numpy.typing import NDArray
 from scipy import interpolate
 from dataclasses import dataclass
+from typing import Optional
 
 from .make_dvr_dvx import VSpace_Differentials
 from .rates.johnson_hinnov.johnson_hinnov import Johnson_Hinnov
@@ -30,6 +31,8 @@ class KN1DLiteResults:
     Sion: NDArray
     fHBC: NDArray
     GammaxHBC: float
+    nH_gen0: Optional[NDArray] = None
+    nH_generations: Optional[NDArray] = None
 
 
 def kn1d_lite(
@@ -51,6 +54,8 @@ def kn1d_lite(
     debrief=False,
     debug=False,
     config_path='./config.json',
+    return_gen0=False,
+    return_all_generations=False,
 ) -> KN1DLiteResults:
     '''
     Run KN1D atomic neutral transport with a user-specified incident neutral
@@ -223,7 +228,8 @@ def kn1d_lite(
     kinetic_h = KineticH(kh_mesh, mu, vxiA, fHBC, GammaxHBC, jh=jh,
                          ni_correct=True, truncate=truncate, max_gen=max_gen,
                          compute_errors=compute_errors, debrief=debrief, debug=debug,
-                         config_path=config_path)
+                         config_path=config_path,
+                         return_gen0=return_gen0, return_all_generations=return_all_generations)
 
     kh_results = kinetic_h.run_procedure(fH2A, fSHA, fH_init, nHPA, THPA)
 
@@ -245,4 +251,6 @@ def kn1d_lite(
         Sion=kh_results.Sion,
         fHBC=fHBC,
         GammaxHBC=GammaxHBC,
+        nH_gen0=kh_results.nH_gen0,
+        nH_generations=kh_results.nH_generations,
     )

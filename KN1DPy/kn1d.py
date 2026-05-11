@@ -61,7 +61,8 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia,
          compute_errors = 0, debrief = 0,
          Hdebug = 0, Hdebrief = 0,
          H2debug = 0, H2debrief = 0, interp_debug = 0, File=None,
-         config_path = './config.json') -> dict:
+         config_path = './config.json',
+         return_gen0 = False, return_all_generations = False) -> dict:
     '''
     Computes the molecular and atomic neutral profiles for inputted profiles
     of Ti(x), Te(x), n(x), and molecular neutral pressure, GaugeH2, at the boundary using
@@ -288,7 +289,8 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia,
     kinetic_h = KineticH(kh_mesh, mu, vxiA, fHBC, GammaxHBC, jh=jh,
                          ni_correct=True, truncate=truncate, max_gen=max_gen,
                          compute_errors=compute_errors, debrief=Hdebrief, debug=Hdebug,
-                         config_path=config_path)
+                         config_path=config_path,
+                         return_gen0=return_gen0, return_all_generations=return_all_generations)
     
     kinetic_h2 = KineticH2(kh2_mesh, mu, vxiM, fh2BC, GammaxH2BC, NuLoss, SH2,
                             compute_h_source=True, ni_correct=True, truncate=truncate, max_gen=max_gen,
@@ -518,7 +520,9 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia,
             EH_hist=EH_hist,
             SI_hist=SI_hist,
             Lyman=Lyman,
-            Balmer=Balmer)
+            Balmer=Balmer,
+            **({'nH_gen0': kh_results.nH_gen0} if kh_results.nH_gen0 is not None else {}),
+            **({'nH_generations': kh_results.nH_generations} if kh_results.nH_generations is not None else {}))
 
     # config snapshot — read before opening to avoid truncating the source file
     config_snapshot = get_config(config_path)
