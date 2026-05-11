@@ -12,7 +12,15 @@ A comprehensive description of the algorithm can be found in this [PSFC report (
 
 ### Installation
 
-KN1DPy requires Python ≥ 3.7. Three install options are available:
+KN1DPy requires Python ≥ 3.12. If your system Python is older (common on HPC clusters), [uv](https://docs.astral.sh/uv/) is the easiest way to install a newer version without admin access:
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+uv python list        # shows available and installed Python versions
+uv python install 3.12 # example compatible Python version
+```
+
+Three install options are available:
 
 **Option 1 — pip (recommended for most users)**
 
