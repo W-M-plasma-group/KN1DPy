@@ -13,6 +13,10 @@ dependencies = [
   "matplotlib>=3.5",
 ]
 
+[project.scripts]
+kn1d = "KN1DPy.main:run"
+kn1d_lite = "KN1DPy.main:run_lite"
+
 [tool.pixi.workspace]
 channels = ["conda-forge"]
 platforms = ["linux-64", "osx-arm64", "win-64"]
