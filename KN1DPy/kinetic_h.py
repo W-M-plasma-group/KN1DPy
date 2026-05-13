@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Optional
 import numpy as np
 from numpy.typing import NDArray
 
@@ -78,6 +79,8 @@ class KHResults():
     QH_total: NDArray
     AlbedoH: float
     SideWallH: NDArray
+    nH_gen0: Optional[NDArray] = None
+    nH_generations: Optional[NDArray] = None
 
 
 class KineticH():
@@ -126,7 +129,8 @@ class KineticH():
 
     def __init__(self, mesh: KineticMesh, mu: int, vxi: NDArray, fHBC: NDArray, GammaxHBC: float, jh: Johnson_Hinnov = None,
                  recomb: bool = True, ni_correct: bool = False, truncate: float = 1e-4, max_gen: int = 100,
-                 compute_errors: bool = False, debrief: int = 0, debug: int = 0, config_path: str = './config.json'):
+                 compute_errors: bool = False, debrief: int = 0, debug: int = 0, config_path: str = './config.toml',
+                 return_gen0: bool = False, return_all_generations: bool = False):
         '''
         Parameters
         ----------
@@ -191,6 +195,8 @@ class KineticH():
         self.compute_errors = (compute_errors and debrief)
         self.recomb = recomb
         self.debug = debug
+        self.return_gen0 = return_gen0
+        self.return_all_generations = return_all_generations
 
         # Override settings for debug
         if self.debug > 0:
@@ -354,12 +360,17 @@ class KineticH():
 
         # --- Iteration ---
         
-        fH, nH, alpha_c, Beta_CX_sum, collision_freqs, m_sums = self._run_iteration_scheme(fH, nH, gamma_wall)
+        fH, nH, alpha_c, Beta_CX_sum, collision_freqs, m_sums, NHG, igen = self._run_iteration_scheme(fH, nH, gamma_wall)
 
 
         # --- Compute Results ---
 
         results = self._compile_results(fH, nH, fSH, gamma_wall, alpha_c, Beta_CX_sum, collision_freqs, m_sums)
+
+        if self.return_gen0:
+            results.nH_gen0 = NHG[:, 0].copy()
+        if self.return_all_generations:
+            results.nH_generations = NHG[:, :igen + 1].copy()
 
         if self.compute_errors:
             self._compute_final_errors(results, Beta_CX_sum, m_sums, alpha_c, collision_freqs)
@@ -469,8 +480,8 @@ class KineticH():
         m_sums.H_P += m_vals.H_P
         m_sums.H_H2 += m_vals.H_H2
 
-        return fH, nH, alpha_c, Beta_CX_sum, collision_freqs, m_sums
-    
+        return fH, nH, alpha_c, Beta_CX_sum, collision_freqs, m_sums, NHG, igen
+
 
     def _run_generations(self, fH, nH, fHG, NHG, meq_coeffs, collision_freqs, fH_iterate):
         '''

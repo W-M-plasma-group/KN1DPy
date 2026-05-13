@@ -5,14 +5,25 @@ New for the python version. Option to use the ADAS ionisation and recombination 
 import numpy as np
 from scipy.interpolate import RectBivariateSpline
 import os
+import urllib.request
 
 ADAS_DIR = os.path.dirname(os.path.abspath(__file__))
+
+_ADAS_FILES = {
+    'scd12_h.dat': 'https://open.adas.ac.uk/download/adf11/scd12/scd12_h.dat',
+    'acd12_h.dat': 'https://open.adas.ac.uk/download/adf11/acd12/acd12_h.dat',
+}
 
 def _adas_path(filename):
     """Return the full path to an ADAS data file stored next to this module."""
     return os.path.join(ADAS_DIR, filename)
 
-# ── your reader (unchanged) ───────────────────────────────────────────────────
+def _ensure_adas_data():
+    for filename, url in _ADAS_FILES.items():
+        path = _adas_path(filename)
+        if not os.path.exists(path):
+            print(f"Downloading ADAS data file: {filename}")
+            urllib.request.urlretrieve(url, path)
 
 def read_adf11(filename):
     with open(filename, 'r') as f:
@@ -95,7 +106,7 @@ def make_adf11_interpolator(filename, block=0):
     return interpolator
 
 
-# Build interpolators once at import time
+_ensure_adas_data()
 _scd_interp = make_adf11_interpolator(_adas_path('scd12_h.dat'), block=0)
 _acd_interp = make_adf11_interpolator(_adas_path('acd12_h.dat'), block=0)
 
