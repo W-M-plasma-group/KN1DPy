@@ -1,43 +1,56 @@
+from numpy.typing import NDArray, ArrayLike
 import numpy as np
 
 from .make_dvr_dvx import VSpace_Differentials
 from .common import constants as CONST
 
-def compensate_distribution(f_slice, vdiff, vr, vx, vth, target_vx, target_energy, nb = 1, assume_pos = True):
-    '''
+
+def compensate_distribution(
+    f_slice: NDArray,
+    vdiff: VSpace_Differentials,
+    vr: NDArray,
+    vx: NDArray,
+    vth: NDArray,
+    target_vx: NDArray,
+    target_energy: NDArray,
+    nb: ArrayLike = 1,
+    assume_pos: bool = True,
+) -> tuple[NDArray, float]:
+    """
     Custom Compensation scheme to give a distribution desired moments. Performs on one slice of the distribution.
 
     Parameters
     ----------
-        f_slice : ndarray
-            Slice of distribution fucntion
-        vdiff : VSpace_Differentials
-            Velocity space differentials for distribution function
-        vr : ndarray
-            Radial Velocities
-        vx : ndarray
-            Axial Velocities
-        vth : ndarray
-            Thermal Velocities
-        target_vx : ndarray
-            Target vx moment for distribution slice
-        target_energy : ndarray
-            Target energy moment for distribution slice
-        nb : ndarray
-            Density factor (Used in interp_fvrvxx)
-        assume_pos : bool
-            Sets whether the function assumes the distribution is positive
-            Defaults to (True)
+    f_slice :
+        Slice of distribution fucntion
+    vdiff :
+        Velocity space differentials for distribution function
+    vr :
+        Radial Velocities
+    vx :
+        Axial Velocities
+    vth :
+        Thermal Velocities
+    target_vx :
+        Target vx moment for distribution slice
+    target_energy :
+        Target energy moment for distribution slice
+    nb :
+        Density factor (Used in interp_fvrvxx)
+    assume_pos :
+        Sets whether the function assumes the distribution is positive
+        Defaults to (True)
 
     Returns
     -------
-        f_slice : ndarray
-            Adjusted distribution function
-        s : float
-            Correction scalar (Used in interp_fvrvxx)
-    '''
-    
-    #NOTE Get nb name checked
+    f_slice : ndarray
+        Adjusted distribution function
+    s : float
+        Correction scalar (Used in interp_fvrvxx)
+
+    """
+
+    # NOTE Get nb name checked
 
     vth_diffs = np.zeros((vr.size, vx.size, 2), float)
     vrvx_diffs = np.zeros((vr.size, vx.size, 2), float)
@@ -157,50 +170,52 @@ def compensate_distribution(f_slice, vdiff, vr, vx, vth, target_vx, target_energ
 
 # NOTE Look at PlasmaPy, specifically plasmapy.formulary.distribution.Maxwellian_velocity_2D
 # NOTE Adjust Docstring for accuracy
-def create_shifted_maxwellian(vr,vx,Tmaxwell,vx_shift,mu,mol,Tnorm):
-    '''
-    Creates a shifted maxwellian distrubution with a desired temperature and vx moment
+def create_shifted_maxwellian(vr, vx, Tmaxwell, vx_shift, mu, mol, Tnorm):
+    """Creates a shifted maxwellian distrubution with a desired temperature and vx moment
 
     Parameters
     ----------
-        vr : ndarray
-            radial velocities
-        vx : ndarray
-            axial velocities
-        Tmaxwell : ndarray
-            Desired temperature moments, (eV)
-        vx_shift : ndarray
-            Desired vx moments, (m s^-1)
-        mu : int
-            1=hydrogen, 2=deuterium
-        mol : int
-            1=atom, 2=diatomic molecule
-        Tnorm : ndarray
-            Average Temperatures
-            
+    vr : ndarray
+        radial velocities
+    vx : ndarray
+        axial velocities
+    Tmaxwell : ndarray
+        Desired temperature moments, (eV)
+    vx_shift : ndarray
+        Desired vx moments, (m s^-1)
+    mu : int
+        1=hydrogen, 2=deuterium
+    mol : int
+        1=atom, 2=diatomic molecule
+    Tnorm : ndarray
+        Average Temperatures
+
     Returns
     -------
-        Maxwell : ndarray
-           3D array of shape (len(vr), len(vx), len(vx_shift)) 
-           Shifted Maxwellian distribution function having numerically 
-           evaluated vx moment close to Vx_shift and temperature close to Tmaxwell
+    Maxwell : ndarray
+        3D array of shape ``(len(vr), len(vx), len(vx_shift))``.
+        Shifted Maxwellian distribution function having numerically
+        evaluated vx moment close to Vx_shift and temperature close to Tmaxwell
 
     Notes
-    -------
-        One might think that Maxwell could be simply computed by a direct evaluation of the EXP function:
+    -----
+    One might think that Maxwell could be simply computed by a direct evaluation
+    of the EXP function::
 
-            for i=0,nvr-1 do begin
-                arg=-(vr(i)^2+(vx-Vx_shift/vth)^2) * mol*Tnorm/Tmaxwell
-                Maxwell(i,*,k)=exp(arg > (-80))
-            endfor
+        for i in range(nvr-1):
+            arg = -(vr(i)^2+(vx-Vx_shift/vth)^2) * mol*Tnorm/Tmaxwell
+            Maxwell[i,:,k] = exp(arg > (-80))
 
-        But owing to the discrete velocity space bins, this method does not necessarily lead to a digital representation 
-        of a shifted Maxwellian (Maxwell) that when integrated numerically has the desired vx moment of Vx_shift
-        and temperature, Tmaxwell.
+    But owing to the discrete velocity space bins, this method does not
+    necessarily lead to a digital representation of a shifted Maxwellian
+    (Maxwell) that when integrated numerically has the desired vx moment of
+    Vx_shift and temperature, Tmaxwell.
 
-        In order to insure that Maxwell has the desired vx and T moments when evaluated numerically, a compensation
-        scheme is employed - similar to that used in Interp_fVrVxX. See compensate_distribution()
-    '''
+    In order to insure that Maxwell has the desired vx and T moments when
+    evaluated numerically, a compensation scheme is employed - similar to that
+    used in Interp_fVrVxX. See `compensate_distribution()`
+
+    """
 
     maxwell = np.zeros((vr.size, vx.size, vx_shift.size), float)
     vth = np.sqrt(2*CONST.Q*Tnorm / (mu*CONST.H_MASS)) #Thermal Velocity

@@ -1,3 +1,4 @@
+from typing import Optional
 from dataclasses import dataclass
 import numpy as np
 from numpy.typing import NDArray
@@ -59,25 +60,39 @@ class CollisionType():
 
 @dataclass
 class KHResults():
-    '''
-    Variables for results of KineticH.run_procedure()
-    See run_procedure for more detail on individual variables
-    '''
+    """
+    Variables for results of `KineticH.run_procedure()`
+    """
     fH: NDArray
+    """3D array, atomic distribution function."""
     nH: NDArray
+    """Neutral atom density profile (m^-3)."""
     GammaxH: NDArray
+    """Neutral flux profile (m^-2 s^-1)"""
     VxH: NDArray
+    """Neutral velocity profile (m s^-1)"""
     pH: NDArray
+    """Neutral pressure (eV m^-2)"""
     TH: NDArray
+    """Neutral temperature profile (eV)"""
     qxH: NDArray
+    """Neutral random heat flux profile (watts m^-2)"""
     qxH_total: NDArray
+    """Total neutral heat flux profile (watts m^-2)"""
     NetHSource: NDArray
+    """Net H0 source (m^-3 s^-1)"""
     Sion: NDArray
+    """H ionization rate (m^-3 s^-1)"""
     QH: NDArray
+    """Rate of net thermal energy transfer into neutral atoms (watts m^-3)"""
     RxH: NDArray
+    """Rate of x momentum transfer to neutral atoms (N m^-2)"""
     QH_total: NDArray
+    """Net rate of total energy transfer into neutral atoms (watts m^-3)"""
     AlbedoH: float
+    """Ratio of atomic particle flux with Vx < 0 divided by particle flux with Vx > 0 at x=0"""
     SideWallH: NDArray
+    """Atomic sink rate from interation with 'side walls' (m^-3 s^-1)"""
 
 
 class KineticH():
@@ -124,44 +139,44 @@ class KineticH():
     prompt = 'Kinetic_H => '
 
 
-    def __init__(self, mesh: KineticMesh, mu: int, vxi: NDArray, fHBC: NDArray, GammaxHBC: float, jh: Johnson_Hinnov = None,
+    def __init__(self, mesh: KineticMesh, mu: int, vxi: NDArray, fHBC: NDArray, GammaxHBC: float, jh: Optional[Johnson_Hinnov] = None,
                  recomb: bool = True, ni_correct: bool = False, truncate: float = 1e-4, max_gen: int = 100,
                  compute_errors: bool = False, debrief: int = 0, debug: int = 0, config_path: str = './config.json'):
         '''
         Parameters
         ----------
-            mesh : KineticMesh
-                Mesh data for h kinetic procedure, must be of type 'h'
-                Includes coordinate data and temperature/density profiles
-            mu : int
-                1=hydrogen, 2=deuterium
-            vxi : ndarray
-                flow speed profile (m/s)
-            fHBC : ndarray
-                2D array, input boundary condition. Specifies shape of atom velocity distribution (fH) at x=0
-            GammaxHBC : float
-                Desired neutral atom flux density at x=0 (m^-2 s^-1)
-            jh_coeffs : JH_Coef, defualt=None
-                Common blocks used to pass data for JH methods
-            recomb : bool, default=True
-                If true, includes recombination as a source of atomic neutrals in the algorithm
-            ni_correct : bool, default=False
-                If true, Corrects hydrogen ion density according to quasineutrality: ni=ne-nHp
-            truncate : float, default=1.0e-4
-                Convergence threshold for generations
-            max_gen : int, default=50
-                Max number of generations
-            compute_errors : bool, default=False
-                If true, compute error estimates
-            debug : int, default=0
-                - 0=do not execute debug code
-                - 1=summary debug
-                - 2=detail debug
-                - 3=very detailed debug
-            debrief : int, default=0
-                - 0=do not print
-                - 1=print summary information
-                - 2=print detailed information
+        mesh :
+            Mesh data for h kinetic procedure, must be of type 'h'
+            Includes coordinate data and temperature/density profiles
+        mu :
+            1=hydrogen, 2=deuterium
+        vxi :
+            flow speed profile (m/s)
+        fHBC :
+            2D array, input boundary condition. Specifies shape of atom velocity distribution (fH) at x=0
+        GammaxHBC :
+            Desired neutral atom flux density at x=0 (m^-2 s^-1)
+        jh :
+            Common blocks used to pass data for JH methods
+        recomb :
+            If true, includes recombination as a source of atomic neutrals in the algorithm
+        ni_correct :
+            If true, Corrects hydrogen ion density according to quasineutrality: ni=ne-nHp
+        truncate :
+            Convergence threshold for generations
+        max_gen :
+            Max number of generations
+        compute_errors :
+            If true, compute error estimates
+        debug :
+            - 0=do not execute debug code
+            - 1=summary debug
+            - 2=detail debug
+            - 3=very detailed debug
+        debrief :
+            - 0=do not print
+            - 1=print summary information
+            - 2=print detailed information
         '''
 
         # --- Settings ---
@@ -264,51 +279,16 @@ class KineticH():
 
         Parameters
         ----------
-            fH2 : ndarray, default=None
-                3D array, molecular distribution function. If None, H-H2 collisions are not computed
-            fSH : ndarray, defualt=None
-                Source velocity distribution function. If None, zero array is used
-            fH : ndarray, default=None
-                3D array, atomic distribution function. If None, zero array is used
-            nHP : ndarray, defualt=None
-                Molecular ion density profile (m^-3). If None, zero array is used
-            THP : ndarray, defualt=None
-                Molecular ion temperature profile (m^-3). If None, array of 3.0 used
-
-        Returns
-        -------
-        KHResults
-
-            fH : ndarray
-                3D array, atomic distribution function.
-            nH : ndarray, defualt=None
-                Neutral atom density profile (m^-3).
-            GammaxH : ndarray
-                Neutral flux profile (m^-2 s^-1)
-            VxH : ndarray
-                Neutral velocity profile (m s^-1)
-            pH : ndarray
-                Neutral pressure (eV m^-2)
-            TH : ndarray
-                Neutral temperature profile (eV)
-            qxH : ndarray
-                Neutral random heat flux profile (watts m^-2)
-            qxH_total : ndarray
-                Total neutral heat flux profile (watts m^-2)
-            NetHSource : ndarray
-                Net H0 source (m^-3 s^-1)
-            Sion : ndarray
-                H ionization rate (m^-3 s^-1)
-            QH : ndarray
-                Rate of net thermal energy transfer into neutral atoms (watts m^-3)
-            RxH : ndarray
-                Rate of x momentum transfer to neutral atoms (N m^-2)
-            QH_total : ndarray
-                Net rate of total energy transfer into neutral atoms (watts m^-3)
-            AlbedoH : float
-                Ratio of atomic particle flux with Vx < 0 divided by particle flux with Vx > 0 at x=0
-            SideWallH : ndarray
-                Atomic sink rate from interation with 'side walls' (m^-3 s^-1)
+        fH2 : ndarray
+            3D array, molecular distribution function. If None, H-H2 collisions are not computed
+        fSH : ndarray
+            Source velocity distribution function. If None, zero array is used
+        fH : ndarray, default=None
+            3D array, atomic distribution function. If None, zero array is used
+        nHP : ndarray
+            Molecular ion density profile (m^-3). If None, zero array is used
+        THP : ndarray
+            Molecular ion temperature profile (m^-3). If None, array of 3.0 used
         '''
 
         nvr, nvx, nx = self.nvr, self.nvx, self.nx

@@ -1,3 +1,4 @@
+from typing import Optional
 import numpy as np
 from warnings import warn
 
@@ -13,17 +14,17 @@ def _get_interpolation_bounds(a, b, a_name="a", b_name="b"):
 
     Parameters
     ----------
-        a : ndarray
-            array that determines bounds of b
-        b : ndarray
-            array being bounded
-        a_name, b_name : str (optional)
-            variable names for exception message
+    a : ndarray
+        array that determines bounds of b
+    b : ndarray
+        array being bounded
+    a_name, b_name : str (optional)
+        variable names for exception message
 
     Returns
     -------
-        tuple : (int, int)
-            start, end of the interpolation range
+    tuple : (int, int)
+        start, end of the interpolation range
     
     Raises
     -------
@@ -43,24 +44,24 @@ def _test_bounds(fb, test_bound : Bound, var_len, test_axis, iter_bound1 : Bound
 
     Parameters
     ----------
-        fb : ndarray
-            3D array, distribution function
-        test_bound : Bound
-            boundary being tested
-        var_len : int
-            Length of the variable distribution whose bound is being tested
-        test_axis : int
-            Determines axis for slicing fb, 0, 1, or 2
-        iter_bound1, iter_bound2 : Bound
-            Boundaries being tested over
-        do_warn : float
-            Acceptable truncation level
-        var_name : str (optional)
-            variable name for warning message
+    fb : ndarray
+        3D array, distribution function
+    test_bound : Bound
+        boundary being tested
+    var_len : int
+        Length of the variable distribution whose bound is being tested
+    test_axis : int
+        Determines axis for slicing fb, 0, 1, or 2
+    iter_bound1, iter_bound2 : Bound
+        Boundaries being tested over
+    do_warn : float
+        Acceptable truncation level
+    var_name : str (optional)
+        variable name for warning message
     
     Issues
     -------
-        Warning if 0 found at boundary edge
+    Warning if 0 found at boundary edge
     '''
 
     big = np.max(fb)
@@ -87,35 +88,35 @@ def _test_bounds(fb, test_bound : Bound, var_len, test_axis, iter_bound1 : Bound
             warn(f"Non-zero value of fb detected at max({var_name}) boundary")
 
 
-def interp_fvrvxx(fa: np.ndarray, mesh_a : KineticMesh, mesh_b : KineticMesh, do_warn=None, debug=False, correct=1):
+def interp_fvrvxx(fa: np.ndarray, mesh_a : KineticMesh, mesh_b : KineticMesh, do_warn: Optional[float] =None, debug: bool=False, correct=1):
     '''
     Interpolates distribution functions used by kinetic neutral procedures
 
     Parameters
     ----------
-        fa : ndarray
-            Input distribution function, 3D array of shape (vra, vxa, xa)
-        mesh_a : KineticMesh
-            Mesh information for input distribution
-        mesh_b : KineticMesh
-            Mesh information for desired output distribution
-        do_warn : float or None (optional)
-            Accebtable truncation level. If None, warnings are not generated
-                For interpolations outside the phase space set by
-                (Vra, Vxa, Xa), the values of fb are set to zero.
-                This may not be acceptable. A test is performed on
-                fb at the boundaries. If fb at the boundaries is greater
-                than do_warn times the maximum value of fb,
-                a warning message is generated.
-        debug : bool
-            If True, generate debug statements
+    fa :
+        Input distribution function, 3D array of shape (vra, vxa, xa)
+    mesh_a :
+        Mesh information for input distribution
+    mesh_b :
+        Mesh information for desired output distribution
+    do_warn :
+        Accebtable truncation level. If None, warnings are not generated.
+        For interpolations outside the phase space set by
+        (Vra, Vxa, Xa), the values of fb are set to zero.
+        This may not be acceptable. A test is performed on
+        fb at the boundaries. If fb at the boundaries is greater
+        than do_warn times the maximum value of fb,
+        a warning message is generated.
+    debug : bool
+        If True, generate debug statements
             
     Returns
     -------
-        fb : ndarray
-            Interpolated distribution function, scaled if necessary to make its 
-            digital integral over all velocity space equal to that of fa
-            3D array of of shape (vrb, vxb, xb)
+    fb : ndarray
+        Interpolated distribution function, scaled if necessary to make its
+        digital integral over all velocity space equal to that of fa
+        3D array of of shape (vrb, vxb, xb)
     '''
 
     prompt = 'INTERP_FVRVXX => '

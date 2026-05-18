@@ -1,6 +1,6 @@
 import os
 import numpy as np
-from numpy.typing import NDArray
+from numpy.typing import NDArray, ArrayLike
 from scipy import interpolate
 
 from ...utils import get_local_directory, bs2dr
@@ -44,7 +44,7 @@ class Johnson_Hinnov():
 
         Parameters
         ----------
-            create : bool, default = False
+            create : bool
                 If set, regenerate coefficients
                 NOTE This feature is currently not working, use file in github
         '''
@@ -72,16 +72,16 @@ class Johnson_Hinnov():
 
         Parameters
         ----------
-            Density	: ndarray
+            Density :
                 electron density (=hydrogen ion density) (m^-3)
-            Te : ndarray
+            Te :
                 electron temperature (eV
             Ion	: int
                 - 0=return "recombination" coeffcient, r0(p)
                 - 1=return "ionization" coeffcient, r1(p)
-            p : int
+            p :
                 hydrogen energy level, p=1 is ground state 
-            no_null : bool, default=False
+            no_null :
                 if true, then rather than generate a NULL value when Density and Te
                 are outside the data range, compute the rate based on the min or max
                 data range values.
@@ -236,16 +236,16 @@ class Johnson_Hinnov():
         
         Parameters
         ----------
-         	Density : ndarray
-                electron density (=hydrogen ion density) (m^-3)
-         	Te : ndarray
-                electron temperature (eV)
-         	N0 : ndarray
-                ground state neutral density (m^-3)
-        	no_null : bool, default=false
-                if true, then rather than generate a NULL value when Density and Te
-                are not null but still outside the data range, compute the rate based on the min or max
-        		data range values.
+        Density :
+             electron density (=hydrogen ion density) (m^-3)
+        Te :
+             electron temperature (eV)
+        N0 :
+             ground state neutral density (m^-3)
+        no_null :
+             if true, then rather than generate a NULL value when Density and Te
+             are not null but still outside the data range, compute the rate based on the min or max
+             data range values.
         '''
         
         # From Johnson-Hinnov, eq (11):
@@ -269,7 +269,7 @@ class Johnson_Hinnov():
         return result
 
 
-    def balmer_alpha(self, Density : NDArray, Te : NDArray, N0 : NDArray, photons = 0, no_null = 0) -> NDArray:
+    def balmer_alpha(self, Density : NDArray, Te : NDArray, N0 : NDArray, photons: ArrayLike = 0, no_null: bool = False) -> NDArray:
         '''
         Computes Balmer-alpha emissivity (watts m^-3) given the local
         electron density, electron temperature, and ground-state
@@ -284,16 +284,16 @@ class Johnson_Hinnov():
         
         Parameters
         ----------
-            Density : ndarray
-                electron density (=hydrogen ion density) (m^-3)
-            Te : ndarray
-                electron temperature (eV
-            N0 : ndarray
-                ground state neutral density (m^-3)
-            No_Null : bool, default=false
-                if set, then rather than generate a NULL value when Density and Te
-                are not null but still outside the data range, compute the rate based on the min or max
-                data range values.
+        Density :
+            electron density (=hydrogen ion density) (m^-3)
+        Te :
+            electron temperature (eV
+        N0 :
+            ground state neutral density (m^-3)
+        No_Null :
+            if set, then rather than generate a NULL value when Density and Te
+            are not null but still outside the data range, compute the rate based on the min or max
+            data range values.
         '''
 
         # From Johnson-Hinnov, eq (11):

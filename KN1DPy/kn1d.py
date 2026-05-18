@@ -76,40 +76,40 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia,
 
     Parameters
     ----------
-        x : ndarray(nx)
-            Cross-field coordinate (meters)
-        xlimiter : float
-            Cross-field coordinate of limiter edge (meters) (for graphic on plots)
-        xsep : float
-            Cross-field coordinate separatrix (meters) (for graphic on plots)
-        GaugeH2	: float
-            Molecular pressure (mtorr)
-        mu : float
-            1=hydrogen, 2=deuterium
-        Ti : ndarray(nx)
-            Ion temperature profile (eV)
-        Te : ndarray(nx)
-            Electron temperature profile (eV)
-        n : ndarray(nx)
-            Density profile (m^-3)
-        vxi	: ndarray(nx)
-            Plasma velocity profile [negative is towards 'wall' (m s^-1)]
-        LC : ndarray(nx)
-            Connection length (surface to surface) along field lines to nearest limiters (meters)
-                Zero values of LC are treated as LC=infinity.
-        PipeDia	: ndarray(nx)
-            Effective pipe diameter (meters)
-                This variable allows collisions with the 'side-walls' to be simulated.
-                If this variable is undefined, then PipeDia set set to zero. Zero values
-                of PipeDia are ignored (i.e., treated as an infinite diameter).
-        truncate : float, default=1.0e-3
-            Convergence threshold for generations
-                fH and fH2 are refined by iteration via routines Kinetic_H2 and Kinetic_H
-                until the maximum change in molecular neutral density (over its profile) normalized to 
-                the maximum value of molecular density is less than this 
-                value in a subsequent iteration.
-        max_gen : int, default=50
-            Maximum number of collision generations to try including before giving up.
+    x : ndarray(nx)
+        Cross-field coordinate (meters)
+    xlimiter : float
+        Cross-field coordinate of limiter edge (meters) (for graphic on plots)
+    xsep : float
+        Cross-field coordinate separatrix (meters) (for graphic on plots)
+    GaugeH2 : float
+        Molecular pressure (mtorr)
+    mu : float
+        1=hydrogen, 2=deuterium
+    Ti : ndarray(nx)
+        Ion temperature profile (eV)
+    Te : ndarray(nx)
+        Electron temperature profile (eV)
+    n : ndarray(nx)
+        Density profile (m^-3)
+    vxi	: ndarray(nx)
+        Plasma velocity profile [negative is towards 'wall' (m s^-1)]
+    LC : ndarray(nx)
+        Connection length (surface to surface) along field lines to nearest limiters (meters)
+            Zero values of LC are treated as LC=infinity.
+    PipeDia : ndarray(nx)
+        Effective pipe diameter (meters)
+            This variable allows collisions with the 'side-walls' to be simulated.
+            If this variable is undefined, then PipeDia set set to zero. Zero values
+            of PipeDia are ignored (i.e., treated as an infinite diameter).
+    truncate : float
+        Convergence threshold for generations
+            fH and fH2 are refined by iteration via routines Kinetic_H2 and Kinetic_H
+            until the maximum change in molecular neutral density (over its profile) normalized to 
+            the maximum value of molecular density is less than this 
+            value in a subsequent iteration.
+    max_gen : int
+        Maximum number of collision generations to try including before giving up.
 
     Returns
     -------

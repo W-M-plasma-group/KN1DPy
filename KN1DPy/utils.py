@@ -5,7 +5,7 @@ import json
 from typing import Any
 import os
 
-from numpy.typing import NDArray
+from numpy.typing import NDArray, ArrayLike
 import numpy as np
 from scipy import interpolate
 from scipy.io import readsav
@@ -74,20 +74,20 @@ class Bound:
 
 # --- Polynomials ---
 
-def poly(x, c):
+def poly(x: ArrayLike, c: ArrayLike):
     '''
     Evaluate a polynomial at one or more points
 
     Parameters
     ----------
-        x : float or ndarray
+        x :
             Variable/s to evaluate the polynomial at
-        c : ndarray
+        c :
             array of polynomial coefficients
             
     Returns
     -------
-        y : float or ndarray
+        y : float or NDArray
             Value of the polynomial evaluated at x, array of values if x is an array
     '''
 

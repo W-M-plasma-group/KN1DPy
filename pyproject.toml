@@ -5,12 +5,20 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "KN1DPy"
 version = "0.1.0"
-requires-python = ">=3.7"
+requires-python = ">=3.11"
 
 dependencies = [
   "numpy>=1.21",
   "scipy>=1.7",
   "matplotlib>=3.5",
+]
+
+[dependency-groups]
+docs = [
+    "sphinx >=7,<10",
+    "sphinx_autodoc_typehints >= 1.19",
+    "sphinx-book-theme ~= 1.2.0",
+    "myst_parser >= 0.14.0",
 ]
 
 [tool.pixi.workspace]

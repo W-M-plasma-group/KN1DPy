@@ -1,3 +1,4 @@
+from typing import Optional
 from dataclasses import dataclass
 import numpy as np
 from numpy.typing import NDArray
@@ -144,42 +145,42 @@ class KineticH2():
         '''
         Parameters
         ----------
-            mesh : KineticMesh
-                Mesh data for h2 kinetic procedure, must be of type 'h2'
-                Includes coordinate data and temperature/density profiles
-            mu : int
-                1=hydrogen, 2=deuterium
-            vxi : ndarray
-                flow speed profile (m/s)
-            fH2BC : ndarray
-                2D array, input boundary condition. Specifies shape of molecule velocity distribution (fH2) at x=0
-            GammaxH2BC : float
-                Desired neutral molecule flux density at x=0 (m^-2 s^-1)
-            NuLoss : ndarray
-                Characteristic molecular ion loss frequency profile (1/s)
-            SH2_inital : ndarray, defualt=None
-                Initial guess for source profile of wall-temperature H2 molecules (m^-3 s^-1). If None, zero array is used
-            sawada : bool, default=False
-                If false, disable Sawada correction
-            compute_h_source : bool, default=False
-                If true, compute fSH, SH, SP, and SHP
-            ni_correct : bool, default=False
-                If true, Corrects hydrogen ion density according to quasineutrality: ni=ne-nHp
-            truncate : float, default=1.0e-4
-                Convergence threshold for generations
-            max_gen : int, default=50
-                Max number of generations
-            compute_errors : bool, default=False
-                If true, compute error estimates
-            debrief : int, default=0
-                - 0=do not print
-                - 1=print summary information
-                - 2=print detailed information
-            debug : int, default=0
-                - 0=do not execute debug code
-                - 1=summary debug
-                - 2=detail debug
-                - 3=very detailed debug
+        mesh :
+            Mesh data for h2 kinetic procedure, must be of type 'h2'
+            Includes coordinate data and temperature/density profiles
+        mu :
+            1=hydrogen, 2=deuterium
+        vxi :
+            flow speed profile (m/s)
+        fH2BC :
+            2D array, input boundary condition. Specifies shape of molecule velocity distribution (fH2) at x=0
+        GammaxH2BC :
+            Desired neutral molecule flux density at x=0 (m^-2 s^-1)
+        NuLoss :
+            Characteristic molecular ion loss frequency profile (1/s)
+        SH2_initial :
+            Initial guess for source profile of wall-temperature H2 molecules (m^-3 s^-1). If None, zero array is used
+        sawada :
+            If false, disable Sawada correction
+        compute_h_source :
+            If true, compute fSH, SH, SP, and SHP
+        ni_correct :
+            If true, Corrects hydrogen ion density according to quasineutrality: ni=ne-nHp
+        truncate :
+            Convergence threshold for generations
+        max_gen :
+            Max number of generations
+        compute_errors :
+            If true, compute error estimates
+        debrief :
+            - 0=do not print
+            - 1=print summary information
+            - 2=print detailed information
+        debug :
+            - 0=do not execute debug code
+            - 1=summary debug
+            - 2=detail debug
+            - 3=very detailed debug
         '''
 
         # --- Settings ---
@@ -274,23 +275,23 @@ class KineticH2():
         return
 
 
-    def run_procedure(self, fH: NDArray = None, SH2: NDArray = None, fH2: NDArray = None, nHP: NDArray = None, THP: NDArray = None) -> KH2Results:
+    def run_procedure(self, fH: Optional[NDArray] = None, SH2: Optional[NDArray] = None, fH2: Optional[NDArray] = None, nHP: Optional[NDArray] = None, THP: Optional[NDArray] = None) -> KH2Results:
         '''
         Solves a 1-D spatial, 2-D velocity kinetic neutral transport 
         problem for molecular hydrogen or deuterium (H2)
 
         Parameters
         ----------
-            fH : ndarray, default=None
-                3D array, atomic distribution function. If None, H-H2 collisions are not computed
-            SH2 : ndarray, defualt=None
-                Source profile of wall-temperature H2 molecules (m^-3 s^-1). If None, zero array is used
-            fH2 : ndarray, defualt=None
-                3D array, molecular distribution function. If None, zero array is used
-            nHP : ndarray, defualt=None
-                Molecular ion density profile (m^-3). If None, zero array is used
-            THP : ndarray, defualt=None
-                Molecular ion temperature profile (m^-3). If None, array of 3.0 used
+        fH :
+            3D array, atomic distribution function. If None, H-H2 collisions are not computed
+        SH2 :
+            Source profile of wall-temperature H2 molecules (m^-3 s^-1). If None, zero array is used
+        fH2 :
+            3D array, molecular distribution function. If None, zero array is used
+        nHP :
+            Molecular ion density profile (m^-3). If None, zero array is used
+        THP :
+            Molecular ion temperature profile (m^-3). If None, array of 3.0 used
             
         Returns
         -------
@@ -298,9 +299,9 @@ class KineticH2():
 
             fH2 : ndarray
                 3D array, molecular distribution function.
-            nHP : ndarray, defualt=None
+            nHP : ndarray
                 Molecular ion density profile (m^-3).
-            THP : ndarray, defualt=None
+            THP : ndarray
                 Molecular ion temperature profile (m^-3).
             nH2 : ndarray
                 Molecular density profile (m^-3)

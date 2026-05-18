@@ -1,5 +1,6 @@
+from typing import Optional
 import numpy as np
-from numpy.typing import NDArray
+from numpy.typing import NDArray, ArrayLike
 from scipy import interpolate
 from dataclasses import dataclass
 
@@ -37,9 +38,9 @@ def kn1d_lite(
     incident_n0,
 
     # Simple mode
-    energies_eV=None,
-    velocities_ms=None,
-    fractions=None,
+    energies_eV: Optional[ArrayLike]=None,
+    velocities_ms: Optional[ArrayLike]=None,
+    fractions: Optional[ArrayLike]=None,
 
     # Advanced mode
     fH_BC=None,
@@ -74,47 +75,43 @@ def kn1d_lite(
         Incident neutral density at the boundary (m^-3).  This is the
         *incident* flux only — output nH will be higher due to reflections
         and charge exchange.
-
-    Simple mode (assumes one or more mono-energetic components for incoming neutrals)
-    ---------------------------------------------------
-    energies_eV : array-like, optional
-        Energy of each component in eV.  Default [3.0].
-    velocities_ms : array-like, optional
+    energies_eV :
+        Energy of each component in eV.
+    velocities_ms :
         Speed of each component in m/s.  Overrides energies_eV if given.
-    fractions : array-like, optional
+    fractions :
         Fraction of incident_n0 in each component (must sum to 1).
-        Default [1.0].
 
-    # NOTE
-    The default is that all the neutrals enter with 3eV. 
-    An input of energies_eV=[3, 10] and fractions=[0.7, 0.3] would mean that 70% of the incident neutrals have 3eV and 30% have 10eV.  
-    If velocities_ms is given instead, those speeds are used directly (and energies_eV is ignored).
+        .. note::
+            The default is that all the neutrals enter with 3eV. An input of
+            ``energies_eV=[3, 10]`` and ``fractions=[0.7, 0.3]`` would mean that 70%
+            of the incident neutrals have 3eV and 30% have 10eV. If velocities_ms is
+            given instead, those speeds are used directly (and energies_eV is
+            ignored).
 
-    Advanced mode (arbitrary distribution function)
-    ------------------------------------------------
     fH_BC : ndarray(nvr, nvx), optional
-        Boundary distribution function with arbitrary normalisation.
-        Scaled internally so that integral = incident_n0.  Negative-vx
-        entries are zeroed out before use.
+        Boundary distribution function with arbitrary normalisation.  Scaled
+        internally so that ``integral = incident_n0``. Negative-vx entries are
+        zeroed out before use.
 
-    # NOTE
-    The simple mode should suffice for most users. Only use advanced if you want to explore the
-    shape of the distribution function on the neutral penetration.
+        .. note::
+            This is an advanced parameter that allows arbitrary distribution
+            functions, and should only be used if you want to explore the shape
+            of the distribution function on the neutral penetration.
 
-    Other
-    -----
+            The simpler mode, using just
+            ``energies_eV``/``velocities_ms``/``fractions``, which assumes one
+            or more mono-energetic components for incoming neutrals, should be
+            sufficient for most users.
+
     truncate : float
-        Convergence threshold.  Default 1e-3.
+        Convergence threshold.
     max_gen : int
-        Maximum collision generations.  Default 50.
+        Maximum collision generations.
     compute_errors : bool
     debrief : bool
     debug : bool
     config_path : str
-
-    Returns
-    -------
-    KN1DLiteResults
     '''
 
     prompt = 'KN1D_lite => '

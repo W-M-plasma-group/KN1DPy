@@ -1,31 +1,34 @@
+from numpy.typing import ArrayLike
 import numpy as np
 
 from ...utils import poly
 
-def sigma_cx_h0(E, freeman=False):
+def sigma_cx_h0(E: ArrayLike, freeman: bool=False):
     '''
-    Computes charge exchange cross section for atomic hydrogen. Data are taken either from the polynomial fit in
-        Janev, "Elementary Processes in Hydrogen-Helium Plasmas", Springer-Verlag, 1987, p.250.
-    or from Freeman and Jone's analytic fit tabulated in 
-        Freeman, E.L., Jones, E.M., "Atomic Collision Processes in Plasma Physics
-        Experiments", UKAEA Report No. CLM-R137 (Culham Laboratory, Abington, England 1974)
+    Computes charge exchange cross section for atomic hydrogen.
+
+    Data are taken either from the polynomial fit in
+    *Janev, "Elementary Processes in Hydrogen-Helium Plasmas", Springer-Verlag, 1987, p.250.*
+    or from Freeman and Jone's analytic fit tabulated in
+    *Freeman, E.L., Jones, E.M., "Atomic Collision Processes in Plasma Physics
+    Experiments", UKAEA Report No. CLM-R137 (Culham Laboratory, Abington, England 1974)*
 
     Parameters
     ----------
-        E : ndarray or float
-            energy of proton corresponding to the relative velocity between proton and hydrogen atom (eV)
-        freeman: bool, default=false
-            if true, then return CX based on Freeman and Jones' analytic fit in
-            Freeman, E.L., Jones, E.M., "Atomic Collision Processes in Plasma Physics
-            Experiments", UKAEA Report No. CLM-R137 (Culham Laboratory, Abington, England 1974).
-            Otherwise, return CX based on polynomial fit in
-		    Janev, "Elementary Processes in Hydrogen-Helium Plasmas", 
-	        Springer-Verlag, 1987, p.250, other
+    E :
+        energy of proton corresponding to the relative velocity between proton and hydrogen atom (eV)
+    freeman:
+        if true, then return CX based on Freeman and Jones' analytic fit in
+        *Freeman, E.L., Jones, E.M., "Atomic Collision Processes in Plasma Physics
+        Experiments", UKAEA Report No. CLM-R137 (Culham Laboratory, Abington, England 1974)*.
+        Otherwise, return CX based on polynomial fit in
+        *Janev, "Elementary Processes in Hydrogen-Helium Plasmas",
+        Springer-Verlag, 1987, p.250, other*
 
     Returns
     -------
-        ndarray
-            sigma_CX for 0.1 < E < 2e4 (m^-2)
+    ndarray
+        sigma_CX for 0.1 < E < 2e4 (m^-2)
     '''
                 
     E = np.asarray(E)

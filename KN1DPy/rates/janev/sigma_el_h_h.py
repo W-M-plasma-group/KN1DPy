@@ -1,8 +1,9 @@
+from numpy.typing import ArrayLike
 import numpy as np 
 
 from ...utils import poly
 
-def sigma_el_h_h(E, vis = False):
+def sigma_el_h_h(E: ArrayLike, vis: bool = False):
     '''
     Computes momentum transfer cross section for elastic collisions of H onto H
     for specified energy of H. Data are taken from 
@@ -14,16 +15,16 @@ def sigma_el_h_h(E, vis = False):
 
     Parameters
     ----------
-    E : ndarray or float
+    E :
         energy of H atom (target H atom is at rest)
-    vis : bool, defaul=False
+    vis :
         if true, then return viscosity cross section instead of momentum transfer cross section 
     
     Returns
     -------
-        ndarray
-            Sigma for 0.03 < E < 1e4. For E outside this range, 
-            the value of Sigma at the 0.03 or 1e4 eV boundary is returned. (m^-2)
+    ndarray
+        Sigma for 0.03 < E < 1e4. For E outside this range, 
+        the value of Sigma at the 0.03 or 1e4 eV boundary is returned. (m^-2)
     '''
 
     E = np.asarray(E, dtype=float)
