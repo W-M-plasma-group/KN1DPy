@@ -24,20 +24,8 @@ from .rates.janev.sigmav_cx_h0 import sigmav_cx_h0
 from .rates.janev.sigmav_ion_h0 import sigmav_ion_h0
 from .rates.janev.sigmav_rec_h1s import sigmav_rec_h1s
 from .rates.johnson_hinnov.johnson_hinnov import Johnson_Hinnov
-from .utils import get_config, sval
+from .utils import KHCollisions, KHConfig, sval
 
-# Dataclasses for use in kinetic_h
-
-@dataclass
-class KHCollisions:
-    '''
-    Collision settings for Kinetic H procedure
-    '''
-    H2_H_EL: bool = False
-    H_H_EL: bool = False
-    H_P_EL: bool = False
-    H_P_CX: bool = False
-    SIMPLE_CX: bool = False
 
 @dataclass
 class MeshEqCoefficients:
@@ -132,7 +120,7 @@ class KineticH:
 
     def __init__(self, mesh: KineticMesh, mu: int, vxi: NDArray, fHBC: NDArray, GammaxHBC: float, jh: Johnson_Hinnov = None,
                  recomb: bool = True, ni_correct: bool = False, truncate: float = 1e-4, max_gen: int = 100,
-                 compute_errors: bool = False, debrief: int = 0, debug: int = 0, config_path: str = './config.toml',
+                 compute_errors: bool = False, debrief: int = 0, debug: int = 0, config: KHConfig = None, coll_config: KHCollisions = None,
                  return_gen0: bool = False, return_all_generations: bool = False):
         '''
         Parameters
@@ -174,12 +162,10 @@ class KineticH:
         # --- Settings ---
 
         # Configuration Options
-        self.config = get_config(config_path)
-
-        col = self.config['collisions']
-        self.COLLISIONS = KHCollisions(col['H2_H_EL'], col['H_H_EL'], col['H_P_EL'], col['H_P_CX'], col['SIMPLE_CX'])
-
-        self.ion_rate_option = self.config['kinetic_h']['ion_rate']
+        self.config = config
+        self.COLLISIONS = coll_config if isinstance(coll_config, KHCollisions) else KHCollisions()
+        self.original_H2_H_EL = self.COLLISIONS.H2_H_EL
+        self.ion_rate_option = config.ion_rate if isinstance(config, KHConfig) else 'adas'
 
         # Small numerical tolerances to avoid divide-by-zero in velocity grid
         # spacing and wall pressure calculations respectively.
@@ -187,8 +173,8 @@ class KineticH:
         self.Wpp_tol = 0.001
 
         # Internal Debug switches
-        self.CI_Test = self.config['kinetic_h']['ci_test']
-        self.Do_Alpha_CX_Test = self.config['kinetic_h']['alpha_cx_test']
+        self.CI_Test = config.ci_test if isinstance(config, KHConfig) else False
+        self.Do_Alpha_CX_Test = config.alpha_cx_test if isinstance(config, KHConfig) else False
 
         # Run Settings
         self.debrief = debrief
@@ -337,7 +323,7 @@ class KineticH:
         self._test_input_parameters(fH2, fSH, nHP, THP, fH)
 
         # If fH2 is zero, then turn off elastic H2 <-> H collisions
-        self.COLLISIONS.H2_H_EL = self.config['collisions']['H2_H_EL']
+        self.COLLISIONS.H2_H_EL = self.original_H2_H_EL
         if np.sum(fH2) <= 0:
             self.COLLISIONS.H2_H_EL = False
 

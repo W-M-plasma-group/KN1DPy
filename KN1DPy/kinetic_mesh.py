@@ -10,7 +10,7 @@ from .rates.janev.sigmav_h1s_h2s_hh import sigmav_h1s_h2s_hh
 from .rates.janev.sigmav_ion_h0 import sigmav_ion_h0
 from .rates.janev.sigmav_ion_hh import sigmav_ion_hh
 from .rates.johnson_hinnov.johnson_hinnov import Johnson_Hinnov
-from .utils import get_config, interp_1d, reverse
+from .utils import interp_1d, reverse
 
 
 class KineticMesh:
@@ -52,19 +52,22 @@ class KineticMesh:
             PipeDia     : NDArray,
             jh          : Johnson_Hinnov = None,
             E0          : NDArray | None = None,
-            fctr        : float | None = None,
-            config_path : str     = './config.toml'):
+            nv          : int      = 10,
+            fctr        : float    = 0.3,
+            ion_rate    : str      = 'adas',
+        ):
 
         print("generating kinetic_" + mesh_type + "_mesh")
 
         if E0 is None:
             E0 = np.array([0.0])
 
-        #Get mesh size from config file
-        cfg = get_config(config_path)
-        nv = cfg["kinetic_" + mesh_type]["mesh_size"]
-        if fctr is None:
-            fctr = cfg["kinetic_" + mesh_type]["grid_fctr"]
+        #Get mesh size from config file (should be passed as inputs!)
+        #cfg = get_config(config_path) if isinstance(config_path, str) else {}
+        #if nv is None:
+        #    nv = cfg.get("kinetic_" + mesh_type, {}).get("mesh_size", 10)
+        #if fctr is None:
+        #    fctr = cfg.get("kinetic_" + mesh_type, {}).get("grid_fctr", 0.3)
 
         # estimate Interaction rate with side walls
         #NOTE Commented gamma_wall calculations here, revisit later
@@ -125,7 +128,7 @@ class KineticMesh:
             minVr = vth*min(vr)
             minE0 = 0.5*CONST.H_MASS*(minVr**2) / CONST.Q
 
-            ion_rate_option = get_config(config_path)['kinetic_h']['ion_rate']
+            ion_rate_option = ion_rate  #get_config(config_path)['kinetic_h']['ion_rate']
             if ion_rate_option == 'collrad':
                 ioniz_rate = collrad_sigmav_ion_h0(nfine, Tefine)
             elif ion_rate_option == 'jh':

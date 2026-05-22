@@ -29,20 +29,8 @@ from .rates.janev.sigmav_p_h1s_hh import sigmav_p_h1s_hh
 from .rates.janev.sigmav_p_h1s_hp import sigmav_p_h1s_hp
 from .rates.janev.sigmav_p_hn2_hp import sigmav_p_hn2_hp
 from .rates.janev.sigmav_p_p_hp import sigmav_p_p_hp
-from .utils import get_config, path_interp_2d, sval
+from .utils import KH2Collisions, KHConfig, path_interp_2d, sval
 
-# Dataclasses for use in kinetic_h
-
-@dataclass
-class KH2Collisions:
-    '''
-    Collision settings for Kinetic H2 procedure
-    '''
-    H2_H_EL: bool = False
-    H2_H2_EL: bool = False
-    H2_P_EL: bool = False
-    H2_P_CX: bool = False
-    Simple_CX: bool = False
 
 @dataclass
 class MeshEqCoefficients:
@@ -143,7 +131,7 @@ class KineticH2:
 
     def __init__(self, mesh: KineticMesh, mu: int, vxi: NDArray, fH2BC: NDArray, GammaxH2BC: float, NuLoss: NDArray, SH2_initial: NDArray,
                     sawada: bool = True, compute_h_source: bool = False, ni_correct: bool = False, truncate: float = 1.0e-4, max_gen: int = 100,
-                    compute_errors: bool = False, debrief: int = 0, debug: int = 0, config_path: str = './config.toml'):
+                    compute_errors: bool = False, debrief: int = 0, debug: int = 0, config: KHConfig = None, coll_config: KH2Collisions = None):
         '''
         Parameters
         ----------
@@ -188,10 +176,9 @@ class KineticH2:
         # --- Settings ---
 
         # Configuration Options
-        self.config = get_config(config_path)
-
-        col = self.config['collisions']
-        self.COLLISIONS = KH2Collisions(col['H2_H_EL'], col['H2_H2_EL'], col['H2_P_EL'], col['H2_P_CX'], col['SIMPLE_CX'])
+        self.config = config
+        self.COLLISIONS = coll_config if isinstance(coll_config, KH2Collisions) else KH2Collisions()
+        self.original_H2_H_EL = self.COLLISIONS.H2_H_EL
 
         # Small numerical tolerances to avoid divide-by-zero in velocity grid
         # spacing and wall pressure calculations respectively.
@@ -199,8 +186,8 @@ class KineticH2:
         self.Wpp_tol = 0.001
 
         # Internal Debug switches
-        self.CI_Test = self.config['kinetic_h2']['ci_test']
-        self.Do_Alpha_CX_Test = self.config['kinetic_h2']['alpha_cx_test']
+        self.CI_Test = config.ci_test if isinstance(config, KHConfig) else False
+        self.Do_Alpha_CX_Test = config.alpha_cx_test if isinstance(config, KHConfig) else False
 
         # Run Settings
         self.sawada = sawada
@@ -366,7 +353,7 @@ class KineticH2:
         self._test_input_parameters(fH, fH2, SH2, nHP, THP)
 
         # if fh is zero, then turn off elastic H2 <-> H collisions
-        self.COLLISIONS.H2_H_EL = self.config['collisions']['H2_H_EL']
+        self.COLLISIONS.H2_H_EL = self.original_H2_H_EL
         if np.sum(fH) <= 0:
             self.COLLISIONS.H2_H_EL = False
 
@@ -896,7 +883,7 @@ class KineticH2:
 
             self._debrief_msg('Computing Beta_CX', 1)
 
-            if self.COLLISIONS.Simple_CX:
+            if self.COLLISIONS.SIMPLE_CX:
                 # Option (B): Compute charge exchange source with assumption that CX source neutrals have  molecular ion distribution function
                 # Eq.(2.11b)
                 for k in range(0, self.nx):
@@ -1572,7 +1559,7 @@ class KineticH2:
         # Set Maxwellian Molecular Ion Distribution Function (assumed to be drifting with ion velocity, vxi)
         self.Internal.fHp_hat = create_shifted_maxwellian(self.mesh.vr, self.mesh.vx, THP, self.vxi, self.mu, 2, self.mesh.Tnorm)
 
-        if self.COLLISIONS.Simple_CX:
+        if self.COLLISIONS.SIMPLE_CX:
             # Option (B) : Use Maxwellian weighted <sigma v>
 
             # THP/mu at each mesh point
