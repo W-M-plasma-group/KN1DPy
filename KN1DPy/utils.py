@@ -2,6 +2,7 @@
 import json
 import tomllib
 import warnings
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
@@ -9,6 +10,37 @@ import numpy as np
 import tomli_w
 from numpy.typing import NDArray
 from scipy import interpolate
+
+# --- Configuration dataclasses ---
+
+@dataclass
+class KHConfig:
+    '''Configuration settings for KN1DPy'''
+    mesh_size: int = 10
+    grid_fctr: float = 0.3
+    ion_rate: str = 'adas'
+    extra_energy_bins_eV: NDArray = field(default_factory=lambda: np.array([]))
+    ci_test: bool = False
+    alpha_cx_test: bool = False
+
+@dataclass
+class KHCollisions:
+    '''Collision settings for Kinetic H procedure'''
+    H2_H_EL: bool = False
+    H_H_EL: bool = False
+    H_P_EL: bool = False
+    H_P_CX: bool = False
+    SIMPLE_CX: bool = False
+
+@dataclass
+class KH2Collisions:
+    '''Collision settings for Kinetic H2 procedure'''
+    H2_H_EL: bool = False
+    H2_H2_EL: bool = False
+    H2_P_EL: bool = False
+    H2_P_CX: bool = False
+    SIMPLE_CX: bool = False
+
 
 # --- File Paths ---
 
@@ -89,6 +121,51 @@ def convert_config_json_to_toml(json_path: str) -> str:
     print(f"Converted '{Path(abs_json).name}' -> '{Path(abs_toml).name}'")
     print(f"Saved to:  {abs_toml}")
     return abs_toml
+
+
+def convert_config_dict_to_dataclasses(config: dict[str, Any] | None = None) -> tuple[KHConfig, KHCollisions, KHConfig, KH2Collisions]:
+    if not isinstance(config, dict):
+        config = {}
+    kh_cfg_dict = config.get('kinetic_h', {})
+    kh2_cfg_dict = config.get('kinetic_h2', {})
+    coll_dict = config.get('collisions', {})
+    kh_cfg = KHConfig(
+        kh_cfg_dict.get('mesh_size', 10),
+        kh_cfg_dict.get('grid_fctr', 0.3),
+        kh_cfg_dict.get('ion_rate', 'adas'),
+        np.atleast_1d(kh_cfg_dict.get('extra_energy_bins_eV', [])),
+        kh_cfg_dict.get('ci_test', False),
+        kh_cfg_dict.get('alpha_cx_test', False),
+    )
+    kh_coll = KHCollisions(
+        coll_dict.get('H2_H_EL', False),
+        coll_dict.get('H_H_EL', False),
+        coll_dict.get('H_P_EL', False),
+        coll_dict.get('H_P_CX', False),
+        coll_dict.get('SIMPLE_CX', False),
+    )
+    kh2_cfg = KHConfig(
+        kh2_cfg_dict.get('mesh_size', 10),
+        kh2_cfg_dict.get('grid_fctr', 0.3),
+        kh2_cfg_dict.get('ion_rate', 'adas'),
+        np.atleast_1d(kh2_cfg_dict.get('extra_energy_bins_eV', [])),
+        kh2_cfg_dict.get('ci_test', False),
+        kh2_cfg_dict.get('alpha_cx_test', False),
+    )
+    kh2_coll = KH2Collisions(
+        coll_dict.get('H2_H_EL', False),
+        coll_dict.get('H2_H2_EL', False),
+        coll_dict.get('H2_P_EL', False),
+        coll_dict.get('H2_P_CX', False),
+        coll_dict.get('SIMPLE_CX', False),
+    )
+    return kh_cfg, kh_coll, kh2_cfg, kh2_coll
+
+def convert_config_file_to_dataclasses(config_path: str = './config.toml') -> tuple[KHConfig, KHCollisions, KHConfig, KH2Collisions]:
+    if not isinstance(config_path, str):
+        config_path = str(config_path)
+    config = get_config(config_path)
+    return convert_config_dict_to_dataclasses(config)
 
 
 # --- Printing ---
