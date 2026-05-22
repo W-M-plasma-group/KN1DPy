@@ -14,7 +14,13 @@ from .kinetic_h2 import KineticH2
 from .kinetic_mesh import KineticMesh
 from .make_dvr_dvx import VSpace_Differentials
 from .rates.johnson_hinnov.johnson_hinnov import Johnson_Hinnov
-from .utils import get_config, interp_1d, sval
+from .utils import (
+    convert_config_dict_to_dataclasses,
+    convert_config_file_to_dataclasses,
+    get_config,
+    interp_1d,
+    sval,
+)
 
 
 @dataclass
@@ -56,7 +62,8 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia,
          compute_errors = 0, debrief = 0,
          Hdebug = 0, Hdebrief = 0,
          H2debug = 0, H2debrief = 0, interp_debug = 0, File=None,
-         config_path = './config.toml',
+         config = None,
+         config_path = None,
          return_gen0 = False, return_all_generations = False) -> dict:
     '''
     Computes the molecular and atomic neutral profiles for inputted profiles
@@ -147,12 +154,15 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia,
     # --- Validate Config Options ---
 
     valid_ion_rates = ['collrad', 'jh', 'janev', 'adas']
-    cfg = get_config(config_path)
-    ion_rate_option = cfg['kinetic_h']['ion_rate']
-    grid_fctr_h2 = cfg['kinetic_h2']['grid_fctr']
-    grid_fctr_h  = cfg['kinetic_h']['grid_fctr']
-    extra_bins_h2 = np.array(cfg['kinetic_h2'].get('extra_energy_bins_eV', []))
-    extra_bins_h  = np.array(cfg['kinetic_h'].get('extra_energy_bins_eV', []))
+    cfg_h, coll_h, cfg_h2, coll_h2 = convert_config_dict_to_dataclasses(config) if isinstance(config, dict) else convert_config_file_to_dataclasses(config_path)
+    ion_rate_option = cfg_h.ion_rate
+    mesh_size_h2 = cfg_h2.mesh_size
+    mesh_size_h = cfg_h.mesh_size
+    grid_fctr_h2 = cfg_h2.grid_fctr
+    grid_fctr_h = cfg_h.grid_fctr
+    extra_bins_h2 = cfg_h2.extra_energy_bins_eV
+    extra_bins_h = cfg_h.extra_energy_bins_eV
+    nv_h2 = mesh_size_h2
     if ion_rate_option not in valid_ion_rates:
         raise Exception(prompt+"Invalid Ionization Rate Option used: '"+ion_rate_option+"', check config.toml")
 
@@ -165,7 +175,7 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia,
     if GaugeH2 > 15.0:
         fctr_h2 = fctr_h2 * 15 / GaugeH2
 
-    kh2_mesh = KineticMesh('h2', mu, x, Ti, Te, n, PipeDia, E0 = Eneut, fctr = fctr_h2, config_path = config_path)
+    kh2_mesh = KineticMesh('h2', mu, x, Ti, Te, n, PipeDia, E0 = Eneut, nv = nv_h2, fctr = fctr_h2)
 
     # Determine optimized vr, vx grid for kinetic_h (atoms, A)
     E0_h = np.unique(extra_bins_h) if len(extra_bins_h) > 0 else np.array([0.0])
@@ -176,7 +186,8 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia,
     # Generates Johnson_Hinnov class, Used in place of IDL version's JH_Coef Common block
     jh = Johnson_Hinnov()
 
-    kh_mesh = KineticMesh('h', mu, x, Ti, Te, n, PipeDia, jh=jh, E0=E0_h, fctr=fctr_h, config_path=config_path)
+    nv_h = mesh_size_h
+    kh_mesh = KineticMesh('h', mu, x, Ti, Te, n, PipeDia, jh=jh, E0=E0_h, nv=nv_h, fctr=fctr_h, ion_rate=ion_rate_option)
 
 
     # --- Initialize variables ---
@@ -284,13 +295,13 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia,
     kinetic_h = KineticH(kh_mesh, mu, vxiA, fHBC, GammaxHBC, jh=jh,
                          ni_correct=True, truncate=truncate, max_gen=max_gen,
                          compute_errors=compute_errors, debrief=Hdebrief, debug=Hdebug,
-                         config_path=config_path,
+                         config=cfg_h, coll_config=coll_h,
                          return_gen0=return_gen0, return_all_generations=return_all_generations)
 
     kinetic_h2 = KineticH2(kh2_mesh, mu, vxiM, fh2BC, GammaxH2BC, NuLoss, SH2,
                             compute_h_source=True, ni_correct=True, truncate=truncate, max_gen=max_gen,
                             compute_errors=compute_errors, debrief=H2debrief, debug=H2debug,
-                            config_path=config_path)
+                            config=cfg_h2, coll_config=coll_h2)
 
 
     # --- Begin Iteration ---
@@ -517,10 +528,11 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia,
             **({'nH_generations': kh_results.nH_generations} if kh_results.nH_generations is not None else {}))
 
     # config snapshot — read before opening to avoid truncating the source file
-    config_snapshot = get_config(config_path)
-    config_toml = out_dir / 'config.toml'
-    with config_toml.open('wb') as f:
-        tomli_w.dump(config_snapshot, f)
+    if config_path is not None:
+        config_snapshot = get_config(config_path)
+        config_toml = out_dir / 'config.toml'
+        with config_toml.open('wb') as f:
+            tomli_w.dump(config_snapshot, f)
 
     # Format Results into Dataclass
     results = KN1DResults(kh2_mesh.x,

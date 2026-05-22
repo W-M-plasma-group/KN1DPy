@@ -9,6 +9,10 @@ from .kinetic_h import KineticH
 from .kinetic_mesh import KineticMesh
 from .make_dvr_dvx import VSpace_Differentials
 from .rates.johnson_hinnov.johnson_hinnov import Johnson_Hinnov
+from .utils import (
+    convert_config_dict_to_dataclasses,
+    convert_config_file_to_dataclasses,
+)
 
 
 @dataclass
@@ -52,7 +56,8 @@ def kn1d_lite(
     compute_errors=False,
     debrief=False,
     debug=False,
-    config_path='./config.toml',
+    config=None,
+    config_path=None,
     return_gen0=False,
     return_all_generations=False,
 ) -> KN1DLiteResults:
@@ -168,8 +173,10 @@ def kn1d_lite(
 
     jh = Johnson_Hinnov()
 
+    cfg_h, coll_h, _, _ = convert_config_dict_to_dataclasses(config) if isinstance(config, dict) else convert_config_file_to_dataclasses(config_path)
+
     kh_mesh = KineticMesh('h', mu, x, Ti, Te, n, np.zeros_like(x), jh=jh,
-                          E0=E0, config_path=config_path)
+                          E0=E0, nv=cfg_h.mesh_size, fctr=cfg_h.grid_fctr)
 
     vth = np.sqrt(2.0 * CONST.Q * kh_mesh.Tnorm / (mu * CONST.H_MASS))
     kh_differentials = VSpace_Differentials(kh_mesh.vr, kh_mesh.vx)
@@ -227,7 +234,7 @@ def kn1d_lite(
     kinetic_h = KineticH(kh_mesh, mu, vxiA, fHBC, GammaxHBC, jh=jh,
                          ni_correct=True, truncate=truncate, max_gen=max_gen,
                          compute_errors=compute_errors, debrief=debrief, debug=debug,
-                         config_path=config_path,
+                         config=cfg_h, coll_config=coll_h,
                          return_gen0=return_gen0, return_all_generations=return_all_generations)
 
     kh_results = kinetic_h.run_procedure(fH2A, fSHA, fH_init, nHPA, THPA)
