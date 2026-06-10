@@ -775,7 +775,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/typing_extensions-4.15.0-pyhcf101f3_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/tzdata-2025c-hc9c84f9_1.conda
       - pypi: .
-      - pypi: https://files.pythonhosted.org/packages/f9/67/3c5cb4cf7e7a8902c66dfd4b775528b813fa03bce959aedd1ab63ac03ccb/snaptol-0.0.4-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/59/d1/ed5f9d2813ad7c79bff94a200d146ae9e1313bfc79ba020e615f9f7b3c3b/snaptol-0.0.5-py3-none-any.whl
       osx-arm64:
       - conda: https://conda.anaconda.org/conda-forge/noarch/ca-certificates-2026.4.22-hbd8a1cb_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/colorama-0.4.6-pyhd8ed1ab_1.conda
@@ -851,7 +851,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/zlib-ng-2.3.3-hed4e4f5_1.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/zstd-1.5.7-hbf9d68e_6.conda
       - pypi: .
-      - pypi: https://files.pythonhosted.org/packages/f9/67/3c5cb4cf7e7a8902c66dfd4b775528b813fa03bce959aedd1ab63ac03ccb/snaptol-0.0.4-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/59/d1/ed5f9d2813ad7c79bff94a200d146ae9e1313bfc79ba020e615f9f7b3c3b/snaptol-0.0.5-py3-none-any.whl
       win-64:
       - conda: https://conda.anaconda.org/conda-forge/noarch/ca-certificates-2026.4.22-h4c7d964_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/colorama-0.4.6-pyhd8ed1ab_1.conda
@@ -956,7 +956,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/win-64/zlib-ng-2.3.3-h0261ad2_1.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/zstd-1.5.7-h534d264_6.conda
       - pypi: .
-      - pypi: https://files.pythonhosted.org/packages/f9/67/3c5cb4cf7e7a8902c66dfd4b775528b813fa03bce959aedd1ab63ac03ccb/snaptol-0.0.4-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/59/d1/ed5f9d2813ad7c79bff94a200d146ae9e1313bfc79ba020e615f9f7b3c3b/snaptol-0.0.5-py3-none-any.whl
 packages:
 - conda: https://conda.anaconda.org/conda-forge/linux-64/_openmp_mutex-4.5-20_gnu.conda
   build_number: 20
@@ -5438,10 +5438,10 @@ packages:
   version: 0.15.14
   sha256: 802342981e056db3851a7836e5b070f8f15f67d4a685ae2a6160939d364b2902
   requires_python: '>=3.7'
-- pypi: https://files.pythonhosted.org/packages/f9/67/3c5cb4cf7e7a8902c66dfd4b775528b813fa03bce959aedd1ab63ac03ccb/snaptol-0.0.4-py3-none-any.whl
+- pypi: https://files.pythonhosted.org/packages/59/d1/ed5f9d2813ad7c79bff94a200d146ae9e1313bfc79ba020e615f9f7b3c3b/snaptol-0.0.5-py3-none-any.whl
   name: snaptol
-  version: 0.0.4
-  sha256: f22a1a6f982c9d9030a36652157c966f89928c95789ef89b35fc238e7e755cff
+  version: 0.0.5
+  sha256: a48c78205ef0cd9dcffa0804697594c085a1e22e3b3314196da90712757f9ec5
   requires_dist:
   - numpy>=2.0.0
   - pytest>=8.4.1

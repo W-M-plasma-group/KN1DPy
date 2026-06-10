@@ -40,7 +40,7 @@ KN1DPy = { path = ".", editable = true }
 pytest = ">=8.4.1"
 
 [tool.pixi.feature.tests.pypi-dependencies]
-snaptol = ">=0.0.4"
+snaptol = ">=0.0.5"
 
 [tool.pixi.feature.dev.pypi-dependencies]
 ruff = ">=0.15.14"
