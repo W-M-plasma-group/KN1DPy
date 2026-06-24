@@ -49,6 +49,8 @@ def kn1d_lite(
 
     # Advanced mode
     fH_BC=None,
+    fH_BC_vr=None,
+    fH_BC_vx=None,
 
     # Other
     truncate=1e-3,
@@ -105,6 +107,13 @@ def kn1d_lite(
         Boundary distribution function with arbitrary normalisation.
         Scaled internally so that integral = incident_n0.  Negative-vx
         entries are zeroed out before use.
+    fH_BC_vr : ndarray(nvr,), optional
+        Physical radial velocity grid (m/s) on which fH_BC is defined.
+        If provided together with fH_BC_vx, fH_BC is interpolated from this
+        physical grid onto kn1d_lite's own physical velocity grid before use.
+        This corrects for Tnorm normalisation differences between runs.
+    fH_BC_vx : ndarray(nvx,), optional
+        Physical axial velocity grid (m/s) on which fH_BC is defined.
 
     # NOTE
     The simple mode should suffice for most users. Only use advanced if you want to explore the
@@ -169,14 +178,29 @@ def kn1d_lite(
         else:
             E0 = energies_eV
     else:
-        E0 = np.array([0.0])
+        # When a physical vx grid is supplied, automatically add an extra
+        # velocity bin at the minimum positive velocity of the input so that
+        # the slowest neutrals are always resolved
+        if fH_BC_vx is not None:
+            vx_arr = np.asarray(fH_BC_vx)
+            vx_min_phys = vx_arr[vx_arr > 0].min()
+            E0 = np.array([0.5 * mu * CONST.H_MASS * vx_min_phys**2 / CONST.Q])
+        else:
+            E0 = np.array([0.0])
 
     jh = Johnson_Hinnov()
 
     cfg_h, coll_h, _, _ = convert_config_dict_to_dataclasses(config) if isinstance(config, dict) else convert_config_file_to_dataclasses(config_path)
 
+    # Merge E0 with extra_energy_bins_eV from config
+    if len(cfg_h.extra_energy_bins_eV) > 0:
+        E0 = np.unique(np.concatenate([E0[E0 > 0], np.atleast_1d(cfg_h.extra_energy_bins_eV)]))
+        if len(E0) == 0:
+            E0 = np.array([0.0])
+
     kh_mesh = KineticMesh('h', mu, x, Ti, Te, n, np.zeros_like(x), jh=jh,
-                          E0=E0, nv=cfg_h.mesh_size, fctr=cfg_h.grid_fctr)
+                          E0=E0, nv=cfg_h.mesh_size, fctr=cfg_h.grid_fctr,
+                          ion_rate=cfg_h.ion_rate)
 
     vth = np.sqrt(2.0 * CONST.Q * kh_mesh.Tnorm / (mu * CONST.H_MASS))
     kh_differentials = VSpace_Differentials(kh_mesh.vr, kh_mesh.vx)
@@ -195,8 +219,35 @@ def kn1d_lite(
             fHBC[0, ix] += (frac * incident_n0) / (kh_differentials.dvr_vol[0] * kh_differentials.dvx[ix])
             GammaxHBC += frac * incident_n0 * v_ms
     else:
-        # Zero out negative-vx entries
         fH_BC = np.array(fH_BC, dtype=float)
+
+        # If physical velocity grids are supplied, interpolate fH_BC from
+        # those physical grids onto kn1d_lite's own velocity grid.
+        # This corrects for the Tnorm normalisation difference: the existing
+        # incident_n0/current_n scaling then automatically converts the
+        # amplitude to kn1d_lite's normalisation.
+        if fH_BC_vr is not None and fH_BC_vx is not None:
+            from scipy.interpolate import RectBivariateSpline
+            fH_BC_vr_arr = np.asarray(fH_BC_vr)
+            fH_BC_vx_arr = np.asarray(fH_BC_vx)
+            vr_phys = kh_mesh.vr * vth          
+            vx_phys = kh_mesh.vx * vth         
+
+            vr_eval = np.clip(vr_phys, fH_BC_vr_arr.min(), fH_BC_vr_arr.max())
+            vx_eval = np.clip(vx_phys, fH_BC_vx_arr.min(), fH_BC_vx_arr.max())
+            # Interpolate in log space so steep drops in the distribution
+            # are smooth gradients rather than step-functions that linear
+            # interpolation overestimates at intermediate grid points.
+            _eps = np.finfo(float).tiny
+            log_fH = np.log(np.maximum(fH_BC, _eps))
+            spline = RectBivariateSpline(
+                fH_BC_vr_arr, fH_BC_vx_arr,
+                log_fH, kx=3, ky=3,
+            )
+            fH_BC = np.exp(spline(vr_eval, vx_eval))
+            fH_BC = np.clip(fH_BC, 0.0, None)
+
+        # Zero out negative-vx entries
         neg_vx = kh_mesh.vx < 0
         fH_BC[:, neg_vx] = 0.0
 
