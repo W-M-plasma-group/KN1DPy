@@ -230,8 +230,8 @@ def kn1d_lite(
             from scipy.interpolate import RectBivariateSpline
             fH_BC_vr_arr = np.asarray(fH_BC_vr)
             fH_BC_vx_arr = np.asarray(fH_BC_vx)
-            vr_phys = kh_mesh.vr * vth          
-            vx_phys = kh_mesh.vx * vth         
+            vr_phys = kh_mesh.vr * vth
+            vx_phys = kh_mesh.vx * vth
 
             vr_eval = np.clip(vr_phys, fH_BC_vr_arr.min(), fH_BC_vr_arr.max())
             vx_eval = np.clip(vx_phys, fH_BC_vx_arr.min(), fH_BC_vx_arr.max())
