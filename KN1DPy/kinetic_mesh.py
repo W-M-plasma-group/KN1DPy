@@ -107,9 +107,9 @@ class KineticMesh:
         xfine = np.clip(xfine, xmin, max(x)) # prevents numerical issues with interpolation outside of x range
 
         Tifine = interp_1d(x, Ti, xfine, fill_value="extrapolate")
-        Tefine = interp_1d(x, Te, xfine)
-        nfine = interp_1d(x, n, xfine)
-        PipeDiafine = interp_1d(x, PipeDia, xfine)
+        Tefine = interp_1d(x, Te, xfine, fill_value="extrapolate")
+        nfine = interp_1d(x, n, xfine, fill_value="extrapolate")
+        PipeDiafine = interp_1d(x, PipeDia, xfine, fill_value="extrapolate")
 
 
         # Set up a vx, vr mesh based on raw data to get typical vx, vr values
@@ -163,10 +163,11 @@ class KineticMesh:
         xH = np.concatenate([np.array([xmin]), xH[0:np.size(xH) - 1]])
 
 
-        TiH = np.interp(xH, xfine, Tifine)
-        TeH = interp_1d(xfine, Tefine, xH)
-        neH = interp_1d(xfine, nfine, xH)
-        PipeDiaH = interp_1d(xfine, PipeDiafine, xH)
+        #TiH = np.interp(xH, xfine, Tifine)
+        TiH = interp_1d(xfine, Tifine, xH, fill_value="extrapolate")
+        TeH = interp_1d(xfine, Tefine, xH, fill_value="extrapolate")
+        neH = interp_1d(xfine, nfine, xH, fill_value="extrapolate")
+        PipeDiaH = interp_1d(xfine, PipeDiafine, xH, fill_value="extrapolate")
 
         vx, vr, Tnorm = self.create_vr_vx_mesh(nv, TiH, E0=E0)
 
@@ -236,9 +237,8 @@ class KineticMesh:
                 ii = np.argwhere(v > v0).T[0]
                 if np.size(ii) > 0:
                     v = np.concatenate([v[0:ii[0]], [v0], v[ii[0]:]])
-                else:
-                    v = np.concatenate([v, v0])
-
+                else: 
+                    v = np.concatenate([v, [v0]])
         vr = v[1:]
         vx = np.concatenate([-reverse(vr), vr])
 
