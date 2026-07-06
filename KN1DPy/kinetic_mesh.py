@@ -237,7 +237,7 @@ class KineticMesh:
                 ii = np.argwhere(v > v0).T[0]
                 if np.size(ii) > 0:
                     v = np.concatenate([v[0:ii[0]], [v0], v[ii[0]:]])
-                else: 
+                else:
                     v = np.concatenate([v, [v0]])
         vr = v[1:]
         vx = np.concatenate([-reverse(vr), vr])
