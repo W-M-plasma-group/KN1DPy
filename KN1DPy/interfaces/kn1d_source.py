@@ -1,23 +1,18 @@
 """KN1D edge neutral source for the n_e equation."""
 import dataclasses
-from typing import Annotated, ClassVar, Literal
+from typing import Annotated, Literal
 
 import chex
 import jax
-import pydantic
 import numpy as np
-from torax._src import array_typing
-from torax._src import jax_utils
-from torax._src import state
+import pydantic
+from torax._src import array_typing, jax_utils, state
 from torax._src.config import runtime_params as runtime_params_lib
 from torax._src.geometry import geometry
 from torax._src.neoclassical.conductivity import base as conductivity_base
-from torax._src.sources import base
-from torax._src.sources import formulas
-from torax._src.sources import runtime_params as sources_runtime_params_lib
-from torax._src.sources import source
-from torax._src.sources import source_profiles
+from torax._src.sources import base, source, source_profiles
 from torax._src.sources import gas_puff_source as gas_puff_source_lib
+from torax._src.sources import runtime_params as sources_runtime_params_lib
 from torax._src.torax_pydantic import torax_pydantic
 
 from KN1DPy.kn1d_lite import kn1d_lite
