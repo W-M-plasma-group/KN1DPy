@@ -21,7 +21,7 @@ Three install options are available:
 Works with your existing Python environment and integrates easily with other packages.
 
 ```bash
-git clone https://github.com/your-org/KN1DPy
+git clone https://github.com/W-M-plasma-group/KN1DPy.git
 cd KN1DPy
 pip install -e .
 ```
