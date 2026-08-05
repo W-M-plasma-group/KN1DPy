@@ -259,8 +259,10 @@ class Johnson_Hinnov:
         photons = np.full(Density.shape,1.0e32)
         r02 = self.jhr_coef(Density, Te, 0, 2, no_null=no_null)
         r12 = self.jhr_coef(Density, Te, 1, 2, no_null=no_null)
-        NHSaha1 = self.nh_saha(Density, Te, 1)
-        NHSaha2 = self.nh_saha(Density, Te, 2)
+        saha_density = np.clip(Density, np.exp(np.min(self.dknot)), np.exp(np.max(self.dknot))) if no_null else Density
+        saha_Te = np.clip(Te, np.exp(np.min(self.tknot)), np.exp(np.max(self.tknot))) if no_null else Te
+        NHSaha1 = self.nh_saha(saha_density, saha_Te, 1)
+        NHSaha2 = self.nh_saha(saha_density, saha_Te, 2)
 
         ok = np.where((N0 > 0) & (N0 < 1e32) & (r02 < 1.0e32) & (r12 < 1.0e32) & (NHSaha1 < 1.0e32) & (NHSaha2 < 1.0e32))[0]
 
@@ -308,8 +310,10 @@ class Johnson_Hinnov:
         photons = np.full(Density.shape,1.0e32)
         r03 = self.jhr_coef(Density, Te, 0, 3, no_null = no_null)
         r13 = self.jhr_coef(Density, Te, 1, 3, no_null = no_null)
-        NHSaha1 = self.nh_saha(Density, Te, 1)
-        NHSaha3 = self.nh_saha(Density, Te, 3)
+        saha_density = np.clip(Density, np.exp(np.min(self.dknot)), np.exp(np.max(self.dknot))) if no_null else Density
+        saha_Te = np.clip(Te, np.exp(np.min(self.tknot)), np.exp(np.max(self.tknot))) if no_null else Te
+        NHSaha1 = self.nh_saha(saha_density, saha_Te, 1)
+        NHSaha3 = self.nh_saha(saha_density, saha_Te, 3)
 
         ok = np.where((N0 > 0) & (N0 < 1e32) & (r03 < 1.0e32) & (r13 < 1.0e32) & (NHSaha1 < 1.0e32) & (NHSaha3 < 1.0e32))[0]
 
