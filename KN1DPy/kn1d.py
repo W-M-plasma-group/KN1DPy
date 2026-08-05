@@ -13,6 +13,7 @@ from .kinetic_h import KineticH
 from .kinetic_h2 import KineticH2
 from .kinetic_mesh import KineticMesh
 from .make_dvr_dvx import VSpace_Differentials
+from .rates.adas import adas_emissivity
 from .rates.johnson_hinnov.johnson_hinnov import Johnson_Hinnov
 from .utils import (
     convert_config_dict_to_dataclasses,
@@ -417,10 +418,18 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia,
 
     # --- Compute Lyman and Balmer Alpha ---
 
-    Lyman = jh.lyman_alpha(kh_mesh.ne, kh_mesh.Te, kh_results.nH, no_null=1)
-    Balmer = jh.balmer_alpha(kh_mesh.ne, kh_mesh.Te, kh_results.nH, no_null=1)
-    # Lyman = lyman_alpha(kh_mesh.ne, kh_mesh.Te, nH, jh_coefficients, no_null = 1) #NOTE Not Working Yet
-    # Balmer = balmer_alpha(kh_mesh.ne, kh_mesh.Te, nH, jh_coefficients, no_null = 1) #NOTE Not Working Yet
+    _use_adas_emissivity = (ion_rate_option != 'jh') and adas_emissivity.available
+    if _use_adas_emissivity:
+        Lyman = adas_emissivity.lyman_alpha(kh_mesh.ne, kh_mesh.Te, kh_results.nH)
+        Balmer = adas_emissivity.balmer_alpha(kh_mesh.ne, kh_mesh.Te, kh_results.nH)
+        emissivity_source = 'ADAS'
+        print(prompt, 'Lyman/Balmer emissivity: ADAS PEC')
+    else:
+        Lyman = jh.lyman_alpha(kh_mesh.ne, kh_mesh.Te, kh_results.nH, no_null=1)
+        Balmer = jh.balmer_alpha(kh_mesh.ne, kh_mesh.Te, kh_results.nH, no_null=1)
+        emissivity_source = 'JH'
+        if ion_rate_option != 'jh':
+            print(prompt, 'Warning: ADAS PEC data unavailable; Lyman/Balmer emissivity using Johnson-Hinnov')
 
 
     # --- Store Results ---
