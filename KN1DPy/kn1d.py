@@ -422,12 +422,10 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia,
     if _use_adas_emissivity:
         Lyman = adas_emissivity.lyman_alpha(kh_mesh.ne, kh_mesh.Te, kh_results.nH)
         Balmer = adas_emissivity.balmer_alpha(kh_mesh.ne, kh_mesh.Te, kh_results.nH)
-        emissivity_source = 'ADAS'
         print(prompt, 'Lyman/Balmer emissivity: ADAS PEC')
     else:
         Lyman = jh.lyman_alpha(kh_mesh.ne, kh_mesh.Te, kh_results.nH, no_null=1)
         Balmer = jh.balmer_alpha(kh_mesh.ne, kh_mesh.Te, kh_results.nH, no_null=1)
-        emissivity_source = 'JH'
         if ion_rate_option != 'jh':
             print(prompt, 'Warning: ADAS PEC data unavailable; Lyman/Balmer emissivity using Johnson-Hinnov')
 
