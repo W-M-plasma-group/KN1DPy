@@ -4,6 +4,7 @@ from typing import Annotated, Literal
 
 import chex
 import jax
+from jax import numpy as jnp
 import numpy as np
 import pydantic
 from torax._src import array_typing, jax_utils, state
@@ -12,10 +13,15 @@ from torax._src.geometry import geometry
 from torax._src.neoclassical.conductivity import base as conductivity_base
 from torax._src.sources import base, source, source_profiles
 from torax._src.sources import gas_puff_source as gas_puff_source_lib
+from torax._src.sources import generic_ion_el_heat_source as generic_ion_el_heat_source_lib
 from torax._src.sources import runtime_params as sources_runtime_params_lib
 from torax._src.torax_pydantic import torax_pydantic
 
 from KN1DPy.kn1d_lite import kn1d_lite
+
+# Hydrogenic ionization potential (13.6 eV), in Joules. Energy removed from
+# the electron population per ionization event of an injected neutral.
+_DEFAULT_IONIZATION_ENERGY_J = 2.182e-18
 
 
 # pylint: disable=invalid-name
@@ -162,3 +168,80 @@ class KN1DGasPuffSourceConfig(base.SourceModelBase):
 
   def build_source(self) -> gas_puff_source_lib.GasPuffSource:
     return gas_puff_source_lib.GasPuffSource(model_func=self.model_func)
+
+
+@jax.tree_util.register_dataclass
+@dataclasses.dataclass(frozen=True)
+class IonizationCoolingRuntimeParams(sources_runtime_params_lib.RuntimeParams):
+  ionization_energy: array_typing.FloatScalar
+
+
+def calc_ionization_cooling_source(
+    runtime_params: runtime_params_lib.RuntimeParams,
+    geo: geometry.Geometry,
+    source_name: str,
+    state: state.CoreProfiles,
+    calculated_source_profiles: source_profiles.SourceProfiles | None,
+    unused_conductivity: conductivity_base.Conductivity | None,
+) -> tuple[array_typing.FloatVectorCell, array_typing.FloatVectorCell]:
+  """Electron heat sink from ionization of KN1D-sourced edge neutrals.
+  """
+  del geo, state  # unused
+  source_params = runtime_params.sources[source_name]
+  assert isinstance(source_params, IonizationCoolingRuntimeParams)
+  if (
+      calculated_source_profiles is None
+      or 'gas_puff' not in calculated_source_profiles.n_e
+  ):
+    raise ValueError(
+        "'kn1d_ionization_cooling' requires the 'gas_puff' ionization-rate"
+        " profile to already be computed this timestep."
+    )
+  ionization_rate = calculated_source_profiles.n_e['gas_puff']
+  electron_sink = -source_params.ionization_energy * ionization_rate
+  ion_zero = jnp.zeros_like(electron_sink)
+  return (ion_zero, electron_sink)
+
+
+class KN1DIonizationCoolingConfig(base.SourceModelBase):
+  """Electron heat sink for ionization of KN1D-sourced edge neutrals.
+
+  Attributes:
+    ionization_energy: Energy removed from the electron population per
+      ionization event [J]. Defaults to 13.6 eV converted to J.
+  """
+
+  model_name: Annotated[
+      Literal['kn1d_ionization_cooling'], torax_pydantic.JAX_STATIC
+  ] = 'kn1d_ionization_cooling'
+  ionization_energy: torax_pydantic.TimeVaryingScalar = (
+      torax_pydantic.ValidatedDefault(_DEFAULT_IONIZATION_ENERGY_J)
+  )
+  mode: Annotated[
+      sources_runtime_params_lib.Mode, torax_pydantic.JAX_STATIC
+  ] = sources_runtime_params_lib.Mode.MODEL_BASED
+  is_explicit: Annotated[bool, torax_pydantic.JAX_STATIC] = True
+
+  @property
+  def model_func(self) -> source.SourceProfileFunction:
+    return calc_ionization_cooling_source
+
+  def build_runtime_params(
+      self,
+      t: chex.Numeric,
+  ) -> IonizationCoolingRuntimeParams:
+    return IonizationCoolingRuntimeParams(
+        prescribed_values=tuple(
+            [v.get_value(t) for v in self.prescribed_values]
+        ),
+        mode=self.mode,
+        is_explicit=self.is_explicit,
+        ionization_energy=self.ionization_energy.get_value(t),
+    )
+
+  def build_source(
+      self,
+  ) -> generic_ion_el_heat_source_lib.GenericIonElectronHeatSource:
+    return generic_ion_el_heat_source_lib.GenericIonElectronHeatSource(
+        model_func=self.model_func
+    )
