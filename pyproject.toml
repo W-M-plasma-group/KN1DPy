@@ -24,7 +24,6 @@ platforms = ["linux-64", "osx-arm64", "win-64"]
 
 [tool.pixi.environments]
 tests = { features = ["tests"], solve-group = "default" }
-dev = { features = ["dev"], solve-group = "default" }
 
 [tool.pixi.dependencies]
 python = ">=3.12"
@@ -42,32 +41,5 @@ pytest = ">=8.4.1"
 [tool.pixi.feature.tests.pypi-dependencies]
 snaptol = ">=0.0.5"
 
-[tool.pixi.feature.dev.pypi-dependencies]
-ruff = ">=0.15.14"
-
 [tool.setuptools.packages.find]
 where = ["."]
-
-[tool.ruff.lint]
-select = [
-  "F", # Pyflakes
-  "E", # pycodestyle error
-  "W", # pycodestyle warning
-  "I", # isort
-  "PT", # flake8-pytest-style
-  "B", # flake8-bugbear
-  "A", # flake8-builtins
-  "C4", # flake8-comprehensions
-  "T10", # flake8-debugger
-  "PTH", # flake8-use-pathlib
-  "SIM", # flake8-simplify
-  "TCH", # flake8-type-checking
-  "UP", # pyupgrade
-  "FURB", # refurb
-  "PERF", # perflint
-  "RUF", # ruff specific
-  "NPY", # NumPy specific
-]
-ignore = [
-  "E501", # Line too long
-]
