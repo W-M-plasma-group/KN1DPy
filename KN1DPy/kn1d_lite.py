@@ -34,6 +34,8 @@ class KN1DLiteResults:
     Sion: NDArray
     fHBC: NDArray
     GammaxHBC: float
+    EHCX: NDArray | None = None
+    SRecomb: NDArray | None = None
     nH_gen0: NDArray | None = None
     nH_generations: NDArray | None = None
 
@@ -308,6 +310,8 @@ def kn1d_lite(
         Sion=kh_results.Sion,
         fHBC=fHBC,
         GammaxHBC=GammaxHBC,
+        EHCX=np.copy(kinetic_h.Output.EHCX),
+        SRecomb=np.copy(kinetic_h.Output.SRecomb),
         nH_gen0=kh_results.nH_gen0,
         nH_generations=kh_results.nH_generations,
     )
