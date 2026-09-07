@@ -1,4 +1,5 @@
-"""KN1D edge neutral source for the n_e equation."""
+"""KN1D edge neutral sources: n_e particle source and associated heat sinks."""
+import collections
 import dataclasses
 from typing import Annotated, Literal
 
@@ -14,14 +15,20 @@ from torax._src.neoclassical.conductivity import base as conductivity_base
 from torax._src.sources import base, source, source_profiles
 from torax._src.sources import gas_puff_source as gas_puff_source_lib
 from torax._src.sources import generic_ion_el_heat_source as generic_ion_el_heat_source_lib
+from torax._src.sources import generic_particle_source as generic_particle_source_lib
 from torax._src.sources import runtime_params as sources_runtime_params_lib
 from torax._src.torax_pydantic import torax_pydantic
 
-from KN1DPy.kn1d_lite import kn1d_lite
+from KN1DPy.common import constants as CONST
+from KN1DPy.kn1d_lite import KN1DLiteResults, kn1d_lite
 
 # Hydrogenic ionization potential (13.6 eV), in Joules. Energy removed from
 # the electron population per ionization event of an injected neutral.
 _DEFAULT_IONIZATION_ENERGY_J = 2.182e-18
+
+# Name under which the KN1D particle source is registered in the TORAX
+# sources dict; the heat sink sources read their KN1D parameters from it.
+_GAS_PUFF_SOURCE_NAME = 'gas_puff'
 
 
 # pylint: disable=invalid-name
@@ -40,9 +47,39 @@ class RuntimeParams(sources_runtime_params_lib.RuntimeParams):
   simple_charge_exchange: bool
 
 
-def calc_kn1d_lite(
+# Memoization of the KN1D solution on its plasma-profile and configuration
+# inputs, so that the particle source and the heat sink sources derived from
+# the same solution share a single KN1D run per timestep.
+_KN1D_CACHE_MAX_SIZE = 4
+_kn1d_cache: 'collections.OrderedDict[tuple, KN1DLiteResults]' = (
+    collections.OrderedDict()
+)
+
+
+def _run_kn1d_lite_cached(
     x, mu, Ti, Te, n, vxi, incident_n0, energy_eV, mesh_size, grid_fctr, h2_h_el, h_h_el, h_p_el, h_p_cx, simple,
-) -> array_typing.FloatVectorCell:
+) -> KN1DLiteResults:
+  key = (
+      np.asarray(x).tobytes(),
+      float(mu),
+      np.asarray(Ti).tobytes(),
+      np.asarray(Te).tobytes(),
+      np.asarray(n).tobytes(),
+      np.asarray(vxi).tobytes(),
+      float(incident_n0),
+      float(energy_eV),
+      int(mesh_size),
+      float(grid_fctr),
+      bool(h2_h_el),
+      bool(h_h_el),
+      bool(h_p_el),
+      bool(h_p_cx),
+      bool(simple),
+  )
+  cached = _kn1d_cache.get(key)
+  if cached is not None:
+    _kn1d_cache.move_to_end(key)
+    return cached
   kn1d_config = {
       "kinetic_h": {
           "mesh_size": int(mesh_size),
@@ -60,7 +97,6 @@ def calc_kn1d_lite(
           "SIMPLE_CX": simple,
       }
   }
-  #out = np.zeros_like(x)
   result = kn1d_lite(
       x=np.array(x[::-1]),
       mu=mu,
@@ -72,9 +108,85 @@ def calc_kn1d_lite(
       energies_eV=[float(energy_eV)],
       config=kn1d_config,
   )
-  out = np.interp(x, result.xH, result.Sion, right=0.0)
-  #out[-1] = 0.0
-  return out
+  _kn1d_cache[key] = result
+  while len(_kn1d_cache) > _KN1D_CACHE_MAX_SIZE:
+    _kn1d_cache.popitem(last=False)
+  return result
+
+
+def calc_kn1d_lite(
+    x, mu, Ti, Te, n, vxi, incident_n0, energy_eV, mesh_size, grid_fctr, h2_h_el, h_h_el, h_p_el, h_p_cx, simple,
+) -> array_typing.FloatVectorCell:
+  result = _run_kn1d_lite_cached(
+      x, mu, Ti, Te, n, vxi, incident_n0, energy_eV, mesh_size, grid_fctr, h2_h_el, h_h_el, h_p_el, h_p_cx, simple,
+  )
+  return np.interp(x, result.xH, result.Sion, right=0.0)
+
+
+def calc_kn1d_cx_neutral_heating(
+    x, mu, Ti, Te, n, vxi, incident_n0, energy_eV, mesh_size, grid_fctr, h2_h_el, h_h_el, h_p_el, h_p_cx, simple,
+) -> array_typing.FloatVectorCell:
+  """Net energy transfer rate to neutrals from ions via charge exchange [W m^-3]."""
+  result = _run_kn1d_lite_cached(
+      x, mu, Ti, Te, n, vxi, incident_n0, energy_eV, mesh_size, grid_fctr, h2_h_el, h_h_el, h_p_el, h_p_cx, simple,
+  )
+  return np.interp(x, result.xH, result.EHCX, right=0.0)
+
+
+def calc_kn1d_recombination_rate(
+    x, mu, Ti, Te, n, vxi, incident_n0, energy_eV, mesh_size, grid_fctr, h2_h_el, h_h_el, h_p_el, h_p_cx, simple,
+) -> array_typing.FloatVectorCell:
+  """Volumetric recombination rate [m^-3 s^-1]."""
+  result = _run_kn1d_lite_cached(
+      x, mu, Ti, Te, n, vxi, incident_n0, energy_eV, mesh_size, grid_fctr, h2_h_el, h_h_el, h_p_el, h_p_cx, simple,
+  )
+  return np.interp(x, result.xH, result.SRecomb, right=0.0)
+
+
+def _kn1d_profile_callback(
+    profile_fn,
+    kn1d_params: 'RuntimeParams',
+    geo: geometry.Geometry,
+    state: state.CoreProfiles,
+) -> array_typing.FloatVectorCell:
+  """Evaluates a KN1D-derived profile on the TORAX cell grid via callback."""
+  cell_array_shape_dtype = jax.ShapeDtypeStruct(
+      shape=(geo.torax_mesh.nx,), dtype=jax_utils.get_dtype()
+  )
+  return jax.pure_callback(
+      profile_fn,
+      cell_array_shape_dtype,
+      x=geo.R_out[-1] - geo.R_out,
+      mu=2.0,
+      Ti=state.T_i.value,
+      Te=state.T_e.value,
+      n=state.n_e.value,
+      vxi=state.toroidal_angular_velocity.value,
+      incident_n0=kn1d_params.separatrix_neutral_density,
+      energy_eV=kn1d_params.separatrix_neutral_energy,
+      mesh_size=kn1d_params.mesh_size,
+      grid_fctr=kn1d_params.grid_factor,
+      h2_h_el=kn1d_params.collisions_H2_H_EL,
+      h_h_el=kn1d_params.collisions_H_H_EL,
+      h_p_el=kn1d_params.collisions_H_P_EL,
+      h_p_cx=kn1d_params.collisions_H_P_CX,
+      simple=kn1d_params.simple_charge_exchange,
+  )
+
+
+def _get_kn1d_gas_puff_params(
+    runtime_params: runtime_params_lib.RuntimeParams,
+    requesting_source_name: str,
+) -> 'RuntimeParams':
+  """Fetches the KN1D parameters of the 'gas_puff' particle source."""
+  gas_puff_params = runtime_params.sources.get(_GAS_PUFF_SOURCE_NAME)
+  if not isinstance(gas_puff_params, RuntimeParams):
+    raise ValueError(
+        f"'{requesting_source_name}' requires the '{_GAS_PUFF_SOURCE_NAME}'"
+        " source to be configured with the 'kn1d' model, so that both draw"
+        " from the same KN1D solution."
+    )
+  return gas_puff_params
 
 
 def calc_edge_neutrals_source(
@@ -88,28 +200,7 @@ def calc_edge_neutrals_source(
   """Calculates external source term for n from puffs."""
   source_params = runtime_params.sources[source_name]
   assert isinstance(source_params, RuntimeParams)
-  cell_array_shape_dtype = jax.ShapeDtypeStruct(
-      shape=(geo.torax_mesh.nx,), dtype=jax_utils.get_dtype()
-  )
-  result = jax.pure_callback(
-      calc_kn1d_lite,
-      cell_array_shape_dtype,
-      x=geo.R_out[-1] - geo.R_out,
-      mu=2.0,
-      Ti=state.T_i.value,
-      Te=state.T_e.value,
-      n=state.n_e.value,
-      vxi=state.toroidal_angular_velocity.value,
-      incident_n0=source_params.separatrix_neutral_density,
-      energy_eV=source_params.separatrix_neutral_energy,
-      mesh_size=source_params.mesh_size,
-      grid_fctr=source_params.grid_factor,
-      h2_h_el=source_params.collisions_H2_H_EL,
-      h_h_el=source_params.collisions_H_H_EL,
-      h_p_el=source_params.collisions_H_P_EL,
-      h_p_cx=source_params.collisions_H_P_CX,
-      simple=source_params.simple_charge_exchange,
-  )
+  result = _kn1d_profile_callback(calc_kn1d_lite, source_params, geo, state)
   return (result, )
 
 
@@ -237,6 +328,185 @@ class KN1DIonizationCoolingConfig(base.SourceModelBase):
         mode=self.mode,
         is_explicit=self.is_explicit,
         ionization_energy=self.ionization_energy.get_value(t),
+    )
+
+  def build_source(
+      self,
+  ) -> generic_ion_el_heat_source_lib.GenericIonElectronHeatSource:
+    return generic_ion_el_heat_source_lib.GenericIonElectronHeatSource(
+        model_func=self.model_func
+    )
+
+
+def calc_cx_cooling_source(
+    runtime_params: runtime_params_lib.RuntimeParams,
+    geo: geometry.Geometry,
+    source_name: str,
+    state: state.CoreProfiles,
+    unused_calculated_source_profiles: source_profiles.SourceProfiles | None,
+    unused_conductivity: conductivity_base.Conductivity | None,
+) -> tuple[array_typing.FloatVectorCell, array_typing.FloatVectorCell]:
+  """Ion heat sink from charge exchange with KN1D-sourced edge neutrals.
+  """
+  gas_puff_params = _get_kn1d_gas_puff_params(runtime_params, source_name)
+  # EHCX is the net energy transfer rate to the neutrals from charge exchange,
+  # which the ion population loses (negative values mean net ion heating by
+  # hot neutrals).
+  cx_neutral_heating = _kn1d_profile_callback(
+      calc_kn1d_cx_neutral_heating, gas_puff_params, geo, state
+  )
+  ion_sink = -cx_neutral_heating
+  return (ion_sink, jnp.zeros_like(ion_sink))
+
+
+class KN1DChargeExchangeCoolingConfig(base.SourceModelBase):
+  """Ion heat sink for charge exchange with KN1D-sourced edge neutrals.
+
+  Draws from the same KN1D solution as the 'gas_puff' particle source, which
+  must be configured with the 'kn1d' model; it has no KN1D parameters of its
+  own.
+  """
+
+  model_name: Annotated[
+      Literal['kn1d_cx_cooling'], torax_pydantic.JAX_STATIC
+  ] = 'kn1d_cx_cooling'
+  mode: Annotated[
+      sources_runtime_params_lib.Mode, torax_pydantic.JAX_STATIC
+  ] = sources_runtime_params_lib.Mode.MODEL_BASED
+  is_explicit: Annotated[bool, torax_pydantic.JAX_STATIC] = True
+
+  @property
+  def model_func(self) -> source.SourceProfileFunction:
+    return calc_cx_cooling_source
+
+  def build_runtime_params(
+      self,
+      t: chex.Numeric,
+  ) -> sources_runtime_params_lib.RuntimeParams:
+    return sources_runtime_params_lib.RuntimeParams(
+        prescribed_values=tuple(
+            [v.get_value(t) for v in self.prescribed_values]
+        ),
+        mode=self.mode,
+        is_explicit=self.is_explicit,
+    )
+
+  def build_source(
+      self,
+  ) -> generic_ion_el_heat_source_lib.GenericIonElectronHeatSource:
+    return generic_ion_el_heat_source_lib.GenericIonElectronHeatSource(
+        model_func=self.model_func
+    )
+
+
+def calc_recombination_particle_sink(
+    runtime_params: runtime_params_lib.RuntimeParams,
+    geo: geometry.Geometry,
+    source_name: str,
+    state: state.CoreProfiles,
+    unused_calculated_source_profiles: source_profiles.SourceProfiles | None,
+    unused_conductivity: conductivity_base.Conductivity | None,
+) -> tuple[array_typing.FloatVectorCell, ...]:
+  """Particle sink for the n_e equation from recombination of KN1D edge plasma.
+  """
+  gas_puff_params = _get_kn1d_gas_puff_params(runtime_params, source_name)
+  recombination_rate = _kn1d_profile_callback(
+      calc_kn1d_recombination_rate, gas_puff_params, geo, state
+  )
+  return (-recombination_rate, )
+
+
+class KN1DRecombinationParticleSinkConfig(base.SourceModelBase):
+  """Particle sink for the n_e equation from recombination of KN1D edge plasma.
+
+  Draws from the same KN1D solution as the 'gas_puff' particle source, which
+  must be configured with the 'kn1d' model; it has no KN1D parameters of its
+  own. Registers as the 'generic_particle' source.
+  """
+
+  model_name: Annotated[
+      Literal['kn1d_recombination_particle_sink'], torax_pydantic.JAX_STATIC
+  ] = 'kn1d_recombination_particle_sink'
+  mode: Annotated[
+      sources_runtime_params_lib.Mode, torax_pydantic.JAX_STATIC
+  ] = sources_runtime_params_lib.Mode.MODEL_BASED
+  is_explicit: Annotated[bool, torax_pydantic.JAX_STATIC] = True
+
+  @property
+  def model_func(self) -> source.SourceProfileFunction:
+    return calc_recombination_particle_sink
+
+  def build_runtime_params(
+      self,
+      t: chex.Numeric,
+  ) -> sources_runtime_params_lib.RuntimeParams:
+    return sources_runtime_params_lib.RuntimeParams(
+        prescribed_values=tuple(
+            [v.get_value(t) for v in self.prescribed_values]
+        ),
+        mode=self.mode,
+        is_explicit=self.is_explicit,
+    )
+
+  def build_source(
+      self,
+  ) -> generic_particle_source_lib.GenericParticleSource:
+    return generic_particle_source_lib.GenericParticleSource(
+        model_func=self.model_func
+    )
+
+
+def calc_recombination_cooling_source(
+    runtime_params: runtime_params_lib.RuntimeParams,
+    geo: geometry.Geometry,
+    source_name: str,
+    state: state.CoreProfiles,
+    unused_calculated_source_profiles: source_profiles.SourceProfiles | None,
+    unused_conductivity: conductivity_base.Conductivity | None,
+) -> tuple[array_typing.FloatVectorCell, array_typing.FloatVectorCell]:
+  """Ion and electron heat sinks from recombination of KN1D edge plasma.
+  """
+  gas_puff_params = _get_kn1d_gas_puff_params(runtime_params, source_name)
+  recombination_rate = _kn1d_profile_callback(
+      calc_kn1d_recombination_rate, gas_puff_params, geo, state
+  )
+  # Each recombination event removes an ion/electron pair carrying the mean
+  # thermal energy (3/2 kT) of its population; T_i and T_e are in keV.
+  ion_sink = -1.5e3 * CONST.Q * state.T_i.value * recombination_rate
+  electron_sink = -1.5e3 * CONST.Q * state.T_e.value * recombination_rate
+  return (ion_sink, electron_sink)
+
+
+class KN1DRecombinationCoolingConfig(base.SourceModelBase):
+  """Ion and electron heat sinks for recombination of KN1D edge plasma.
+
+  Draws from the same KN1D solution as the 'gas_puff' particle source, which
+  must be configured with the 'kn1d' model; it has no KN1D parameters of its
+  own.
+  """
+
+  model_name: Annotated[
+      Literal['kn1d_recombination_cooling'], torax_pydantic.JAX_STATIC
+  ] = 'kn1d_recombination_cooling'
+  mode: Annotated[
+      sources_runtime_params_lib.Mode, torax_pydantic.JAX_STATIC
+  ] = sources_runtime_params_lib.Mode.MODEL_BASED
+  is_explicit: Annotated[bool, torax_pydantic.JAX_STATIC] = True
+
+  @property
+  def model_func(self) -> source.SourceProfileFunction:
+    return calc_recombination_cooling_source
+
+  def build_runtime_params(
+      self,
+      t: chex.Numeric,
+  ) -> sources_runtime_params_lib.RuntimeParams:
+    return sources_runtime_params_lib.RuntimeParams(
+        prescribed_values=tuple(
+            [v.get_value(t) for v in self.prescribed_values]
+        ),
+        mode=self.mode,
+        is_explicit=self.is_explicit,
     )
 
   def build_source(
