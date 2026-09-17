@@ -72,6 +72,7 @@ class KHResults:
     SideWallH: NDArray
     nH_gen0: NDArray | None = None
     nH_generations: NDArray | None = None
+    fH_gen0: NDArray | None = None
 
 
 class KineticH:
@@ -121,7 +122,8 @@ class KineticH:
     def __init__(self, mesh: KineticMesh, mu: int, vxi: NDArray, fHBC: NDArray, GammaxHBC: float, jh: Johnson_Hinnov = None,
                  recomb: bool = True, ni_correct: bool = False, truncate: float = 1e-4, max_gen: int = 100,
                  compute_errors: bool = False, debrief: int = 0, debug: int = 0, config: KHConfig = None, coll_config: KHCollisions = None,
-                 return_gen0: bool = False, return_all_generations: bool = False):
+                 return_gen0: bool = False, return_all_generations: bool = False,
+                 return_fH_gen0: bool = False):
         '''
         Parameters
         ----------
@@ -186,6 +188,7 @@ class KineticH:
         self.debug = debug
         self.return_gen0 = return_gen0
         self.return_all_generations = return_all_generations
+        self.return_fH_gen0 = return_fH_gen0
 
         # Override settings for debug
         if self.debug > 0:
@@ -349,7 +352,7 @@ class KineticH:
 
         # --- Iteration ---
 
-        fH, nH, alpha_c, Beta_CX_sum, collision_freqs, m_sums, NHG, igen = self._run_iteration_scheme(fH, nH, gamma_wall)
+        fH, nH, alpha_c, Beta_CX_sum, collision_freqs, m_sums, NHG, igen, fHG_gen0 = self._run_iteration_scheme(fH, nH, gamma_wall)
 
 
         # --- Compute Results ---
@@ -360,6 +363,8 @@ class KineticH:
             results.nH_gen0 = NHG[:, 0].copy()
         if self.return_all_generations:
             results.nH_generations = NHG[:, :igen + 1].copy()
+        if self.return_fH_gen0:
+            results.fH_gen0 = fHG_gen0
 
         if self.compute_errors:
             self._compute_final_errors(results, Beta_CX_sum, m_sums, alpha_c, collision_freqs)
@@ -399,6 +404,8 @@ class KineticH:
         # Begin Iteration
         fHG = np.zeros((nvr,nvx,nx))
         NHG = np.zeros((nx,self.max_gen+1))
+        fHG_gen0 = None  # captured below if self.return_fH_gen0 -- always reflects the
+                         # LAST outer (fH_iterate) pass, same convention as NHG/nH_gen0
         while True:
 
             nH_input = np.copy(nH)
@@ -433,6 +440,8 @@ class KineticH:
             # Set total atomic neutral distribution function to first flight generation
             fH = fHG.copy()
             nH = NHG[:,0].copy()
+            if self.return_fH_gen0:
+                fHG_gen0 = fHG.copy()
 
 
             # --- Iterative Generations ---
@@ -469,7 +478,7 @@ class KineticH:
         m_sums.H_P += m_vals.H_P
         m_sums.H_H2 += m_vals.H_H2
 
-        return fH, nH, alpha_c, Beta_CX_sum, collision_freqs, m_sums, NHG, igen
+        return fH, nH, alpha_c, Beta_CX_sum, collision_freqs, m_sums, NHG, igen, fHG_gen0
 
 
     def _run_generations(self, fH, nH, fHG, NHG, meq_coeffs, collision_freqs, fH_iterate):
