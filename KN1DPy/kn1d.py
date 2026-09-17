@@ -65,7 +65,8 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia,
          H2debug = 0, H2debrief = 0, interp_debug = 0, File=None,
          config = None,
          config_path = None,
-         return_gen0 = False, return_all_generations = False) -> dict:
+         return_gen0 = False, return_all_generations = False,
+         return_fH_gen0 = False) -> dict:
     '''
     Computes the molecular and atomic neutral profiles for inputted profiles
     of Ti(x), Te(x), n(x), and molecular neutral pressure, GaugeH2, at the boundary using
@@ -155,7 +156,7 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia,
     # --- Validate Config Options ---
 
     valid_ion_rates = ['collrad', 'jh', 'janev', 'adas']
-    cfg_h, coll_h, cfg_h2, coll_h2 = convert_config_dict_to_dataclasses(config) if isinstance(config, dict) else convert_config_file_to_dataclasses(config_path)
+    cfg_h, coll_h, cfg_h2, coll_h2 = convert_config_dict_to_dataclasses(config) if isinstance(config, dict) else convert_config_file_to_dataclasses(config_path or './config.toml')
     ion_rate_option = cfg_h.ion_rate
     mesh_size_h2 = cfg_h2.mesh_size
     mesh_size_h = cfg_h.mesh_size
@@ -297,7 +298,8 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia,
                          ni_correct=True, truncate=truncate, max_gen=max_gen,
                          compute_errors=compute_errors, debrief=Hdebrief, debug=Hdebug,
                          config=cfg_h, coll_config=coll_h,
-                         return_gen0=return_gen0, return_all_generations=return_all_generations)
+                         return_gen0=return_gen0, return_all_generations=return_all_generations,
+                         return_fH_gen0=return_fH_gen0)
 
     kinetic_h2 = KineticH2(kh2_mesh, mu, vxiM, fh2BC, GammaxH2BC, NuLoss, SH2,
                             compute_h_source=True, ni_correct=True, truncate=truncate, max_gen=max_gen,
@@ -532,7 +534,8 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia,
             Lyman=Lyman,
             Balmer=Balmer,
             **({'nH_gen0': kh_results.nH_gen0} if kh_results.nH_gen0 is not None else {}),
-            **({'nH_generations': kh_results.nH_generations} if kh_results.nH_generations is not None else {}))
+            **({'nH_generations': kh_results.nH_generations} if kh_results.nH_generations is not None else {}),
+            **({'fH_gen0': kh_results.fH_gen0} if kh_results.fH_gen0 is not None else {}))
 
     # config snapshot — read before opening to avoid truncating the source file
     if config_path is not None:
