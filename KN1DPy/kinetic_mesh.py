@@ -98,7 +98,8 @@ class KineticMesh:
             xmax = np.minimum(interp_1d(y, x, expdown, fill_value="extrapolate"), max(x))
         elif mesh_type == 'h2':
             #Find x location where Y = -10, i.e., where nH2 should be down by exp(-10)
-            xmax = np.minimum(interp_1d(y, x, -10.0), max(x))
+            expdown = max(-10, np.min(y))
+            xmax = np.minimum(interp_1d(y, x, expdown, fill_value="extrapolate"), max(x))
         xmin = x[0]
 
 
