@@ -3,6 +3,7 @@ Regression tests using a dict config instead of a config file path.
 Mirrors test_regression.py but passes config= rather than config_path=.
 """
 import pathlib
+import shutil
 import pytest
 from scipy.io import readsav
 from KN1DPy.kn1d import kn1d
@@ -101,6 +102,42 @@ def file_results(run_in_tmp_dir, config_path):
 def test_kn1d_dict_matches_file(dict_results, file_results, label):
     np.testing.assert_allclose(
         getattr(dict_results, label),
+        getattr(file_results, label),
+        rtol=1e-10,
+        atol=0,
+        err_msg=f"Mismatch for {label}",
+    )
+
+
+@pytest.fixture(scope="module")
+def default_results(run_in_tmp_dir):
+    shutil.copy(INPUT_DIR / "config.toml", run_in_tmp_dir / "config.toml")
+    data_file = INPUT_DIR / "cmod_test_in.sav"
+    sav = readsav(str(data_file.resolve()))
+    Ti = sav["Ti"] * 1e3
+    Te = sav["Te"] * 1e3
+    n = sav["n"] * 1e20
+    return kn1d(
+        x=sav["x"],
+        xlimiter=sav["xlimiter"],
+        xsep=sav["xsep"],
+        GaugeH2=sav["GaugeH2"],
+        mu=sav["mu"],
+        Ti=Ti,
+        Te=Te,
+        n=n,
+        vxi=sav["vxi"],
+        LC=sav["LC"],
+        PipeDia=sav["PipeDia"],
+        max_gen=100,
+        compute_errors=1,
+    )
+
+
+@pytest.mark.parametrize("label", LABELS)
+def test_kn1d_default_config_matches_file(default_results, file_results, label):
+    np.testing.assert_allclose(
+        getattr(default_results, label),
         getattr(file_results, label),
         rtol=1e-10,
         atol=0,
