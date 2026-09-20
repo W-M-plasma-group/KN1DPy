@@ -97,13 +97,16 @@ def _run_kn1d_lite_cached(
           "SIMPLE_CX": simple,
       }
   }
+  # x arrives center-to-edge (descending) and is reversed so KN1D's x ascends
+  # from the edge, where the neutrals enter; the profiles must be reversed
+  # with it or KN1D sees the core plasma at the neutral inlet.
   result = kn1d_lite(
       x=np.array(x[::-1]),
       mu=mu,
-      Ti=np.array(1.0e3 * Ti),
-      Te=np.array(1.0e3 * Te),
-      n=np.array(n),
-      vxi=np.array(vxi).flatten(),
+      Ti=np.array(1.0e3 * Ti)[::-1],
+      Te=np.array(1.0e3 * Te)[::-1],
+      n=np.array(n)[::-1],
+      vxi=np.array(vxi).flatten()[::-1],
       incident_n0=float(incident_n0),
       energies_eV=[float(energy_eV)],
       config=kn1d_config,
