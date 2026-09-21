@@ -37,6 +37,12 @@ _GAS_PUFF_SOURCE_NAME = 'gas_puff'
 class RuntimeParams(sources_runtime_params_lib.RuntimeParams):
   separatrix_neutral_density: array_typing.FloatScalar
   separatrix_neutral_energy: array_typing.FloatScalar
+  # Multi-beam incident BC: energies [eV] and number-density fractions of
+  # separatrix_neutral_density. Empty tuples select the single
+  # separatrix_neutral_energy beam. Tuple LENGTH is static (config-fixed),
+  # so `if beam_energies:` is a valid trace-time branch.
+  beam_energies: tuple
+  beam_fractions: tuple
   mesh_size: int
   grid_factor: float
   #ion_rate_method: str
@@ -58,7 +64,15 @@ _kn1d_cache: 'collections.OrderedDict[tuple, KN1DLiteResults]' = (
 
 def _run_kn1d_lite_cached(
     x, mu, Ti, Te, n, vxi, incident_n0, energy_eV, mesh_size, grid_fctr, h2_h_el, h_h_el, h_p_el, h_p_cx, simple,
+    fractions=None,
 ) -> KN1DLiteResults:
+  # energy_eV may be a scalar (single beam) or a 1D array of beam energies
+  # with matching number-density `fractions` of incident_n0.
+  energies = np.atleast_1d(np.asarray(energy_eV, dtype=float))
+  frac = (
+      None if fractions is None or np.asarray(fractions).size == 0
+      else np.atleast_1d(np.asarray(fractions, dtype=float))
+  )
   key = (
       np.asarray(x).tobytes(),
       float(mu),
@@ -67,7 +81,8 @@ def _run_kn1d_lite_cached(
       np.asarray(n).tobytes(),
       np.asarray(vxi).tobytes(),
       float(incident_n0),
-      float(energy_eV),
+      energies.tobytes(),
+      b'' if frac is None else frac.tobytes(),
       int(mesh_size),
       float(grid_fctr),
       bool(h2_h_el),
@@ -108,7 +123,8 @@ def _run_kn1d_lite_cached(
       n=np.array(n)[::-1],
       vxi=np.array(vxi).flatten()[::-1],
       incident_n0=float(incident_n0),
-      energies_eV=[float(energy_eV)],
+      energies_eV=list(energies),
+      fractions=None if frac is None else list(frac),
       config=kn1d_config,
   )
   _kn1d_cache[key] = result
@@ -192,8 +208,17 @@ def _kn1d_profile_callback(
   """
   field = _KN1D_RESULT_FIELDS[profile_fn]
 
+  # Multi-beam BC when the config carries one (tuple length is static, so
+  # this branch resolves at trace time); else the single-energy beam.
+  if kn1d_params.beam_energies:
+    energy_arg = jnp.asarray(kn1d_params.beam_energies)
+    fractions_arg = jnp.asarray(kn1d_params.beam_fractions)
+  else:
+    energy_arg = kn1d_params.separatrix_neutral_energy
+    fractions_arg = jnp.zeros((0,))
+
   def host(R_out, R_out_face, Ti, Te, n, vxi, Ti_b, Te_b, n_b, vxi_b,
-           incident_n0, energy_eV, mesh_size, grid_fctr, h2_h_el,
+           incident_n0, energy_eV, fractions, mesh_size, grid_fctr, h2_h_el,
            h_h_el, h_p_el, h_p_cx, simple):
     R_out, R_out_face = np.asarray(R_out), np.asarray(R_out_face)
     x = np.append(R_out_face[-1] - R_out, 0.0)
@@ -205,6 +230,7 @@ def _kn1d_profile_callback(
         np.append(np.asarray(vxi), vxi_b),
         incident_n0, energy_eV, mesh_size, grid_fctr,
         h2_h_el, h_h_el, h_p_el, h_p_cx, simple,
+        fractions=fractions,
     )
     out = cell_average(np.asarray(result.xH),
                        np.asarray(getattr(result, field)),
@@ -228,7 +254,8 @@ def _kn1d_profile_callback(
       n_b=state.n_e.face_value()[-1],
       vxi_b=state.toroidal_angular_velocity.face_value()[-1],
       incident_n0=kn1d_params.separatrix_neutral_density,
-      energy_eV=kn1d_params.separatrix_neutral_energy,
+      energy_eV=energy_arg,
+      fractions=fractions_arg,
       mesh_size=kn1d_params.mesh_size,
       grid_fctr=kn1d_params.grid_factor,
       h2_h_el=kn1d_params.collisions_H2_H_EL,
@@ -284,6 +311,12 @@ class KN1DGasPuffSourceConfig(base.SourceModelBase):
   separatrix_neutral_energy: torax_pydantic.TimeVaryingScalar = (
       torax_pydantic.ValidatedDefault(3.0)     # Neutral energy at separatrix in eV.
   )
+  # Optional multi-beam incident BC (kn1d_lite simple mode): beam energies
+  # [eV] and matching number-density fractions of separatrix_neutral_density.
+  # Both empty (default) selects the single separatrix_neutral_energy beam;
+  # both set overrides it.
+  separatrix_neutral_energies: tuple[float, ...] = ()
+  separatrix_neutral_fractions: tuple[float, ...] = ()
   mesh_size: pydantic.PositiveInt = 10
   grid_factor: pydantic.PositiveFloat = 0.2
   #ion_rate_method: Annotated[str, torax_pydantic.JAX_STATIC] = 'adas'
@@ -295,6 +328,26 @@ class KN1DGasPuffSourceConfig(base.SourceModelBase):
   mode: Annotated[
       sources_runtime_params_lib.Mode, torax_pydantic.JAX_STATIC
   ] = sources_runtime_params_lib.Mode.MODEL_BASED
+
+  @pydantic.model_validator(mode='after')
+  def _validate_beams(self) -> 'KN1DGasPuffSourceConfig':
+    e = self.separatrix_neutral_energies
+    f = self.separatrix_neutral_fractions
+    if len(e) != len(f):
+      raise ValueError(
+          'separatrix_neutral_energies and separatrix_neutral_fractions must'
+          f' have the same length, got {len(e)} and {len(f)}.'
+      )
+    if e and abs(sum(f) - 1.0) > 1.0e-6:
+      raise ValueError(
+          f'separatrix_neutral_fractions must sum to 1, got {sum(f)}.'
+      )
+    if any(x <= 0.0 for x in e) or any(x <= 0.0 for x in f):
+      raise ValueError(
+          'separatrix_neutral_energies and separatrix_neutral_fractions must'
+          ' be positive.'
+      )
+    return self
 
   @property
   def model_func(self) -> source.SourceProfileFunction:
@@ -312,6 +365,8 @@ class KN1DGasPuffSourceConfig(base.SourceModelBase):
         is_explicit=True,
         separatrix_neutral_density=self.separatrix_neutral_density.get_value(t),
         separatrix_neutral_energy=self.separatrix_neutral_energy.get_value(t),
+        beam_energies=self.separatrix_neutral_energies,
+        beam_fractions=self.separatrix_neutral_fractions,
         mesh_size=self.mesh_size,
         grid_factor=self.grid_factor,
         #ion_rate_method=self.ion_rate_method,
