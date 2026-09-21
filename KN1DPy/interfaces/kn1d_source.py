@@ -146,25 +146,87 @@ def calc_kn1d_recombination_rate(
   return np.interp(x, result.xH, result.SRecomb, right=0.0)
 
 
+# KN1DLiteResults field evaluated by _kn1d_profile_callback for each of the
+# point-sample functions above (kept as the callback's profile_fn keys, and
+# available for direct x-space use).
+_KN1D_RESULT_FIELDS = {
+    calc_kn1d_lite: 'Sion',
+    calc_kn1d_cx_neutral_heating: 'EHCX',
+    calc_kn1d_recombination_rate: 'SRecomb',
+}
+
+
+def cell_average(xH, y, x_faces):
+  """Conservative average of KN1D profile y(xH) over each TORAX cell.
+
+  xH ascends from the LCFS (0); y is taken as 0 beyond xH[-1]. x_faces =
+  R_out_face[-1] - R_out_face (descending, center to edge), so cell i
+  spans [x_faces[i+1], x_faces[i]]. value * width reproduces KN1D's own
+  integral over the cell, unlike point-sampling at the cell center.
+  """
+  F = np.concatenate(([0.0], np.cumsum(
+      0.5 * (y[1:] + y[:-1]) * np.diff(xH))))
+  Ff = np.interp(x_faces, xH, F, left=0.0, right=F[-1])
+  return (Ff[:-1] - Ff[1:]) / (x_faces[:-1] - x_faces[1:])
+
+
 def _kn1d_profile_callback(
     profile_fn,
     kn1d_params: 'RuntimeParams',
     geo: geometry.Geometry,
     state: state.CoreProfiles,
 ) -> array_typing.FloatVectorCell:
-  """Evaluates a KN1D-derived profile on the TORAX cell grid via callback."""
+  """Evaluates a KN1D-derived profile on the TORAX cell grid via callback.
+
+  The KN1D input x grid is measured from the LCFS (x = R_out_face[-1] -
+  R_out) and the LCFS point itself (x = 0, face boundary-condition values)
+  is appended, so KN1D sees the plasma-edge values at the neutral inlet;
+  the earlier coupling put x = 0 at the outermost cell CENTER, half a cell
+  inside the plasma edge, and never showed KN1D the boundary values.
+  Arrays keep the center-to-edge order (descending x), which
+  `_run_kn1d_lite_cached` reverses itself (x and profiles). The KN1D
+  result field is deposited onto the TORAX cells by conservative cell
+  averaging (see `cell_average`) rather than point sampling, which
+  over-applied KN1D's mm-scale edge profiles wherever a cell center
+  happened to sit on a peak.
+  """
+  field = _KN1D_RESULT_FIELDS[profile_fn]
+
+  def host(R_out, R_out_face, Ti, Te, n, vxi, Ti_b, Te_b, n_b, vxi_b,
+           incident_n0, energy_eV, mesh_size, grid_fctr, h2_h_el,
+           h_h_el, h_p_el, h_p_cx, simple):
+    R_out, R_out_face = np.asarray(R_out), np.asarray(R_out_face)
+    x = np.append(R_out_face[-1] - R_out, 0.0)
+    result = _run_kn1d_lite_cached(
+        x, 2.0,
+        np.append(np.asarray(Ti), Ti_b),
+        np.append(np.asarray(Te), Te_b),
+        np.append(np.asarray(n), n_b),
+        np.append(np.asarray(vxi), vxi_b),
+        incident_n0, energy_eV, mesh_size, grid_fctr,
+        h2_h_el, h_h_el, h_p_el, h_p_cx, simple,
+    )
+    out = cell_average(np.asarray(result.xH),
+                       np.asarray(getattr(result, field)),
+                       R_out_face[-1] - R_out_face)
+    return out.astype(jax_utils.get_dtype())
+
   cell_array_shape_dtype = jax.ShapeDtypeStruct(
       shape=(geo.torax_mesh.nx,), dtype=jax_utils.get_dtype()
   )
   return jax.pure_callback(
-      profile_fn,
+      host,
       cell_array_shape_dtype,
-      x=geo.R_out[-1] - geo.R_out,
-      mu=2.0,
+      R_out=geo.R_out,
+      R_out_face=geo.R_out_face,
       Ti=state.T_i.value,
       Te=state.T_e.value,
       n=state.n_e.value,
       vxi=state.toroidal_angular_velocity.value,
+      Ti_b=state.T_i.face_value()[-1],
+      Te_b=state.T_e.face_value()[-1],
+      n_b=state.n_e.face_value()[-1],
+      vxi_b=state.toroidal_angular_velocity.face_value()[-1],
       incident_n0=kn1d_params.separatrix_neutral_density,
       energy_eV=kn1d_params.separatrix_neutral_energy,
       mesh_size=kn1d_params.mesh_size,
