@@ -60,6 +60,7 @@ class KN1DResults:
 
 def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia,
          truncate = 1.0e-3, max_gen = 100,
+         max_iter = 50,
          compute_errors = 0, debrief = 0,
          Hdebug = 0, Hdebrief = 0,
          H2debug = 0, H2debrief = 0, interp_debug = 0, File=None,
@@ -115,6 +116,10 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia,
                 value in a subsequent iteration.
         max_gen : int, default=50
             Maximum number of collision generations to try including before giving up.
+        max_iter : int, default=50
+            Maximum number of outer fH/fH2 iterations before giving up. This guards against
+            the loop cycling between two nearly identical states without ever meeting
+            `truncate`. A warning is printed if the cap is reached.
 
     Returns
     -------
@@ -407,6 +412,13 @@ def kn1d(x, xlimiter, xsep, GaugeH2, mu, Ti, Te, n, vxi, LC, PipeDia,
 
         if nDelta_nH2 <= truncate:
             # Stop Iteration
+            break
+
+        if counter >= max_iter:
+            print(
+                prompt + f'WARNING: fH/fH2 loop reached {max_iter} iterations without '
+                f'converging: nDelta_nH2 = {nDelta_nH2:.3e} (truncate = {truncate:.1e})'
+            )
             break
 
     # --- End Iteration ---
